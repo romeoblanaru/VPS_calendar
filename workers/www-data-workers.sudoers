@@ -1,0 +1,14 @@
+# Allow www-data to control worker services without password
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl start booking-event-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl stop booking-event-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart booking-event-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl status booking-event-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl is-active booking-event-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl is-enabled booking-event-worker
+
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl start google-calendar-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl stop google-calendar-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl restart google-calendar-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl status google-calendar-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl is-active google-calendar-worker
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl is-enabled google-calendar-worker

@@ -1,0 +1,16 @@
+[Unit]
+Description=Booking Event Worker
+After=network.target mysql.service nginx.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/srv/project_1/calendar
+ExecStart=/usr/bin/php /srv/project_1/calendar/workers/booking_event_worker.php
+Restart=always
+RestartSec=5
+StandardOutput=append:/srv/project_1/calendar/logs/booking-event-worker.log
+StandardError=append:/srv/project_1/calendar/logs/booking-event-worker.log
+
+[Install]
+WantedBy=multi-user.target

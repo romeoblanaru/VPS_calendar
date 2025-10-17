@@ -1,0 +1,1118 @@
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-color: #dee2e6;
+    --shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-bottom: 50px;
+}
+.dashboard-container {
+    min-height: 100vh;
+    padding: 20px;
+}
+.dashboard-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 0;
+    min-height: calc(100vh - 40px);
+    position: relative;
+}
+
+.specialist-widget {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.specialist-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.specialist-widget .card-header {
+    border-bottom: none;
+    font-weight: bold;
+}
+
+.specialist-widget .card-body {
+    padding: 1rem;
+}
+
+.specialist-details p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.specialist-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.form-check {
+    margin-top: 0.5rem;
+}
+
+.form-check-label {
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* Visibility Indicators */
+.visibility-indicator {
+    margin-left: 8px;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.visibility-indicator.visible {
+    color: #28a745;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.visibility-indicator.hidden {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+        .visibility-indicator i {
+            margin-right: 0;
+            width: auto;
+        }
+
+/* Top Section Styling */
+.top-section {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: none;
+}
+
+.specialist-info p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.specialist-info p:last-child {
+    margin-bottom: 0;
+}
+
+/* Services Section Styling */
+.services-section {
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    text-align: left;
+}
+
+.services-section hr {
+    border-top: 1px solid #dee2e6;
+    margin-top: 0.15rem;
+    margin-bottom: 0.15rem;
+}
+
+.service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.service-item:last-child {
+    border-bottom: none;
+}
+
+.service-item:hover {
+    background-color: #e9ecef;
+    border-radius: 4px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.service-name {
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.service-details {
+    text-align: right;
+    font-size: 0.8rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.service-duration {
+    color: #6c757d;
+}
+
+.service-price {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.no-services {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px dashed #dee2e6;
+}
+
+/* Permissions Section Styling */
+.permissions-section {
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: none;
+}
+
+.permissions-section hr {
+    border-top: 2px solid #6c757d;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.permissions-section table {
+    width: 100%;
+}
+
+.permissions-section td {
+    white-space: nowrap;
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.25rem 0;
+    font-size: 0.85rem;
+}
+
+/* Specialist Action Buttons Styling */
+.specialist-action-buttons {
+    flex: 0 0 100px;
+    gap: 4px;
+}
+
+.specialist-action-buttons .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Notification Section Styling */
+.notification-section {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: none;
+}
+
+.notification-section hr {
+    border-top: 1px solid #dee2e6;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.notification-section span {
+    font-size: 0.9rem;
+}
+
+        /* Visibility Text (for supervisor view) */
+        .visibility-text {
+            margin-left: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .visibility-text.visible {
+            color: #28a745;
+        }
+
+        .visibility-text.hidden {
+            color: #dc3545;
+        }
+
+/* Extended panel styling */
+.dashboard-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 0;
+    min-height: calc(100vh - 40px);
+    position: relative;
+}
+
+/* Ensure the panel can grow beyond viewport */
+.dashboard-card::after {
+    content: '';
+    display: block;
+    height: 100px;
+    width: 100%;
+}
+
+/* Make the body extend beyond viewport */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-bottom: 50px;
+}
+.modify-modal-overlay {
+    position: fixed;
+    z-index: 1050;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.modify-modal {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    width: 84%;
+    max-width: 780px;
+    margin: 5vh auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.modify-modal-header {
+    padding: 12px 25px;
+    background: #007bff;
+    color: #fff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+.modify-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+.modify-modal-close {
+    font-size: 2rem;
+    cursor: pointer;
+    color: #fff;
+}
+.modify-modal-buttons {
+    padding: 15px 20px;
+    border-top: 1px solid #dee2e6;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.btn-modify {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+}
+.btn-modify:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+}
+.btn-cancel {
+    background: linear-gradient(135deg, #6c757d, #545b62);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(108, 117, 125, 0.2);
+}
+.btn-cancel:hover {
+    background: linear-gradient(135deg, #545b62, #3d4449);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(108, 117, 125, 0.3);
+}
+.form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+}
+.form-group label {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #b71c1c;
+}
+.form-group input,
+.form-group select {
+    padding: 8px 10px;
+    border: 1.5px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: #f8f9fa;
+    transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+.org-name-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.modify-icon-inline {
+    font-size: 2rem;
+    margin-right: 8px;
+}
+.org-name-large {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #dc3545;
+}
+.individual-edit-section {
+    margin-bottom: 18px;
+    width: 99%;
+}
+.schedule-editor-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+.schedule-editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.schedule-editor-table th,
+.schedule-editor-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 13px;
+}
+.schedule-editor-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+.day-name {
+    font-weight: 600;
+    background-color: #e9ecef;
+}
+.time-inputs {
+    display: flex;
+    gap: 2px;
+}
+.btn-clear-shift {
+    background: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+    font-size: 9px !important;
+    cursor: pointer !important;
+    min-width: 35px !important;
+    text-align: center !important;
+    margin: 0 !important;
+    display: inline-block !important;
+}
+.btn-clear-shift:hover {
+    background: #c82333 !important;
+}
+.quick-options-compact {
+    background: #f8f9fa;
+    padding: 4px 6px;
+    border-radius: 5px;
+    margin-top: 8px;
+    border: 1px solid #dee2e6;
+}
+.quick-options-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding: 8px !important;
+}
+.quick-option-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    min-width: auto !important;
+}
+.quick-option-group label {
+    font-size: 12px !important;
+    margin: 0 !important;
+    padding-right: 3px !important;
+    white-space: nowrap !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    text-align: right !important;
+}
+.quick-option-group select {
+    width: 100px !important;
+    padding: 2px 3px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    font-size: 12px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+}
+.quick-option-group button {
+    background: #007bff !important;
+    color: white !important;
+    border: none !important;
+    padding: 1px 5px !important;
+    border-radius: 3px !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    min-width: auto !important;
+    max-width: none !important;
+}
+.quick-option-group button:hover {
+    background: #0056b3;
+}
+.individual-edit-section h4 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #495057;
+}
+.modify-error {
+    color: #dc3545;
+    font-size: 0.95em;
+    margin: 10px 0;
+    display: none;
+}
+
+/* Modal styles */
+.modify-modal-overlay {
+    position: fixed;
+    z-index: 1050;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Override modal size for add specialist modal */
+#addSpecialistModal .modify-modal {
+    width: 84% !important;
+    max-width: 780px !important;
+    margin: 5vh auto;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Override header padding for add new specialist modal */
+#addSpecialistModal .modify-modal-header {
+    padding: 12px 25px !important;
+    background: #007bff;
+    color: #fff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+#addSpecialistModal .modify-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+}
+
+/* Make form fields more compact */
+#addSpecialistModal .form-row {
+    margin-bottom: 8px;
+    display: flex;
+    gap: 15px;
+}
+
+#addSpecialistModal .form-group {
+    margin-bottom: 5px;
+    flex: 1;
+}
+
+#addSpecialistModal .form-control {
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+#addSpecialistModal .form-group label {
+    font-size: 0.85em;
+    margin-bottom: 3px;
+}
+
+/* Buttons styling */
+#addSpecialistModal .modify-modal-buttons {
+    padding: 10px 15px;
+    gap: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#addSpecialistModal .btn-modify {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+}
+
+#addSpecialistModal .btn-modify:hover {
+    background: linear-gradient(135deg, #0056b3, #003d80);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Working Schedule Styles */
+#addSpecialistModal .individual-edit-section {
+    margin-bottom: 20px;
+    width: 99%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#addSpecialistModal .individual-edit-section h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#addSpecialistModal .schedule-editor-table-container {
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+}
+
+#addSpecialistModal .schedule-editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    min-width: auto;
+    max-width: 100%;
+}
+
+#addSpecialistModal .schedule-editor-table th {
+    background: #f8f9fa;
+    padding: 4px 4px;
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#addSpecialistModal .schedule-editor-table th:first-child {
+    min-width: 50px;
+    text-align: left;
+}
+
+#addSpecialistModal .schedule-editor-table td {
+    padding: 3px 1px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+#addSpecialistModal .schedule-editor-table tr:hover {
+    background: #f8f9fa;
+}
+
+#addSpecialistModal .day-name {
+    font-weight: 600;
+    color: #495057;
+    min-width: 50px;
+    font-size: 11px;
+    background-color: #f8f9fa;
+}
+
+/* Shift-specific styling */
+#addSpecialistModal .shift1-start-time,
+#addSpecialistModal .shift1-end-time {
+    width: 75%;
+    padding: 2px 4px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 11px;
+    min-width: 70px;
+    background-color: #e3f2fd;
+    border-color: #bbdefb;
+}
+
+#addSpecialistModal .shift2-start-time,
+#addSpecialistModal .shift2-end-time {
+    width: 75%;
+    padding: 2px 4px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 11px;
+    min-width: 70px;
+    background-color: #f3e5f5;
+    border-color: #e1bee7;
+}
+
+#addSpecialistModal .shift3-start-time,
+#addSpecialistModal .shift3-end-time {
+    width: 75%;
+    padding: 2px 4px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 11px;
+    min-width: 70px;
+    background-color: #e8f5e8;
+    border-color: #c8e6c9;
+}
+
+#addSpecialistModal .shift1-start-time:focus,
+#addSpecialistModal .shift1-end-time:focus {
+    border-color: #2196f3;
+    box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
+}
+
+#addSpecialistModal .shift2-start-time:focus,
+#addSpecialistModal .shift2-end-time:focus {
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 0.2rem rgba(156, 39, 176, 0.25);
+}
+
+#addSpecialistModal .shift3-start-time:focus,
+#addSpecialistModal .shift3-end-time:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+}
+
+#addSpecialistModal .btn-clear-shift {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: background-color 0.15s ease-in-out;
+    white-space: nowrap;
+    min-width: 40px;
+    text-align: center;
+}
+
+#addSpecialistModal .btn-clear-shift:hover {
+    background: #c82333;
+}
+
+/* Quick Options Section - Compact Style (matching booking_view_page.php) */
+#addSpecialistModal .quick-options-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+#addSpecialistModal .quick-options-section h4 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+#addSpecialistModal .quick-options-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+/* Override Quick Options spacing for compact layout */
+#addSpecialistModal .quick-options-row {
+    padding: 8px !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+}
+
+#addSpecialistModal .quick-option-group {
+    gap: 4px !important;
+    min-width: auto !important;
+    flex-shrink: 0;
+}
+
+#addSpecialistModal .time-inputs {
+    gap: 2px !important;
+}
+
+#addSpecialistModal .time-inputs .form-control {
+    padding: 2px 4px !important;
+    width: 45px !important;
+}
+
+#addSpecialistModal .quick-option-group label {
+    margin-right: 2px !important;
+    margin-bottom: 0 !important;
+}
+
+#addSpecialistModal .time-inputs input[type="time"] {
+    width: 75% !important;
+    padding: 2px 0px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    font-size: 11px !important;
+    min-width: 30px !important;
+    background-color: #e3f2fd !important;
+    border-color: #bbdefb !important;
+}
+
+#addSpecialistModal .time-inputs input[type="time"]:focus {
+    border-color: #2196f3 !important;
+    box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25) !important;
+}
+
+/* Modify Schedule Modal Styles */
+#modifyScheduleModal .modify-modal {
+    width: 70% !important;
+    max-width: 1000px !important;
+    height: calc(100vh - 200px + 100px) !important;
+}
+
+#modifyScheduleModal .modify-modal-body {
+    height: calc(100% - 60px) !important;
+    overflow-y: auto;
+}
+
+#modifyScheduleModal .modify-modal-header h3 {
+    font-size: 21px !important;
+    padding: 4px 15px !important;
+}
+
+#modifyScheduleModal .org-name-large {
+    font-size: 10px !important;
+}
+
+#modifyScheduleModal .schedule-editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#modifyScheduleModal .schedule-editor-table th,
+#modifyScheduleModal .schedule-editor-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 11px;
+}
+
+#modifyScheduleModal .schedule-editor-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+#modifyScheduleModal .day-name {
+    font-weight: 600;
+    background-color: #e9ecef;
+}
+
+#modifyScheduleModal .quick-options-compact {
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+#modifyScheduleModal .quick-options-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+/* Responsive design for quick options */
+@media (max-width: 768px) {
+    #addSpecialistModal .quick-options-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    #addSpecialistModal .quick-option-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+    
+    #addSpecialistModal .time-inputs {
+        justify-content: center;
+    }
+    
+    #addSpecialistModal .time-inputs .form-control {
+        width: 70px;
+    }
+    
+    #addSpecialistModal .schedule-editor-table {
+        font-size: 0.8em;
+    }
+    
+    #addSpecialistModal .schedule-editor-table th,
+    #addSpecialistModal .schedule-editor-table td {
+        padding: 4px 2px;
+    }
+    
+    #addSpecialistModal .day-name {
+        font-size: 0.8em;
+        min-width: 60px;
+    }
+    
+    #addSpecialistModal .shift1-start-time,
+    #addSpecialistModal .shift1-end-time,
+    #addSpecialistModal .shift2-start-time,
+    #addSpecialistModal .shift2-end-time,
+    #addSpecialistModal .shift3-start-time,
+    #addSpecialistModal .shift3-end-time {
+        width: 60px;
+        font-size: 0.75em;
+    }
+    
+    #addSpecialistModal .btn-clear-shift {
+        padding: 3px 6px;
+        font-size: 0.7em;
+    }
+}
+
+.dashboard-container {
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Updated Clear Button Styles */
+#addSpecialistModal .btn-clear-shift {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: background-color 0.15s ease-in-out;
+    white-space: nowrap;
+    min-width: 40px;
+    text-align: center;
+    margin: 0 auto;
+    display: block;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#addSpecialistModal .btn-clear-shift:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+#addSpecialistModal .btn-clear-shift:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(220, 53, 69, 0.1);
+}
+
+/* Schedule Editor Table Styles */
+#scheduleEditorTableBody,
+#scheduleEditorTableBody tr,
+#scheduleEditorTableBody td {
+    background-color: white !important;
+}
+
+#scheduleEditorTableBody .day-name {
+    background-color: white !important;
+    font-weight: 600;
+    color: #495057;
+    font-size: 11px;
+    text-align: left;
+    padding-left: 8px;
+    min-width: 80px;
+}
+
+#scheduleEditorTableBody td {
+    padding: 3px 4px;
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+/* Form field styles */
+#addSpecialistModal input.form-control {
+    background-color: white !important;
+}
+
+#addSpecialistModal .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+#addSpecialistModal .form-group {
+    flex: 1;
+}
+
+/* Compact layout for username/password and email schedule */
+#addSpecialistModal .compact-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+#addSpecialistModal .compact-row .left-column,
+#addSpecialistModal .compact-row .right-column {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+}
+
+#addSpecialistModal .compact-row .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+#addSpecialistModal .compact-row input[type="number"] {
+    width: 100% !important;
+    padding: 4px !important;
+    text-align: center;
+    min-width: 0;
+}
+
+#addSpecialistModal .compact-row input[type="text"],
+#addSpecialistModal .compact-row input[type="password"] {
+    width: 100% !important;
+    min-width: 0;
+}
+
+/* Login fields style */
+#addSpecialistModal .login-field {
+    background-color: #e6f7ff !important;
+}
+
+/* Form field styles */
+#addSpecialistModal input.form-control {
+    background-color: white !important;
+}
+
+/* Login fields style - more specific selector to override the above */
+#addSpecialistModal #specialistUser,
+#addSpecialistModal #specialistPassword {
+    background-color: #e6f7ff !important;
+}
+
+#addSpecialistModal .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+/* Form field styles */
+#addSpecialistModal input.form-control,
+#addSpecialistModal select.form-control {
+    background-color: white !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* Non-required fields */
+#addSpecialistModal #specialistPhone,
+#addSpecialistModal #specialistSelection {
+    border-color: #ced4da !important;
+}
+
+/* Login fields style */
+#addSpecialistModal #specialistUser,
+#addSpecialistModal #specialistPassword {
+    background-color: #e6f7ff !important;
+}
+
+/* Label styles */
+#addSpecialistModal label {
+    color: #000000 !important;
+    font-weight: 500;
+}
+
+/* Mandatory field styles */
+#addSpecialistModal input[required],
+#addSpecialistModal select[required] {
+    border: 1px solid #dc3545 !important;
+}
+
+#addSpecialistModal #emailScheduleHour.grey-border,
+#addSpecialistModal #emailScheduleMinute.grey-border,
+#addSpecialistModal #specialistUser.grey-border,
+#addSpecialistModal #specialistPassword.grey-border {
+    border: 1.5px solid #9e9e9e !important;
+}
+
+#addSpecialistModal .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+#addSpecialistModal input.form-control,
+#addSpecialistModal select.form-control {
+    background-color: white !important;
+    border: 1px solid #ced4da !important;
+}
+
+

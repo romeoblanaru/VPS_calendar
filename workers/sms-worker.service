@@ -1,0 +1,16 @@
+[Unit]
+Description=SMS Worker for Calendar Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/srv/project_1/calendar
+ExecStart=/usr/bin/php /srv/project_1/calendar/workers/sms_worker.php
+Restart=always
+RestartSec=5
+StandardOutput=append:/srv/project_1/calendar/workers/logs/sms_worker.log
+StandardError=append:/srv/project_1/calendar/workers/logs/sms_worker.log
+
+[Install]
+WantedBy=multi-user.target

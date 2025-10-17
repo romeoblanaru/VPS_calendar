@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my-bookings.co.uk — AI Appointment Management</title>
+  <meta name="description" content="Professional AI-powered multi-channel appointment management: voice, SMS, WhatsApp, Messenger, web, and custom webhooks." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="main.js"></script>
+</head>
+<body>
+  <header class="hdr">
+    <div class="container nav">
+      <a href="#" class="brand">
+        <img src="assets/logo.png" alt="my-bookings logo" class="brand__logo" style="height: 120px !important; width: 120px !important;" />
+        <span class="brand__text">my-bookings.co.uk</span>
+      </a>
+      <button class="nav__toggle" id="navToggle" aria-label="Open menu">☰</button>
+      <nav class="menu" id="navMenu">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero__grid">
+      <div class="copy">
+        <h1>Calendar Booking System</h1>
+        <p class="lead">
+          Professional appointment management. One unified <strong>AI brain</strong> orchestrates bookings from
+          <strong>voice</strong>, <strong>SMS</strong>, <strong>WhatsApp</strong>, <strong>Messenger</strong>,
+          <strong>web</strong>, and <strong>custom webhooks</strong>.
+        </p>
+        <ul class="chips">
+          <li>Multi-organization</li>
+          <li>Multiple working points</li>
+          <li>Multiple specialists</li>
+          <li>Web-based admin</li>
+        </ul>
+        <div class="cta">
+          <div class="login-dropdown-hero">
+            <button class="btn btn--primary btn--large" id="heroEnterBtn" style="padding: 0.6rem 1.44rem !important; font-size: 1.08rem !important; transition: all 0.3s ease !important;" onmouseover="this.style.background='#0949b8'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(11,94,215,0.3)'" onmouseout="this.style.background=''; this.style.transform=''; this.style.boxShadow=''">Enter</button>
+            <div class="login-form" id="heroLoginForm">
+              <form action="../login.php" method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <small>Press Enter to login</small>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="art">
+        <div class="panel">
+          <header class="panel__bar"><span></span><span></span><span></span></header>
+          <div class="kpis">
+            <div class="kpi"><div class="kpi__v">6</div><div class="kpi__l">Channels</div></div>
+            <div class="kpi"><div class="kpi__v">AI</div><div class="kpi__l">Orchestration</div></div>
+            <div class="kpi"><div class="kpi__v">Realtime</div><div class="kpi__l">Updates</div></div>
+          </div>
+          <div class="timeline">
+            <div class="ev ev--voice">Voice • Confirmed</div>
+            <div class="ev ev--sms">SMS • Pending</div>
+            <div class="ev ev--wa">WhatsApp • Confirmed</div>
+            <div class="ev ev--msgr">Messenger • New</div>
+            <div class="ev ev--web">Web • New</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="container">
+      <h2 class="title">What you get</h2>
+      <div class="grid features">
+        <div class="card"><div class="ico">📆</div><h3>Unified calendar</h3><p>One schedule for all channels with conflict resolution.</p></div>
+        <div class="card"><div class="ico">🤖</div><h3>Unified AI brain</h3><p>Single AI core for intent, availability, reminders and policy.</p></div>
+        <div class="card"><div class="ico">🏢</div><h3>Multi-tenant</h3><p>Organizations, working points, and specialist roles.</p></div>
+        <div class="card"><div class="ico">⚡</div><h3>Realtime</h3><p>Instant updates without manual refresh.</p></div>
+        <div class="card"><div class="ico">🔌</div><h3>Webhooks & API</h3><p>Connect CRM, billing, and custom systems.</p></div>
+        <div class="card"><div class="ico">🔐</div><h3>Security</h3><p>RBAC, audit logs, scoped tokens, SSL.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="how">
+    <div class="container">
+      <h2 class="title">How it works</h2>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div><h3>Capture</h3><p>Bookings enter via voice, SMS, WhatsApp, Messenger, web, or your webhooks.</p></div></div>
+        <div class="step"><div class="n">2</div><div><h3>AI orchestrate</h3><p>AI validates intent, checks calendars, applies policies, and resolves clashes.</p></div></div>
+        <div class="step"><div class="n">3</div><div><h3>Sync</h3><p>Calendars update instantly; clients get confirmations and reminders.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="container">
+      <h2 class="title">Pricing</h2>
+      <div class="grid pricing">
+        <div class="pricecard">
+          <h3>Starter</h3><div class="price">£0</div>
+          <ul><li>1 working point</li><li>2 specialists</li><li>Web bookings</li><li>Email confirmations</li></ul>
+          <a class="btn btn--outline" href="#contact">Get started</a>
+        </div>
+        <div class="pricecard hit">
+          <h3>Pro</h3><div class="price">£39<span>/mo</span></div>
+          <ul><li>Multi working points</li><li>Unlimited specialists</li><li>Voice, SMS, WhatsApp, Messenger</li><li>AI + webhooks</li></ul>
+          <a class="btn btn--primary" href="#contact">Choose Pro</a>
+        </div>
+        <div class="pricecard">
+          <h3>Business</h3><div class="price">Custom</div>
+          <ul><li>SSO & RBAC</li><li>Priority support</li><li>Dedicated infra</li><li>Onboarding</li></ul>
+          <a class="btn btn--outline" href="#contact">Talk to sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="contact">
+    <div class="container">
+      <h2 class="title">Get started</h2>
+      <form class="form" onsubmit="return false;">
+        <div class="grid form__grid">
+          <input type="text" placeholder="Name" required />
+          <input type="email" placeholder="Work email" required />
+          <input type="text" placeholder="Company" />
+          <select><option>Starter</option><option selected>Pro</option><option>Business</option></select>
+        </div>
+        <textarea rows="4" placeholder="Describe your booking workflow"></textarea>
+        <button class="btn btn--primary">Request access</button>
+      </form>
+      <p class="muted">We’ll reply within 1 business day.</p>
+    </div>
+  </section>
+
+  <footer class="ftr">
+    <div class="container ftr__grid">
+      <div><img src="assets/logo.png" alt="" class="logo--sm" style="height: 96px !important; width: 96px !important;"/><p class="muted">AI-powered multi-channel appointment management.</p></div>
+      <div><h4>Product</h4><ul><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#how">How it works</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="../privacy_policy.php">Privacy</a></li><li><a href="../terms_of_service.php">Terms</a></li><li><a href="#">Status</a></li></ul></div>
+    </div>
+    <div class="container ftr__bottom">
+      <div>
+        <span>© <span id="year"></span> Calendar Booking System. All rights reserved.</span>
+      </div>
+      <div>
+        <span style="margin-right: 1rem;">Contact: admin@my-bookings.co.uk</span>
+        <span>Phone: +44 7504 128961</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

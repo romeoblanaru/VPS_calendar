@@ -1,0 +1,224 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Database Cleanup Cron Job Script
+ * 
+ * Cleans up old records from multiple tables to maintain database performance
+ * Runs daily at midnight via cron job
+ * 
+ * Tables cleaned:
+ * - booking_changes (7 days)
+ * - client_last_check (1 day) 
+ * - gcal_worker_signals (7 days)
+ * - google_calendar_sync_queue (7 days for completed, 30 days for failed)
+ * - webhook_logs (7 days)
+ * - logs (30 days)
+ * 
+ * Usage: php database_cleanup_cron.php
+ * Cron: 0 0 * * * /usr/bin/php /path/to/calendar/admin/database_cleanup_cron.php
+ */
+
+// Set script to run from command line or web (for testing)
+$is_cli = php_sapi_name() === 'cli';
+
+if (!$is_cli) {
+    // If running via web, check for admin privileges
+    require_once '../includes/session.php';
+    if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin_user') {
+        die('Access denied. Admin privileges required.');
+    }
+}
+
+require_once '../includes/db.php';
+
+// Configuration
+$config = [
+    'booking_changes' => [
+        'table' => 'booking_changes',
+        'timestamp_column' => 'change_timestamp',
+        'retention_days' => 7,
+        'description' => 'Booking change tracking records'
+    ],
+    'client_last_check' => [
+        'table' => 'client_last_check',
+        'timestamp_column' => 'last_check_timestamp',
+        'retention_days' => 1,
+        'description' => 'Client session tracking records'
+    ],
+    'gcal_worker_signals' => [
+        'table' => 'gcal_worker_signals',
+        'timestamp_column' => 'created_at',
+        'retention_days' => 7,
+        'description' => 'Google Calendar worker signals'
+    ],
+    'google_calendar_sync_queue_done' => [
+        'table' => 'google_calendar_sync_queue',
+        'timestamp_column' => 'created_at',
+        'retention_days' => 7,
+        'condition' => "status IN ('done', 'processing')",
+        'description' => 'Completed Google Calendar sync queue items'
+    ],
+    'google_calendar_sync_queue_failed' => [
+        'table' => 'google_calendar_sync_queue',
+        'timestamp_column' => 'created_at',
+        'retention_days' => 30,
+        'condition' => "status = 'failed'",
+        'description' => 'Failed Google Calendar sync queue items (kept longer for debugging)'
+    ],
+    'webhook_logs' => [
+        'table' => 'webhook_logs',
+        'timestamp_column' => 'created_at',
+        'retention_days' => 7,
+        'description' => 'Webhook request logs'
+    ],
+    'logs' => [
+        'table' => 'logs',
+        'timestamp_column' => 'action_time',
+        'retention_days' => 30,
+        'description' => 'System action logs'
+    ]
+];
+
+// Logging function
+function log_message($message, $is_error = false) {
+    global $is_cli;
+    
+    $timestamp = date('Y-m-d H:i:s');
+    $prefix = $is_error ? 'ERROR' : 'INFO';
+    $log_entry = "[{$timestamp}] [{$prefix}] {$message}";
+    
+    // Log to error log
+    error_log("[Database Cleanup] " . $log_entry);
+    
+    // Output to console/web
+    if ($is_cli) {
+        echo $log_entry . "\n";
+    } else {
+        echo htmlspecialchars($log_entry) . "<br>\n";
+    }
+}
+
+// Start cleanup process
+log_message("Starting database cleanup process");
+
+$total_deleted = 0;
+$cleanup_results = [];
+
+try {
+    $pdo->beginTransaction();
+    
+    foreach ($config as $key => $table_config) {
+        try {
+            // Check if table exists
+            $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+            $stmt->execute([$table_config['table']]);
+            
+            if ($stmt->rowCount() === 0) {
+                log_message("Table '{$table_config['table']}' does not exist, skipping");
+                continue;
+            }
+            
+            // Build the cleanup query
+            $sql = "DELETE FROM `{$table_config['table']}` WHERE `{$table_config['timestamp_column']}` < DATE_SUB(NOW(), INTERVAL {$table_config['retention_days']} DAY)";
+            
+            // Add additional condition if specified
+            if (isset($table_config['condition'])) {
+                $sql .= " AND " . $table_config['condition'];
+            }
+            
+            log_message("Cleaning {$table_config['description']} older than {$table_config['retention_days']} days");
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+            
+            $deleted_count = $stmt->rowCount();
+            $total_deleted += $deleted_count;
+            
+            $cleanup_results[$key] = [
+                'table' => $table_config['table'],
+                'deleted' => $deleted_count,
+                'description' => $table_config['description'],
+                'retention_days' => $table_config['retention_days']
+            ];
+            
+            log_message("Deleted {$deleted_count} records from {$table_config['table']}");
+            
+        } catch (Exception $e) {
+            log_message("Error cleaning {$table_config['table']}: " . $e->getMessage(), true);
+            // Continue with other tables even if one fails
+            continue;
+        }
+    }
+    
+    // Optimize tables after cleanup
+    log_message("Optimizing cleaned tables...");
+    
+    $tables_to_optimize = array_unique(array_column($config, 'table'));
+    
+    foreach ($tables_to_optimize as $table) {
+        try {
+            // Check if table exists before optimizing
+            $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+            $stmt->execute([$table]);
+            
+            if ($stmt->rowCount() > 0) {
+                $pdo->exec("OPTIMIZE TABLE `{$table}`");
+                log_message("Optimized table: {$table}");
+            }
+        } catch (Exception $e) {
+            log_message("Warning: Could not optimize table {$table}: " . $e->getMessage(), true);
+            // Continue with other tables
+        }
+    }
+    
+    $pdo->commit();
+    
+    // Generate summary report
+    log_message("=== CLEANUP SUMMARY ===");
+    log_message("Total records deleted: {$total_deleted}");
+    
+    foreach ($cleanup_results as $result) {
+        log_message("- {$result['description']}: {$result['deleted']} records ({$result['retention_days']} day retention)");
+    }
+    
+    // Calculate space saved (rough estimate)
+    $estimated_space_mb = round($total_deleted * 0.001, 2); // Very rough estimate
+    log_message("Estimated space freed: ~{$estimated_space_mb} MB");
+    
+    log_message("Database cleanup completed successfully");
+    
+    // If running via web, show formatted results
+    if (!$is_cli) {
+        echo "<hr><h3>Cleanup Results</h3>";
+        echo "<table border='1' cellpadding='5' cellspacing='0'>";
+        echo "<tr><th>Table</th><th>Records Deleted</th><th>Retention Period</th><th>Description</th></tr>";
+        
+        foreach ($cleanup_results as $result) {
+            echo "<tr>";
+            echo "<td>{$result['table']}</td>";
+            echo "<td>{$result['deleted']}</td>";
+            echo "<td>{$result['retention_days']} days</td>";
+            echo "<td>{$result['description']}</td>";
+            echo "</tr>";
+        }
+        
+        echo "</table>";
+        echo "<p><strong>Total records deleted: {$total_deleted}</strong></p>";
+    }
+    
+} catch (Exception $e) {
+    $pdo->rollBack();
+    
+    $error_message = "Database cleanup failed: " . $e->getMessage();
+    log_message($error_message, true);
+    
+    if (!$is_cli) {
+        echo "<div style='color: red; font-weight: bold;'>Error: " . htmlspecialchars($error_message) . "</div>";
+    }
+    
+    exit(1);
+}
+
+// Success exit
+exit(0);
+?> 

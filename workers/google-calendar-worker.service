@@ -1,0 +1,30 @@
+[Unit]
+Description=Google Calendar Sync Worker - Near Real-time Sync
+Documentation=https://my-bookings.co.uk/admin/php_workers_dashboard.php
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/project_1/calendar
+ExecStart=/usr/bin/php /srv/project_1/calendar/process_google_calendar_queue_enhanced.php --signal-loop
+Restart=always
+RestartSec=10
+StandardOutput=append:/srv/project_1/calendar/logs/google-calendar-worker.log
+StandardError=append:/srv/project_1/calendar/logs/google-calendar-worker-error.log
+
+# Restart conditions
+RestartPreventExitStatus=0
+SuccessExitStatus=0
+
+# Resource limits
+LimitNOFILE=65536
+Nice=10
+
+# Environment
+Environment="HOME=/var/www"
+
+[Install]
+WantedBy=multi-user.target

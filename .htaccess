@@ -1,0 +1,10 @@
+Options -Indexes
+
+RewriteEngine On
+
+# If the request exactly targets a directory (not a real file),
+# route through a small PHP guard that redirects back to index.php.
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ guard_directory.php [L]
+
+

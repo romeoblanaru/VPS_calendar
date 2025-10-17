@@ -1,0 +1,16 @@
+
+CHANGELOG:
+----------
+Modified Files:
+1. admin/admin_dashboard.php
+    - Added JS handlers for:
+        - btn_logs → loads admin_logs.php into bottom_panel
+        - btn_webhooks → loads webhook_dashboard.php into bottom_panel
+        - btn_csv → loads csv_files.php into bottom_panel
+        - btn_logout → redirects to logout.php
+
+2. admin/load_bottom_panel.php
+    - Appended support for actions:
+        - 'admin_logs'
+        - 'webhook_dashboard'
+        - 'csv_files'

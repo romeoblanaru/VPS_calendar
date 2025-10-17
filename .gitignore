@@ -1,0 +1,51 @@
+# PHP
+vendor/
+composer.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+error_log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Uploads (if any)
+uploads/
+
+# Cache
+cache/
+*.cache
+
+# Session files
+sessions/
+
+# Prevent bot_1 directory from being tracked
+../bot_1/
+/srv/project_1/bot_1/
+
+# Database backups
+*.sql
+*.sql.gz
+
+# OAuth credentials and secrets
+config/google_oauth.json
+config/client_secret*.json
+includes/credentials.php

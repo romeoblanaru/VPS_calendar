@@ -1,0 +1,1045 @@
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        /* Title Box */
+        .title-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 15.6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .title-left {
+            text-align: left;
+            flex: 1;
+        }
+
+        .title-center {
+            text-align: center;
+            flex: 2;
+        }
+
+        .title-right {
+            text-align: right;
+            flex: 1;
+        }
+
+        .current-time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .time-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .page-title {
+            font-size: 2.64rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin: 0;
+            text-align: center;
+        }
+
+        /* Animated Logo Styles */
+        .logo-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .logo-letter {
+            display: inline-block;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .logo-letter.space {
+            width: 15px;
+        }
+
+        /* Animated Eyes - Beauty Salon Red (Smaller) */
+        .logo-letter.beauty-eye {
+            position: relative;
+            display: inline-block;
+            width: 0.9em;
+            height: 0.9em;
+            margin: 0 1px;
+        }
+
+        .eye-outer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #e74c3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 0.9em;
+            text-shadow: 2px 2px 4px rgba(231, 76, 60, 0.3);
+            animation: eyeBlink 4s ease-in-out infinite;
+        }
+
+        .eye-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0.45em;
+            height: 0.45em;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .iris {
+            width: 0.22em;
+            height: 0.22em;
+            background: #2c3e50;
+            border-radius: 50%;
+            animation: irisMove 3s ease-in-out infinite;
+        }
+
+        .logo-letter.beauty-eye:nth-child(2) .eye-outer {
+            animation-delay: 0s;
+        }
+
+        .logo-letter.beauty-eye:nth-child(2) .iris {
+            animation-delay: 0.5s;
+        }
+
+        .logo-letter.beauty-eye:nth-child(3) .eye-outer {
+            animation-delay: 0.2s;
+        }
+
+        .logo-letter.beauty-eye:nth-child(3) .iris {
+            animation-delay: 1s;
+        }
+
+        /* Hover effects for all letters */
+        .logo-text:hover .logo-letter {
+            transform: translateY(-2px);
+            color: var(--primary-color);
+        }
+
+        .logo-text:hover .logo-letter.beauty-eye .eye-outer {
+            background: #c0392b;
+            transform: scale(1.1);
+            transition: all 0.3s ease;
+        }
+
+        .logo-text:hover .iris {
+            animation: irisMoveFast 1s ease-in-out infinite;
+        }
+
+
+
+        /* Eye blinking animation */
+        @keyframes eyeBlink {
+            0%, 90%, 100% {
+                transform: scaleY(1);
+            }
+            95% {
+                transform: scaleY(0.1);
+            }
+        }
+
+        /* Iris movement animation - looking left and right */
+        @keyframes irisMove {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-0.1em);
+            }
+            75% {
+                transform: translateX(0.1em);
+            }
+        }
+
+        /* Fast iris movement on hover */
+        @keyframes irisMoveFast {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-0.12em);
+            }
+            75% {
+                transform: translateX(0.12em);
+            }
+        }
+
+
+
+        /* Beauty salon sparkle effect for the eyes */
+        .logo-letter.beauty-eye::before {
+            content: '✨';
+            position: absolute;
+            top: -12px;
+            right: -6px;
+            font-size: 0.8rem;
+            opacity: 0;
+            animation: beautySparkle 4s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .logo-letter.beauty-eye:nth-child(3)::before {
+            animation-delay: 2s;
+        }
+
+        @keyframes beautySparkle {
+            0%, 100% {
+                opacity: 0;
+                transform: scale(0) rotate(0deg);
+            }
+            25% {
+                opacity: 1;
+                transform: scale(1) rotate(180deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.2) rotate(360deg);
+            }
+            75% {
+                opacity: 0;
+                transform: scale(0) rotate(540deg);
+            }
+        }
+
+
+
+        /* Main Content Layout */
+        .content-wrapper {
+            display: flex;
+            gap: 10px;
+            min-height: calc(100vh - 150px);
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: auto;
+        }
+
+        /* Widgets */
+        .widget {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+        }
+
+        .widget-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 4px;
+        }
+
+        /* Specialist color overrides for widget title */
+        .widget-title.specialist-colored {
+            background: var(--specialist-bg-color);
+            color: var(--specialist-fg-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border-bottom: none;
+        }
+
+        .specialist-widget {
+            flex-shrink: 0;
+        }
+
+        .organisation-widget {
+            flex: 0 1 auto;
+            overflow-y: visible;
+            max-height: none;
+        }
+
+        .specialist-info {
+            margin-bottom: 15px;
+        }
+
+        .specialist-name-large {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        /* Specialist color overrides for specialist name in sidebar */
+        
+
+        .organisation-name-large {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+        }
+
+        .specialist-specialty {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        .contact-info i {
+            width: 20px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+
+        /* Visibility Indicators */
+        .visibility-indicator {
+            margin-left: 8px;
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .visibility-indicator.visible {
+            color: #28a745;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+
+        .visibility-indicator.hidden {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+
+        .visibility-indicator i {
+            margin-right: 0;
+            width: auto;
+        }
+
+        /* Visibility Text (for supervisor view) */
+        .visibility-text {
+            margin-left: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .visibility-text.visible {
+            color: #28a745;
+        }
+
+        .visibility-text.hidden {
+            color: #dc3545;
+        }
+
+        .working-points-container {
+            margin-top: 10px;
+        }
+
+        .working-point-section {
+            margin-bottom: 15px;
+        }
+
+        .working-point-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .working-point-item {
+            background: var(--light-color);
+            border-radius: 10px;
+            padding: 6px 2px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            padding-top: 0;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .working-point-header {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .working-point-details {
+            margin-bottom: 8px;
+        }
+
+        .working-point-contact {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .working-point-address,
+        .working-point-phone {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .working-point-address {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .working-point-phone {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .working-point-email {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .working-program {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+            padding-top: 0;
+            line-height: 2.0;
+        }
+
+        /* Calendar Section */
+        .calendar-section {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .calendar-top {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--light-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .period-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: nowrap;
+            justify-content: center;
+            width: 100%;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+
+        .period-selector form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+
+        .period-option {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            min-width: auto;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .period-option input[type="radio"] {
+            margin: 0;
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
+            transform: scale(0.9);
+        }
+
+        .period-option label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            position: relative;
+            z-index: 10;
+            font-size: 0.9rem;
+        }
+        
+        .period-option {
+            position: relative;
+            z-index: 10;
+        }
+
+        
+
+        .calendar-view {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .calendar-view.compact {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+
+            .calendar-section {
+                order: 1;
+            }
+
+            .title-box {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .period-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Language Selector */
+        .language-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .language-btn {
+            background: none;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .language-btn:hover,
+        .language-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+        }
+        
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #c82333, #a71e2a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+        }
+        
+        .btn-delete:active {
+            transform: translateY(0);
+        }
+        
+        /* Override modal size for modify specialist modal */
+        #modifySpecialistModal .modify-modal {
+            width: 50% !important;
+            max-width: 600px !important;
+        }
+        
+        /* Override modal size for add specialist modal - increased 10% */
+        #addSpecialistModal .modify-modal {
+            width: 92.4% !important;
+            max-width: 858px !important;
+        }
+        
+        /* Override header padding for modify specialist modal */
+        #modifySpecialistModal .modify-modal-header {
+            padding: 12px 25px !important;
+        }
+        
+        /* Override header padding for add new specialist modal */
+        #addSpecialistModal .modify-modal-header {
+            padding: 12px 25px !important;
+        }
+        
+        /* Make form fields more compact */
+        #modifySpecialistModal .form-row {
+            margin-bottom: 8px;
+        }
+        
+        #modifySpecialistModal .form-group {
+            margin-bottom: 5px;
+        }
+        
+        #modifySpecialistModal .form-control {
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+        
+        #modifySpecialistModal .form-group label {
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+        
+        #modifySpecialistModal .modify-modal-body {
+            padding: 15px;
+        }
+        
+        #modifySpecialistModal .modify-modal-buttons {
+            padding: 10px 15px;
+            gap: 8px;
+            justify-content: flex-start !important;
+            flex-direction: column !important;
+        }
+        
+        #modifySpecialistModal .btn-modify,
+        #modifySpecialistModal .btn-delete,
+        #modifySpecialistModal .btn-cancel {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+        
+        #modifySpecialistModal .button-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+        
+        #modifySpecialistModal .button-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        
+        
+        #modifySpecialistModal .btn-delete {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+        }
+        
+        #modifySpecialistModal .btn-delete:hover {
+            background: linear-gradient(135deg, #c82333, #a71e2a);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
+        }
+        
+        #modifySpecialistModal .btn-modify {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+        }
+        
+        #modifySpecialistModal .btn-modify:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+        }
+        
+        #modifySpecialistModal .btn-cancel {
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(108, 117, 125, 0.2);
+        }
+        
+        #modifySpecialistModal .btn-cancel:hover {
+            background: linear-gradient(135deg, #545b62, #3d4449);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(108, 117, 125, 0.3);
+        }
+        
+        #modifySpecialistModal .modal-cancel-button {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            z-index: 10;
+        }
+        
+        #modifySpecialistModal .modify-modal {
+            position: relative;
+        }
+        
+        /* Override Quick Options spacing for compact layout */
+        #addSpecialistModal .quick-options-row {
+            padding: 8px !important;
+            gap: 8px !important;
+            flex-wrap: nowrap !important;
+        }
+        
+        #addSpecialistModal .quick-option-group {
+            gap: 4px !important;
+            min-width: auto !important;
+            flex-shrink: 0;
+        }
+        
+        #addSpecialistModal .time-inputs {
+            gap: 2px !important;
+        }
+        
+        #addSpecialistModal .time-inputs .form-control {
+            padding: 2px 4px !important;
+            width: 45px !important;
+        }
+        
+        #addSpecialistModal .quick-option-group label {
+            margin-right: 2px !important;
+            margin-bottom: 0 !important;
+        }
+        
+        #addSpecialistModal .time-inputs input[type="time"] {
+            width: 75% !important;
+            padding: 2px 0px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 3px !important;
+            font-size: 11px !important;
+            min-width: 30px !important;
+        }
+        
+
+        
+        #addSpecialistModal .time-inputs input[type="time"]:focus {
+            box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25) !important;
+        }
+        
+        /* Modify Schedule Modal Styles */
+        #modifyScheduleModal .modify-modal {
+            width: 70% !important;
+            max-width: 1000px !important;
+            height: calc(100vh - 200px + 100px) !important;
+        }
+        
+        #modifyScheduleModal .modify-modal-body {
+            height: calc(100% - 60px) !important;
+            overflow-y: auto;
+        }
+        
+        #modifyScheduleModal .modify-modal-header h3 {
+            font-size: 21px !important;
+            padding: 4px 15px !important;
+        }
+        
+        #modifyScheduleModal .org-name-large {
+            font-size: 10px !important;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table th,
+        #modifyScheduleModal .schedule-editor-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 11px;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        #modifyScheduleModal .day-name {
+            font-weight: 600;
+            background-color: #e9ecef;
+        }
+        
+        #modifyScheduleModal .time-inputs {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        
+        #modifyScheduleModal .time-inputs input[type="time"] {
+            width: 70px !important;
+            padding: 3px 0px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 3px !important;
+            font-size: 12px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+        }
+        
+        #modifyScheduleModal .btn-clear-shift {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            cursor: pointer;
+        }
+        
+        #modifyScheduleModal .btn-clear-shift:hover {
+            background: #c82333;
+        }
+        
+        #modifyScheduleModal .quick-options-compact {
+            background: #f8f9fa;
+            padding: 4px 6px;
+            border-radius: 5px;
+            margin-top: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        #modifyScheduleModal .quick-options-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+        }
+        
+        #modifyScheduleModal .quick-option-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        
+        #modifyScheduleModal .quick-option-group label {
+            font-size: 12px !important;
+            margin: 0 !important;
+            padding-right: 3px !important;
+            white-space: nowrap !important;
+            min-width: 40px !important;
+            max-width: 40px !important;
+            text-align: right !important;
+        }
+        
+        #modifyScheduleModal .individual-edit-section {
+            margin-bottom: 15px;
+        }
+        
+        #modifyScheduleModal .individual-edit-section:first-of-type {
+            margin-top: 5px;
+        }
+        
+        #modifyScheduleModal .quick-option-group select {
+            width: 100px !important;
+            padding: 2px 3px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 3px !important;
+            font-size: 12px !important;
+            min-width: 100px !important;
+            max-width: 100px !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group button {
+            background: #007bff !important;
+            color: white !important;
+            border: none !important;
+            padding: 1px 5px !important;
+            border-radius: 3px !important;
+            font-size: 12px !important;
+            cursor: pointer !important;
+            min-width: auto !important;
+            max-width: none !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group button:hover {
+            background: #0056b3;
+        }
+        
+        #modifyScheduleModal .individual-edit-section h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .individual-edit-section {
+            width: 99%;
+        }
+
+        /* Google Calendar Integration Styles */
+.google-calendar-integration {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+    background-color: #f8f9fa;
+}
+
+.gcal-status-connected {
+    color: #155724;
+}
+
+.gcal-status-disconnected {
+    color: #721c24;
+}
+
+.gcal-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 12px;
+}
+
+.gcal-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.gcal-action-icon:hover {
+    background-color: #e9ecef;
+    color: #495057;
+    text-decoration: none;
+    transform: scale(1.1);
+}
+
+.gcal-action-icon i {
+    font-size: 12px;
+}
+
+.gcal-connect-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.gcal-connect-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.google-calendar-integration .badge {
+    font-size: 11px;
+    padding: 3px 6px;
+}
+
+.google-calendar-integration .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.google-calendar-integration .btn .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+        /* Compact calendar spacing fix */
+        .calendar-view.compact {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
