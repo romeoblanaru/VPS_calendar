@@ -246,7 +246,17 @@ if ((!isset($_SESSION['user_id']) && !isset($_SESSION['user'])) || $_SESSION['ro
             </button>
         </div>
         
-        <!-- Tool Card 5: phpMyAdmin -->
+        <!-- Tool Card 5: Text to Voice -->
+        <div class="tool-card">
+            <h3><i class="fas fa-volume-up" style="color: #9b59b6;"></i> Text to Voice (TTS)</h3>
+            <p>Test TTS and create voice files</p>
+            <div class="tool-url">https://voice.rom2.co.uk/text_to_voice</div>
+            <button onclick="window.open('https://voice.rom2.co.uk/text_to_voice', '_blank')">
+                <i class="fas fa-external-link-alt"></i> Open Tool
+            </button>
+        </div>
+
+        <!-- Tool Card 6: phpMyAdmin -->
         <div class="tool-card">
             <h3><i class="fas fa-database" style="color: #f39c12;"></i> phpMyAdmin</h3>
             <p>MySQL database management</p>
