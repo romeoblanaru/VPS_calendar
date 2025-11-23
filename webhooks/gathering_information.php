@@ -1,23 +1,26 @@
 <?php
 /**
  * Webhook: Gathering Information
- * 
+ *
  * This webhook receives phone number parameters and returns comprehensive
  * information about a working point, its specialists, services, and schedules
  * formatted for AI voice bot consumption.
- * 
+ *
  * Parameters:
  * - assigned_phone_nr (required): Phone number to identify the working point
  * - start_date (optional, YYYY-MM-DD): Start date for availability range
  * - end_date (optional, YYYY-MM-DD): End date for availability range
- * 
+ * - healthcheck (optional): When present, returns webhook and database health status
+ *
  * Returns: JSON response with company details, working point info, specialists,
  *          services, schedules, and available slots (14 days by default or within provided date range)
+ *          OR healthcheck response if healthcheck parameter is present
  */
 
 // Include required files
 require_once '../includes/db.php';
 require_once '../includes/webhook_logger.php';
+require_once '../includes/timezone_config.php';
 
 // Set JSON response headers
 header('Content-Type: application/json');
@@ -208,6 +211,25 @@ function minutesToTime($minutes) {
  */
 try {
     // Get parameters from GET or POST
+    $healthcheck = $_GET['healthcheck'] ?? $_POST['healthcheck'] ?? null;
+
+    // Handle healthcheck request
+    if ($healthcheck !== null) {
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM working_points");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $workingPointsCount = (int)$result['count'];
+
+        $healthResponse = [
+            'webhook_status' => 'healthy',
+            'database_response' => $workingPointsCount >= 1 ? 'healthy' : 'unhealthy',
+            'working_points' => $workingPointsCount
+        ];
+
+        http_response_code(200);
+        echo json_encode($healthResponse, JSON_PRETTY_PRINT);
+        exit();
+    }
+
     $assigned_phone_nr = $_GET['assigned_phone_nr'] ?? $_POST['assigned_phone_nr'] ?? null;
     $start_date_param = $_GET['start_date'] ?? $_POST['start_date'] ?? null;
     $end_date_param = $_GET['end_date'] ?? $_POST['end_date'] ?? null;
@@ -279,6 +301,8 @@ try {
             'unic_id' => $workingPoint['unic_id'],
             'name_of_the_place' => $workingPoint['name_of_the_place'],
             'address' => $workingPoint['address'],
+            'landmark' => $workingPoint['landmark'] ?? 'unavailable',
+            'directions' => $workingPoint['directions'] ?? 'unavailable',
             'lead_person_name' => $workingPoint['lead_person_name'],
             'lead_person_phone_nr' => $workingPoint['lead_person_phone_nr'],
             'workplace_phone_nr' => $workingPoint['workplace_phone_nr'],
@@ -499,15 +523,31 @@ try {
         
         // Calculate available slots only if a valid date range was provided
         if ($rangeIsValid) {
+            // Get current time in working point timezone
+            $currentTime = getCurrentTimeInWorkingPointTimezoneOnly($workingPoint, 'Y-m-d H:i:s');
+            $currentDateTime = new DateTime($currentTime, new DateTimeZone($timezone));
+
             $specialistAvailableSlots = [];
             foreach ($datesRange as $date) {
                 $slots = getAvailableSlots($pdo, $specialist['unic_id'], $workingPoint['unic_id'], $date);
                 if (!empty($slots)) {
-                    $specialistAvailableSlots[] = [
-                        'date' => $date,
-                        'day_of_week' => date('l', strtotime($date)),
-                        'slots' => $slots
-                    ];
+                    // Filter out past slots
+                    $futureSlots = [];
+                    foreach ($slots as $slot) {
+                        $slotDateTime = new DateTime($date . ' ' . $slot['start'], new DateTimeZone($timezone));
+                        if ($slotDateTime > $currentDateTime) {
+                            $futureSlots[] = $slot;
+                        }
+                    }
+
+                    // Only add to response if there are future slots
+                    if (!empty($futureSlots)) {
+                        $specialistAvailableSlots[] = [
+                            'date' => $date,
+                            'day_of_week' => date('l', strtotime($date)),
+                            'slots' => $futureSlots
+                        ];
+                    }
                 }
             }
             $specialistData['available_slots'] = $specialistAvailableSlots;

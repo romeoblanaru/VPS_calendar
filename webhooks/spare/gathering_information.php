@@ -58,7 +58,7 @@ function getTimezoneByCountry($country) {
 
 /**
  * Function to get available time slots for a specialist on a specific date
- * This function calculates available time by subtracting booked periods from shift periods
+ * This function calculates available time by subtracting booked periods and time off periods from shift periods
  */
 function getAvailableSlots($pdo, $specialist_id, $working_place_id, $date) {
     try {
@@ -77,6 +77,20 @@ function getAvailableSlots($pdo, $specialist_id, $working_place_id, $date) {
             return [];
         }
         
+        // Check if specialist has time off on this date
+        $timeOffStmt = $pdo->prepare("
+            SELECT start_time, end_time 
+            FROM specialist_time_off 
+            WHERE specialist_id = ? AND date_off = ?
+        ");
+        $timeOffStmt->execute([$specialist_id, $date]);
+        $timeOff = $timeOffStmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If full day off, return empty slots
+        if ($timeOff && (!$timeOff['start_time'] || !$timeOff['end_time'])) {
+            return [];
+        }
+        
         // Get existing bookings for this date and specialist
         $bookingStmt = $pdo->prepare("
             SELECT TIME(booking_start_datetime) as start_time, TIME(booking_end_datetime) as end_time
@@ -86,6 +100,18 @@ function getAvailableSlots($pdo, $specialist_id, $working_place_id, $date) {
         ");
         $bookingStmt->execute([$specialist_id, $date]);
         $bookings = $bookingStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Add time off period to bookings array if exists
+        if ($timeOff && $timeOff['start_time'] && $timeOff['end_time']) {
+            $bookings[] = [
+                'start_time' => $timeOff['start_time'],
+                'end_time' => $timeOff['end_time']
+            ];
+            // Re-sort bookings by start time
+            usort($bookings, function($a, $b) {
+                return strcmp($a['start_time'], $b['start_time']);
+            });
+        }
         
         $availableSlots = [];
         
@@ -106,7 +132,7 @@ function getAvailableSlots($pdo, $specialist_id, $working_place_id, $date) {
                 // Create array of available periods (initially the entire shift)
                 $availablePeriods = [['start' => $shiftStartMinutes, 'end' => $shiftEndMinutes]];
                 
-                // Remove booked periods from available periods
+                // Remove booked periods (including time off) from available periods
                 foreach ($bookings as $booking) {
                     $bookingStartMinutes = timeToMinutes($booking['start_time']);
                     $bookingEndMinutes = timeToMinutes($booking['end_time']);
@@ -301,6 +327,7 @@ try {
     
     // Get specialists for this working point
     if ($filter_specialist_id) {
+        // Specific specialist requested
         $stmt = $pdo->prepare("
             SELECT DISTINCT s.*, ssa.specialist_nr_visible_to_client, ssa.specialist_email_visible_to_client
             FROM specialists s
@@ -310,20 +337,73 @@ try {
             )
         ");
         $stmt->execute([$filter_specialist_id, $workingPoint['unic_id']]);
+        $specialists = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } elseif (!$filter_specialist_id && $filter_service_id) {
+        // specialist_id=all AND service_id provided: fetch reference service name+price, then match all specialists
+        $refServiceStmt = $pdo->prepare("
+            SELECT name_of_service, price_of_service
+            FROM services
+            WHERE unic_id = ? AND id_work_place = ?
+            AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
+            AND (suspended IS NULL OR suspended = 0 OR suspended != 1)
+            LIMIT 1
+        ");
+        $refServiceStmt->execute([$filter_service_id, $workingPoint['unic_id']]);
+        $refService = $refServiceStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($refService) {
+            // Store reference service for later use in service fetching
+            $matchServiceByNamePrice = true;
+            $matchServiceName = $refService['name_of_service'];
+            $matchServicePrice = $refService['price_of_service'];
+
+            // Find all specialists who have a service with exact name+price match
+            $stmt = $pdo->prepare("
+                SELECT DISTINCT s.*, ssa.specialist_nr_visible_to_client, ssa.specialist_email_visible_to_client
+                FROM specialists s
+                LEFT JOIN specialists_setting_and_attr ssa ON s.unic_id = ssa.specialist_id
+                WHERE s.unic_id IN (
+                    SELECT DISTINCT srv.id_specialist
+                    FROM services srv
+                    WHERE srv.id_work_place = ?
+                    AND srv.name_of_service = ?
+                    AND srv.price_of_service = ?
+                    AND (srv.deleted IS NULL OR srv.deleted = 0 OR srv.deleted != 1)
+                    AND (srv.suspended IS NULL OR srv.suspended = 0 OR srv.suspended != 1)
+                )
+                AND s.unic_id IN (
+                    SELECT DISTINCT wp.specialist_id
+                    FROM working_program wp
+                    WHERE wp.working_place_id = ?
+                )
+            ");
+            $stmt->execute([
+                $workingPoint['unic_id'],
+                $refService['name_of_service'],
+                $refService['price_of_service'],
+                $workingPoint['unic_id']
+            ]);
+            $specialists = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            // Reference service not found, return empty
+            $specialists = [];
+        }
     } else {
+        $matchServiceByNamePrice = false;
+        // All specialists without service filter
         $stmt = $pdo->prepare("
             SELECT DISTINCT s.*, ssa.specialist_nr_visible_to_client, ssa.specialist_email_visible_to_client
             FROM specialists s
             LEFT JOIN specialists_setting_and_attr ssa ON s.unic_id = ssa.specialist_id
             WHERE s.unic_id IN (
-                SELECT DISTINCT wp.specialist_id 
-                FROM working_program wp 
+                SELECT DISTINCT wp.specialist_id
+                FROM working_program wp
                 WHERE wp.working_place_id = ?
             )
         ");
         $stmt->execute([$workingPoint['unic_id']]);
+        $specialists = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    $specialists = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     foreach ($specialists as $specialist) {
         $specialistData = [
@@ -339,20 +419,33 @@ try {
         ];
         
         // Get services for this specialist at this working point
-        if ($filter_service_id) {
+        if (isset($matchServiceByNamePrice) && $matchServiceByNamePrice) {
+            // Match services by name+price (specialist_id=all AND service_id provided)
             $serviceStmt = $pdo->prepare("
-                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat 
-                FROM services 
-                WHERE unic_id = ? AND id_specialist = ? AND id_work_place = ? 
+                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat
+                FROM services
+                WHERE id_specialist = ? AND id_work_place = ?
+                AND name_of_service = ? AND price_of_service = ?
+                AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
+                AND (suspended IS NULL OR suspended = 0 OR suspended != 1)
+            ");
+            $serviceStmt->execute([$specialist['unic_id'], $workingPoint['unic_id'], $matchServiceName, $matchServicePrice]);
+        } elseif ($filter_service_id) {
+            // Specific service_id requested
+            $serviceStmt = $pdo->prepare("
+                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat
+                FROM services
+                WHERE unic_id = ? AND id_specialist = ? AND id_work_place = ?
                 AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
                 AND (suspended IS NULL OR suspended = 0 OR suspended != 1)
             ");
             $serviceStmt->execute([$filter_service_id, $specialist['unic_id'], $workingPoint['unic_id']]);
         } else {
+            // All services for this specialist
             $serviceStmt = $pdo->prepare("
-                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat 
-                FROM services 
-                WHERE id_specialist = ? AND id_work_place = ? 
+                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat
+                FROM services
+                WHERE id_specialist = ? AND id_work_place = ?
                 AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
                 AND (suspended IS NULL OR suspended = 0 OR suspended != 1)
             ");
