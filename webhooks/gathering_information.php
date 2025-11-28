@@ -300,6 +300,7 @@ try {
         'working_point' => [
             'unic_id' => $workingPoint['unic_id'],
             'name_of_the_place' => $workingPoint['name_of_the_place'],
+            'description_of_the_place' => $workingPoint['description_of_the_place'] ?? 'unavailable',
             'address' => $workingPoint['address'],
             'landmark' => $workingPoint['landmark'] ?? 'unavailable',
             'directions' => $workingPoint['directions'] ?? 'unavailable',
