@@ -1031,11 +1031,10 @@ if ($supervisor_mode && $selected_specialist) {
                     <?php if ($supervisor_mode): ?>
                     | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
                     <?php endif; ?>
-                    | <button id="realtime-status-btn" class="btn btn-sm btn-success" onclick="toggleRealtimeUpdates()" style="padding: 2px 8px; font-size: 12px; margin: 0 5px;" title="Real-time updates status">
-                        <i class="status-icon fas fa-circle" style="font-size: 8px; margin-right: 4px;"></i>
-                        <span class="status-text">Connecting...</span>
-                    </button>
-                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a></small>
+                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
+                    | <span id="realtime-status-btn" onclick="toggleRealtimeUpdates()" style="cursor: pointer; display: inline-block; margin: 0 8px; vertical-align: middle;" title="Real-time booking updates via SSE (Server-Sent Events) - Connecting...">
+                        <i class="status-icon fas fa-circle" style="font-size: 14px; color: #ffc107; transition: color 0.3s ease;"></i>
+                    </span></small>
                 </div>
             </div>
         </div>
@@ -3148,35 +3147,33 @@ if ($supervisor_mode && $selected_specialist) {
         function updateRealtimeStatus(status, message, mode) {
             const statusBtn = document.getElementById('realtime-status-btn');
             if (!statusBtn) return;
-            
+
             const statusIcon = statusBtn.querySelector('.status-icon');
-            const statusText = statusBtn.querySelector('.status-text');
-            
+
+            // Detailed tooltip descriptions
+            let tooltip = '';
+
             // Update icon and color based on status
             switch(status) {
                 case 'connected':
-                    statusIcon.className = 'status-icon fas fa-circle';
-                    statusIcon.style.color = '#28a745';
-                    statusBtn.classList.remove('btn-warning', 'btn-danger');
-                    statusBtn.classList.add('btn-success');
+                    statusIcon.style.color = '#28a745'; // Green
+                    tooltip = `Real-time booking updates: ACTIVE\nMode: ${message}\nClick to disable automatic updates`;
                     break;
                 case 'reconnecting':
-                    statusIcon.className = 'status-icon fas fa-circle';
-                    statusIcon.style.color = '#ffc107';
-                    statusBtn.classList.remove('btn-success', 'btn-danger');
-                    statusBtn.classList.add('btn-warning');
+                    statusIcon.style.color = '#ffc107'; // Yellow/Orange
+                    tooltip = `Real-time booking updates: RECONNECTING\nStatus: ${message}\nClick to disable`;
                     break;
                 case 'error':
+                    statusIcon.style.color = '#dc3545'; // Red
+                    tooltip = `Real-time booking updates: ERROR\nStatus: ${message}\nClick to retry`;
+                    break;
                 case 'stopped':
-                    statusIcon.className = 'status-icon fas fa-circle';
-                    statusIcon.style.color = '#dc3545';
-                    statusBtn.classList.remove('btn-success', 'btn-warning');
-                    statusBtn.classList.add('btn-danger');
+                    statusIcon.style.color = '#dc3545'; // Red
+                    tooltip = `Real-time booking updates: DISABLED\nClick to enable automatic updates`;
                     break;
             }
-            
-            statusText.textContent = message;
-            statusBtn.title = `Real-time updates: ${message}`;
+
+            statusBtn.title = tooltip;
         }
         
         function toggleRealtimeUpdates() {

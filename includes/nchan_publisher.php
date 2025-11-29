@@ -5,8 +5,8 @@
  */
 
 class NchanPublisher {
-    // Use internal HTTP server to avoid HTTPS/HTTP2 timeout issues
-    private $publishUrl = 'http://127.0.0.1:8083/internal/publish/booking';
+    // Use internal HTTP server on localhost to avoid HTTPS/HTTP2 timeout issues
+    private $publishUrl = 'http://127.0.0.1/internal/publish/booking';
     
     /**
      * Publish booking event to nchan channels

@@ -291,10 +291,10 @@ try {
             'requested_end' => $booking_end_datetime,
             'timestamp' => date('Y-m-d H:i:s')
         ];
-
+        
         http_response_code(409);
         echo json_encode($errorResponse);
-
+        
         // Log the conflict
         $logger->logError(
             "Booking time conflict for specialist {$id_specialist}",
@@ -314,169 +314,7 @@ try {
         );
         exit();
     }
-
-    // Check for specialist time off
-    $booking_date = date('Y-m-d', strtotime($booking_start_datetime));
-    $booking_start_time = date('H:i:s', strtotime($booking_start_datetime));
-    $booking_end_time = date('H:i:s', strtotime($booking_end_datetime));
-
-    $stmt = $pdo->prepare("
-        SELECT start_time, end_time
-        FROM specialist_time_off
-        WHERE specialist_id = ? AND date_off = ?
-    ");
-    $stmt->execute([$id_specialist, $booking_date]);
-    $time_off = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($time_off) {
-        // If full day off (no start_time or end_time)
-        if (!$time_off['start_time'] || !$time_off['end_time']) {
-            $errorResponse = [
-                'error' => 'The Schedule has just changed and the asked period is not available, please check availability again for a new slot recommendation',
-                'status' => 'error',
-                'reason' => 'Specialist has full day off',
-                'requested_date' => $booking_date,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-
-            http_response_code(409);
-            echo json_encode($errorResponse);
-
-            $logger->logError(
-                "Booking conflicts with specialist time off (full day)",
-                null,
-                409,
-                [
-                    'specialist_id' => $id_specialist,
-                    'working_point_id' => $id_work_place,
-                    'additional_data' => [
-                        'requested_start' => $booking_start_datetime,
-                        'requested_end' => $booking_end_datetime,
-                        'time_off_date' => $booking_date
-                    ]
-                ]
-            );
-            exit();
-        }
-
-        // Check if booking overlaps with partial time off
-        if (($booking_start_time < $time_off['end_time'] && $booking_end_time > $time_off['start_time'])) {
-            $errorResponse = [
-                'error' => 'The Schedule has just changed and the asked period is not available, please check availability again for a new slot recommendation',
-                'status' => 'error',
-                'reason' => 'Booking conflicts with specialist time off',
-                'time_off_period' => $time_off['start_time'] . ' - ' . $time_off['end_time'],
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-
-            http_response_code(409);
-            echo json_encode($errorResponse);
-
-            $logger->logError(
-                "Booking conflicts with specialist time off period",
-                null,
-                409,
-                [
-                    'specialist_id' => $id_specialist,
-                    'working_point_id' => $id_work_place,
-                    'additional_data' => [
-                        'requested_start' => $booking_start_datetime,
-                        'requested_end' => $booking_end_datetime,
-                        'time_off_start' => $time_off['start_time'],
-                        'time_off_end' => $time_off['end_time']
-                    ]
-                ]
-            );
-            exit();
-        }
-    }
-
-    // Check if booking falls within working hours
-    $day_of_week = date('l', strtotime($booking_date));
-
-    $stmt = $pdo->prepare("
-        SELECT shift1_start, shift1_end, shift2_start, shift2_end, shift3_start, shift3_end
-        FROM working_program
-        WHERE specialist_id = ? AND working_place_id = ? AND day_of_week = ?
-    ");
-    $stmt->execute([$id_specialist, $id_work_place, $day_of_week]);
-    $working_schedule = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$working_schedule) {
-        $errorResponse = [
-            'error' => 'The Schedule has just changed and the asked period is not available, please check availability again for a new slot recommendation',
-            'status' => 'error',
-            'reason' => 'No working schedule found for this day',
-            'day_of_week' => $day_of_week,
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
-
-        http_response_code(409);
-        echo json_encode($errorResponse);
-
-        $logger->logError(
-            "No working schedule found for specialist on {$day_of_week}",
-            null,
-            409,
-            [
-                'specialist_id' => $id_specialist,
-                'working_point_id' => $id_work_place,
-                'additional_data' => [
-                    'requested_start' => $booking_start_datetime,
-                    'requested_end' => $booking_end_datetime,
-                    'day_of_week' => $day_of_week
-                ]
-            ]
-        );
-        exit();
-    }
-
-    // Check if booking falls within any shift
-    $shifts = [
-        ['start' => $working_schedule['shift1_start'], 'end' => $working_schedule['shift1_end']],
-        ['start' => $working_schedule['shift2_start'], 'end' => $working_schedule['shift2_end']],
-        ['start' => $working_schedule['shift3_start'], 'end' => $working_schedule['shift3_end']]
-    ];
-
-    $falls_within_shift = false;
-    foreach ($shifts as $shift) {
-        if ($shift['start'] && $shift['end'] && $shift['start'] !== '00:00:00' && $shift['end'] !== '00:00:00') {
-            if ($booking_start_time >= $shift['start'] && $booking_end_time <= $shift['end']) {
-                $falls_within_shift = true;
-                break;
-            }
-        }
-    }
-
-    if (!$falls_within_shift) {
-        $errorResponse = [
-            'error' => 'The Schedule has just changed and the asked period is not available, please check availability again for a new slot recommendation',
-            'status' => 'error',
-            'reason' => 'Booking time is outside working hours',
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
-
-        http_response_code(409);
-        echo json_encode($errorResponse);
-
-        $logger->logError(
-            "Booking time is outside specialist working hours",
-            null,
-            409,
-            [
-                'specialist_id' => $id_specialist,
-                'working_point_id' => $id_work_place,
-                'additional_data' => [
-                    'requested_start' => $booking_start_datetime,
-                    'requested_end' => $booking_end_datetime,
-                    'day_of_week' => $day_of_week,
-                    'working_shifts' => $shifts
-                ]
-            ]
-        );
-        exit();
-    }
-
+    
     // Clean phone number - keep the + symbol for international numbers
     $clean_phone = preg_replace('/[^0-9+]/', '', $client_phone_nr);
     
