@@ -218,39 +218,58 @@ function editService($pdo) {
             return;
         }
         
-        // Check if the service exists
-        $stmt = $pdo->prepare("SELECT id_specialist, id_work_place FROM services WHERE unic_id = ?");
+        // Check if the service exists and get current name
+        $stmt = $pdo->prepare("SELECT id_specialist, id_work_place, name_of_service FROM services WHERE unic_id = ?");
         $stmt->execute([$service_id]);
         $existing_service = $stmt->fetch();
-        
+
         if (!$existing_service) {
             echo json_encode(['success' => false, 'message' => 'Service not found']);
             return;
         }
-        
+
         // Check if service name already exists for this specialist and workpoint (excluding current service)
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM services WHERE id_specialist = ? AND id_work_place = ? AND name_of_service = ? AND unic_id != ?");
         $stmt->execute([$existing_service['id_specialist'], $existing_service['id_work_place'], $service_name, $service_id]);
-        
+
         if ($stmt->fetchColumn() > 0) {
             echo json_encode(['success' => false, 'message' => 'Service name already exists for this specialist at this workpoint']);
             return;
         }
-        
-        // Update the service
-        $stmt = $pdo->prepare("
-            UPDATE services 
-            SET name_of_service = ?, duration = ?, price_of_service = ?, procent_vat = ?
-            WHERE unic_id = ?
-        ");
-        
-        $result = $stmt->execute([
-            $service_name,
-            $duration,
-            $price,
-            $vat_percentage,
-            $service_id
-        ]);
+
+        // Check if name_of_service is being changed
+        $name_changed = ($existing_service['name_of_service'] !== $service_name);
+
+        // Update the service - clear name_of_service_in_english if name changed
+        if ($name_changed) {
+            $stmt = $pdo->prepare("
+                UPDATE services
+                SET name_of_service = ?, duration = ?, price_of_service = ?, procent_vat = ?, name_of_service_in_english = ''
+                WHERE unic_id = ?
+            ");
+
+            $result = $stmt->execute([
+                $service_name,
+                $duration,
+                $price,
+                $vat_percentage,
+                $service_id
+            ]);
+        } else {
+            $stmt = $pdo->prepare("
+                UPDATE services
+                SET name_of_service = ?, duration = ?, price_of_service = ?, procent_vat = ?
+                WHERE unic_id = ?
+            ");
+
+            $result = $stmt->execute([
+                $service_name,
+                $duration,
+                $price,
+                $vat_percentage,
+                $service_id
+            ]);
+        }
         
         if ($result) {
             echo json_encode(['success' => true, 'message' => 'Service updated successfully']);

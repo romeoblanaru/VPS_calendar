@@ -447,7 +447,7 @@ try {
         if (isset($matchServiceByNamePrice) && $matchServiceByNamePrice) {
             // Match services by name+price (specialist_id=all AND service_id provided)
             $serviceStmt = $pdo->prepare("
-                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat
+                SELECT unic_id, name_of_service, name_of_service_in_english, duration, price_of_service, procent_vat
                 FROM services
                 WHERE id_specialist = ? AND id_work_place = ?
                 AND name_of_service = ? AND price_of_service = ?
@@ -458,7 +458,7 @@ try {
         } elseif ($filter_service_id) {
             // Specific service_id requested
             $serviceStmt = $pdo->prepare("
-                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat
+                SELECT unic_id, name_of_service, name_of_service_in_english, duration, price_of_service, procent_vat
                 FROM services
                 WHERE unic_id = ? AND id_specialist = ? AND id_work_place = ?
                 AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
@@ -468,7 +468,7 @@ try {
         } else {
             // All services for this specialist
             $serviceStmt = $pdo->prepare("
-                SELECT unic_id, name_of_service, duration, price_of_service, procent_vat
+                SELECT unic_id, name_of_service, name_of_service_in_english, duration, price_of_service, procent_vat
                 FROM services
                 WHERE id_specialist = ? AND id_work_place = ?
                 AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
@@ -477,11 +477,12 @@ try {
             $serviceStmt->execute([$specialist['unic_id'], $workingPoint['unic_id']]);
         }
         $services = $serviceStmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         foreach ($services as $service) {
             $specialistData['services'][] = [
                 'unic_id' => $service['unic_id'],
                 'name_of_service' => $service['name_of_service'],
+                'name_of_service_in_english' => $service['name_of_service_in_english'] ?? 'unavailable',
                 'duration' => $service['duration'],
                 'price_of_service' => $service['price_of_service'],
                 'procent_vat' => $service['procent_vat'] ?? 0
@@ -524,15 +525,16 @@ try {
         
         // Calculate available slots only if a valid date range was provided
         if ($rangeIsValid) {
-            // Get current time in working point timezone
+            // Get current time in working point timezone and add 1 hour 55 minutes buffer
             $currentTime = getCurrentTimeInWorkingPointTimezoneOnly($workingPoint, 'Y-m-d H:i:s');
             $currentDateTime = new DateTime($currentTime, new DateTimeZone($timezone));
+            $currentDateTime->modify('+1 hour 55 minutes'); // Add lead time for client to reach business
 
             $specialistAvailableSlots = [];
             foreach ($datesRange as $date) {
                 $slots = getAvailableSlots($pdo, $specialist['unic_id'], $workingPoint['unic_id'], $date);
                 if (!empty($slots)) {
-                    // Filter out past slots
+                    // Filter out slots that are too soon (less than current time + 1h 55min)
                     $futureSlots = [];
                     foreach ($slots as $slot) {
                         $slotDateTime = new DateTime($date . ' ' . $slot['start'], new DateTimeZone($timezone));

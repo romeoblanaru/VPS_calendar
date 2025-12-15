@@ -330,10 +330,14 @@ function calculateSupervisorBookingPositions($day_bookings, $time_slots) {
     background: white;
     overflow: visible;
     border: 1px solid #e9ecef;
-    cursor: pointer;
+    cursor: default;
     transition: background-color 0.2s ease;
     border-right: 1px solid #e9ecef;
     border-bottom: 1px solid #e9ecef;
+}
+
+.specialist-cell:not(.non-working):not(.day-off):not(.past) {
+    cursor: pointer;
 }
 
 .specialist-cell:last-child {
@@ -351,7 +355,7 @@ function calculateSupervisorBookingPositions($day_bookings, $time_slots) {
     border-bottom: none;
 }
 
-.specialist-cell:hover {
+.specialist-cell:not(.non-working):not(.day-off):not(.past):hover {
     background-color: rgba(102, 126, 234, 0.1);
 }
 
