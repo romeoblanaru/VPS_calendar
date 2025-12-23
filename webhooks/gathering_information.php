@@ -364,9 +364,10 @@ try {
         $stmt->execute([$filter_specialist_id, $workingPoint['unic_id']]);
         $specialists = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } elseif (!$filter_specialist_id && $filter_service_id) {
-        // specialist_id=all AND service_id provided: fetch reference service name+price, then match all specialists
+        // specialist_id=all AND service_id provided: fetch reference service with normalized names+price, then match all specialists
         $refServiceStmt = $pdo->prepare("
-            SELECT name_of_service, price_of_service
+            SELECT name_of_service, price_of_service,
+                   name_normalized, name_english_normalized
             FROM services
             WHERE unic_id = ? AND id_work_place = ?
             AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
@@ -379,10 +380,15 @@ try {
         if ($refService) {
             // Store reference service for later use in service fetching
             $matchServiceByNamePrice = true;
-            $matchServiceName = $refService['name_of_service'];
+            $matchServiceNameNormalized = $refService['name_normalized'];
+            $matchServiceNameEnglishNormalized = $refService['name_english_normalized'];
             $matchServicePrice = $refService['price_of_service'];
 
-            // Find all specialists who have a service with exact name+price match
+            // Price matching: Round to nearest integer (€50.20 → €50, €50.80 → €51)
+            $matchServicePriceRounded = round(floatval($matchServicePrice), 0);
+
+            // Find all specialists who have a service with normalized name+price match
+            // Match either by normalized local name OR normalized English name
             $stmt = $pdo->prepare("
                 SELECT DISTINCT s.*, ssa.specialist_nr_visible_to_client, ssa.specialist_email_visible_to_client
                 FROM specialists s
@@ -391,8 +397,11 @@ try {
                     SELECT DISTINCT srv.id_specialist
                     FROM services srv
                     WHERE srv.id_work_place = ?
-                    AND srv.name_of_service = ?
-                    AND srv.price_of_service = ?
+                    AND (
+                        srv.name_normalized = ?
+                        OR (srv.name_english_normalized IS NOT NULL AND srv.name_english_normalized = ?)
+                    )
+                    AND ROUND(srv.price_of_service, 0) = ?
                     AND (srv.deleted IS NULL OR srv.deleted = 0 OR srv.deleted != 1)
                     AND (srv.suspended IS NULL OR srv.suspended = 0 OR srv.suspended != 1)
                 )
@@ -404,8 +413,9 @@ try {
             ");
             $stmt->execute([
                 $workingPoint['unic_id'],
-                $refService['name_of_service'],
-                $refService['price_of_service'],
+                $matchServiceNameNormalized,
+                $matchServiceNameEnglishNormalized,
+                $matchServicePriceRounded,
                 $workingPoint['unic_id']
             ]);
             $specialists = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -445,16 +455,27 @@ try {
         
         // Get services for this specialist at this working point
         if (isset($matchServiceByNamePrice) && $matchServiceByNamePrice) {
-            // Match services by name+price (specialist_id=all AND service_id provided)
+            // Match services by normalized name+price (specialist_id=all AND service_id provided)
+            // Uses normalized matching with English fallback and rounded price matching
             $serviceStmt = $pdo->prepare("
                 SELECT unic_id, name_of_service, name_of_service_in_english, duration, price_of_service, procent_vat
                 FROM services
                 WHERE id_specialist = ? AND id_work_place = ?
-                AND name_of_service = ? AND price_of_service = ?
+                AND (
+                    name_normalized = ?
+                    OR (name_english_normalized IS NOT NULL AND name_english_normalized = ?)
+                )
+                AND ROUND(price_of_service, 0) = ?
                 AND (deleted IS NULL OR deleted = 0 OR deleted != 1)
                 AND (suspended IS NULL OR suspended = 0 OR suspended != 1)
             ");
-            $serviceStmt->execute([$specialist['unic_id'], $workingPoint['unic_id'], $matchServiceName, $matchServicePrice]);
+            $serviceStmt->execute([
+                $specialist['unic_id'],
+                $workingPoint['unic_id'],
+                $matchServiceNameNormalized,
+                $matchServiceNameEnglishNormalized,
+                $matchServicePriceRounded
+            ]);
         } elseif ($filter_service_id) {
             // Specific service_id requested
             $serviceStmt = $pdo->prepare("
