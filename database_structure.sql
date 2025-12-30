@@ -1,3 +1,8 @@
+[sudo] password for rom: -- MySQL dump 10.13  Distrib 8.0.43, for Linux (x86_64)
+--
+-- Host: localhost    Database: nuuitasi_calendar4
+-- ------------------------------------------------------
+-- Server version	8.0.43-0ubuntu0.22.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -9,6 +14,11 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `booking`
+--
+
 DROP TABLE IF EXISTS `booking`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -28,7 +38,7 @@ CREATE TABLE `booking` (
   `client_transcript_conversation` mediumtext COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`unic_id`),
   KEY `idx_google_event_id` (`google_event_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=320 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=362 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -460,6 +470,11 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `booking_canceled`
+--
+
 DROP TABLE IF EXISTS `booking_canceled`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -492,7 +507,7 @@ CREATE TABLE `booking_canceled` (
   KEY `idx_made_by` (`made_by`),
   KEY `idx_received_through` (`received_through`),
   KEY `idx_booking_canceled_google_event_id` (`google_event_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Backup table for cancelled bookings with cancellation tracking';
+) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Backup table for cancelled bookings with cancellation tracking';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -569,6 +584,11 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `booking_changes`
+--
+
 DROP TABLE IF EXISTS `booking_changes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -585,8 +605,13 @@ CREATE TABLE `booking_changes` (
   KEY `idx_workpoint_timestamp` (`workpoint_id`,`change_timestamp`),
   KEY `idx_booking_date` (`booking_date`),
   KEY `idx_change_timestamp` (`change_timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `booking_event_queue`
+--
+
 DROP TABLE IF EXISTS `booking_event_queue`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -600,8 +625,13 @@ CREATE TABLE `booking_event_queue` (
   `processed` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_processed` (`processed`,`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=321 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=365 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `booking_sms_queue`
+--
+
 DROP TABLE IF EXISTS `booking_sms_queue`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -619,8 +649,13 @@ CREATE TABLE `booking_sms_queue` (
   PRIMARY KEY (`id`),
   KEY `idx_status` (`status`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=206 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=250 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `client_last_check`
+--
+
 DROP TABLE IF EXISTS `client_last_check`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -635,6 +670,11 @@ CREATE TABLE `client_last_check` (
   KEY `idx_workpoint_check` (`workpoint_id`,`last_check_timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `conversation_memory`
+--
+
 DROP TABLE IF EXISTS `conversation_memory`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -657,8 +697,13 @@ CREATE TABLE `conversation_memory` (
   KEY `idx_workplace` (`worplace_id`),
   KEY `idx_finalized_action` (`finalized_action`),
   KEY `idx_source` (`source`)
-) ENGINE=InnoDB AUTO_INCREMENT=219 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores conversation memory with client details and workplace information';
+) ENGINE=InnoDB AUTO_INCREMENT=340 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores conversation memory with client details and workplace information';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `gcal_worker_signals`
+--
+
 DROP TABLE IF EXISTS `gcal_worker_signals`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -674,8 +719,13 @@ CREATE TABLE `gcal_worker_signals` (
   KEY `idx_processed_created` (`processed`,`created_at`),
   KEY `idx_specialist` (`specialist_id`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `google_calendar_credentials`
+--
+
 DROP TABLE IF EXISTS `google_calendar_credentials`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -699,6 +749,11 @@ CREATE TABLE `google_calendar_credentials` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `google_calendar_sync_queue`
+--
+
 DROP TABLE IF EXISTS `google_calendar_sync_queue`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -720,8 +775,13 @@ CREATE TABLE `google_calendar_sync_queue` (
   KEY `idx_queue_specialist` (`specialist_id`),
   KEY `idx_queue_booking` (`booking_id`),
   CONSTRAINT `google_calendar_sync_queue_chk_1` CHECK (json_valid(`payload`))
-) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ip_address`
+--
+
 DROP TABLE IF EXISTS `ip_address`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -738,6 +798,11 @@ CREATE TABLE `ip_address` (
   KEY `date_of_insertion` (`date_of_insertion`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores client VPN configurations with IP addresses and private keys';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `logs`
+--
+
 DROP TABLE IF EXISTS `logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -753,6 +818,11 @@ CREATE TABLE `logs` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `organisations`
+--
+
 DROP TABLE IF EXISTS `organisations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -774,6 +844,11 @@ CREATE TABLE `organisations` (
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `services`
+--
+
 DROP TABLE IF EXISTS `services`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -782,16 +857,64 @@ CREATE TABLE `services` (
   `id_specialist` int DEFAULT NULL,
   `id_work_place` int DEFAULT NULL,
   `id_organisation` int DEFAULT NULL,
-  `name_of_service` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name_of_service` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name_of_service_in_english` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `duration` int DEFAULT NULL,
   `price_of_service` decimal(10,2) DEFAULT NULL,
   `procent_vat` decimal(5,2) DEFAULT '0.00',
   `deleted` tinyint(1) DEFAULT NULL,
   `suspended` tinyint(1) DEFAULT NULL COMMENT 'NULL or 0 = not suspended, 1 = suspended',
+  `name_normalized` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name_english_normalized` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`unic_id`),
-  KEY `idx_suspended` (`suspended`)
-) ENGINE=InnoDB AUTO_INCREMENT=188 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `idx_suspended` (`suspended`),
+  KEY `idx_name_normalized` (`name_normalized`),
+  KEY `idx_name_english_normalized` (`name_english_normalized`),
+  KEY `idx_name_price_normalized` (`name_normalized`,`price_of_service`),
+  KEY `idx_name_english_price_normalized` (`name_english_normalized`,`price_of_service`)
+) ENGINE=InnoDB AUTO_INCREMENT=190 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `services_normalize_insert` BEFORE INSERT ON `services` FOR EACH ROW BEGIN
+    SET NEW.name_normalized = normalize_service_name(NEW.name_of_service);
+    SET NEW.name_english_normalized = normalize_service_name(NEW.name_of_service_in_english);
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `services_normalize_update` BEFORE UPDATE ON `services` FOR EACH ROW BEGIN
+    SET NEW.name_normalized = normalize_service_name(NEW.name_of_service);
+    SET NEW.name_english_normalized = normalize_service_name(NEW.name_of_service_in_english);
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `specialist_time_off`
+--
+
 DROP TABLE IF EXISTS `specialist_time_off`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -807,8 +930,13 @@ CREATE TABLE `specialist_time_off` (
   UNIQUE KEY `unique_specialist_date` (`specialist_id`,`date_off`),
   KEY `idx_specialist_id` (`specialist_id`),
   KEY `idx_date_off` (`date_off`)
-) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `specialists`
+--
+
 DROP TABLE IF EXISTS `specialists`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -826,6 +954,11 @@ CREATE TABLE `specialists` (
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `specialists_setting_and_attr`
+--
+
 DROP TABLE IF EXISTS `specialists_setting_and_attr`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -848,6 +981,11 @@ CREATE TABLE `specialists_setting_and_attr` (
   UNIQUE KEY `specialist_id` (`specialist_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Specialist settings and attributes for calendar display and email notifications';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `super_users`
+--
+
 DROP TABLE IF EXISTS `super_users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -862,6 +1000,11 @@ CREATE TABLE `super_users` (
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `voice_config`
+--
+
 DROP TABLE IF EXISTS `voice_config`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -888,6 +1031,11 @@ CREATE TABLE `voice_config` (
   KEY `idx_workpoint_active` (`workpoint_id`,`is_active`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `webhook_logs`
+--
+
 DROP TABLE IF EXISTS `webhook_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -926,14 +1074,20 @@ CREATE TABLE `webhook_logs` (
   KEY `idx_related_working_point_id` (`related_working_point_id`),
   KEY `idx_webhook_logs_composite` (`webhook_name`,`created_at`,`is_successful`),
   KEY `idx_webhook_logs_date_range` (`created_at`,`is_successful`)
-) ENGINE=InnoDB AUTO_INCREMENT=29332 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs of all webhook calls to the system';
+) ENGINE=InnoDB AUTO_INCREMENT=37960 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs of all webhook calls to the system';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `working_points`
+--
+
 DROP TABLE IF EXISTS `working_points`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `working_points` (
   `unic_id` int NOT NULL AUTO_INCREMENT,
   `name_of_the_place` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description_of_the_place` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Description of the activity of the place Ex: Salon de cosmetica si infrumusetare" or "Restaurant de lux"',
   `address` mediumtext COLLATE utf8mb4_unicode_ci,
   `landmark` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `directions` text COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -948,11 +1102,17 @@ CREATE TABLE `working_points` (
   `organisation_id` int DEFAULT NULL,
   `country` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `language` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `curency` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EUR',
   `we_handling` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'specialis' COMMENT 'Describe what we handling (specialist, table, bay, etc)	',
   `specialist_relevance` enum('strong','medium','low','') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'medium' COMMENT 'strong/medium/low  tell to the Ai how  relevant is then name of the specialist in conversation (specialist_relevance=low when we handle bays or ramps)',
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `working_program`
+--
+
 DROP TABLE IF EXISTS `working_program`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -969,8 +1129,13 @@ CREATE TABLE `working_program` (
   `shift3_start` time DEFAULT NULL,
   `shift3_end` time DEFAULT NULL,
   PRIMARY KEY (`unic_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=832 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=848 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `workingpoint_settings_and_attr`
+--
+
 DROP TABLE IF EXISTS `workingpoint_settings_and_attr`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -989,6 +1154,11 @@ CREATE TABLE `workingpoint_settings_and_attr` (
   KEY `idx_setting_key` (`setting_key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `workpoint_social_media`
+--
+
 DROP TABLE IF EXISTS `workpoint_social_media`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -1017,6 +1187,259 @@ CREATE TABLE `workpoint_social_media` (
   KEY `idx_is_active` (`is_active`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WhatsApp and Facebook Messenger credentials for each workpoint';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping routines for database 'nuuitasi_calendar4'
+--
+/*!50003 DROP FUNCTION IF EXISTS `normalize_service_name` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `normalize_service_name`(input_text VARCHAR(255)) RETURNS varchar(255) CHARSET utf8mb4
+    NO SQL
+    DETERMINISTIC
+BEGIN
+    DECLARE normalized VARCHAR(255);
+
+    IF input_text IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SET normalized = input_text;
+
+    
+    SET normalized = REPLACE(normalized, ' ', '');
+    SET normalized = REPLACE(normalized, '.', '');
+    SET normalized = REPLACE(normalized, ',', '');
+    SET normalized = REPLACE(normalized, '-', '');
+    SET normalized = REPLACE(normalized, '–', '');
+    SET normalized = REPLACE(normalized, '—', '');
+    SET normalized = REPLACE(normalized, '_', '');
+    SET normalized = REPLACE(normalized, '/', '');
+    SET normalized = REPLACE(normalized, '\\', '');
+    SET normalized = REPLACE(normalized, '(', '');
+    SET normalized = REPLACE(normalized, ')', '');
+    SET normalized = REPLACE(normalized, '[', '');
+    SET normalized = REPLACE(normalized, ']', '');
+    SET normalized = REPLACE(normalized, '{', '');
+    SET normalized = REPLACE(normalized, '}', '');
+    SET normalized = REPLACE(normalized, ':', '');
+    SET normalized = REPLACE(normalized, ';', '');
+    SET normalized = REPLACE(normalized, '!', '');
+    SET normalized = REPLACE(normalized, '?', '');
+    SET normalized = REPLACE(normalized, '\'', '');
+    SET normalized = REPLACE(normalized, '"', '');
+    SET normalized = REPLACE(normalized, '`', '');
+    SET normalized = REPLACE(normalized, '´', '');
+    SET normalized = REPLACE(normalized, '*', '');
+    SET normalized = REPLACE(normalized, '&', '');
+    SET normalized = REPLACE(normalized, '+', '');
+    SET normalized = REPLACE(normalized, '=', '');
+    SET normalized = REPLACE(normalized, '|', '');
+    SET normalized = REPLACE(normalized, '@', '');
+    SET normalized = REPLACE(normalized, '#', '');
+    SET normalized = REPLACE(normalized, '$', '');
+    SET normalized = REPLACE(normalized, '%', '');
+    SET normalized = REPLACE(normalized, '^', '');
+    SET normalized = REPLACE(normalized, '~', '');
+    SET normalized = REPLACE(normalized, '<', '');
+    SET normalized = REPLACE(normalized, '>', '');
+
+    
+    SET normalized = REPLACE(normalized, 'À', 'A');
+    SET normalized = REPLACE(normalized, 'Á', 'A');
+    SET normalized = REPLACE(normalized, 'Â', 'A');
+    SET normalized = REPLACE(normalized, 'Ã', 'A');
+    SET normalized = REPLACE(normalized, 'Ä', 'A');
+    SET normalized = REPLACE(normalized, 'Å', 'A');
+    SET normalized = REPLACE(normalized, 'Ā', 'A');
+    SET normalized = REPLACE(normalized, 'Ă', 'A');
+    SET normalized = REPLACE(normalized, 'Ą', 'A');
+
+    SET normalized = REPLACE(normalized, 'È', 'E');
+    SET normalized = REPLACE(normalized, 'É', 'E');
+    SET normalized = REPLACE(normalized, 'Ê', 'E');
+    SET normalized = REPLACE(normalized, 'Ë', 'E');
+    SET normalized = REPLACE(normalized, 'Ē', 'E');
+    SET normalized = REPLACE(normalized, 'Ė', 'E');
+    SET normalized = REPLACE(normalized, 'Ę', 'E');
+    SET normalized = REPLACE(normalized, 'Ě', 'E');
+
+    SET normalized = REPLACE(normalized, 'Ì', 'I');
+    SET normalized = REPLACE(normalized, 'Í', 'I');
+    SET normalized = REPLACE(normalized, 'Î', 'I');
+    SET normalized = REPLACE(normalized, 'Ï', 'I');
+    SET normalized = REPLACE(normalized, 'Ī', 'I');
+    SET normalized = REPLACE(normalized, 'Į', 'I');
+
+    SET normalized = REPLACE(normalized, 'Ò', 'O');
+    SET normalized = REPLACE(normalized, 'Ó', 'O');
+    SET normalized = REPLACE(normalized, 'Ô', 'O');
+    SET normalized = REPLACE(normalized, 'Õ', 'O');
+    SET normalized = REPLACE(normalized, 'Ö', 'O');
+    SET normalized = REPLACE(normalized, 'Ø', 'O');
+    SET normalized = REPLACE(normalized, 'Ō', 'O');
+    SET normalized = REPLACE(normalized, 'Ő', 'O');
+
+    SET normalized = REPLACE(normalized, 'Ù', 'U');
+    SET normalized = REPLACE(normalized, 'Ú', 'U');
+    SET normalized = REPLACE(normalized, 'Û', 'U');
+    SET normalized = REPLACE(normalized, 'Ü', 'U');
+    SET normalized = REPLACE(normalized, 'Ū', 'U');
+    SET normalized = REPLACE(normalized, 'Ų', 'U');
+    SET normalized = REPLACE(normalized, 'Ű', 'U');
+
+    SET normalized = REPLACE(normalized, 'Ý', 'Y');
+    SET normalized = REPLACE(normalized, 'Ÿ', 'Y');
+
+    SET normalized = REPLACE(normalized, 'Ć', 'C');
+    SET normalized = REPLACE(normalized, 'Č', 'C');
+    SET normalized = REPLACE(normalized, 'Ç', 'C');
+
+    SET normalized = REPLACE(normalized, 'Ď', 'D');
+    SET normalized = REPLACE(normalized, 'Đ', 'D');
+    SET normalized = REPLACE(normalized, 'Ð', 'D');
+
+    SET normalized = REPLACE(normalized, 'Ģ', 'G');
+    SET normalized = REPLACE(normalized, 'Ğ', 'G');
+
+    SET normalized = REPLACE(normalized, 'Ķ', 'K');
+
+    SET normalized = REPLACE(normalized, 'Ł', 'L');
+    SET normalized = REPLACE(normalized, 'Ļ', 'L');
+
+    SET normalized = REPLACE(normalized, 'Ń', 'N');
+    SET normalized = REPLACE(normalized, 'Ň', 'N');
+    SET normalized = REPLACE(normalized, 'Ņ', 'N');
+    SET normalized = REPLACE(normalized, 'Ñ', 'N');
+
+    SET normalized = REPLACE(normalized, 'Ř', 'R');
+
+    SET normalized = REPLACE(normalized, 'Ś', 'S');
+    SET normalized = REPLACE(normalized, 'Š', 'S');
+    SET normalized = REPLACE(normalized, 'Ş', 'S');
+    SET normalized = REPLACE(normalized, 'Ș', 'S');
+    SET normalized = REPLACE(normalized, 'ẞ', 'SS');
+
+    SET normalized = REPLACE(normalized, 'Ť', 'T');
+    SET normalized = REPLACE(normalized, 'Ţ', 'T');
+    SET normalized = REPLACE(normalized, 'Ț', 'T');
+    SET normalized = REPLACE(normalized, 'Þ', 'TH');
+
+    SET normalized = REPLACE(normalized, 'Ź', 'Z');
+    SET normalized = REPLACE(normalized, 'Ż', 'Z');
+    SET normalized = REPLACE(normalized, 'Ž', 'Z');
+
+    SET normalized = REPLACE(normalized, 'Æ', 'AE');
+    SET normalized = REPLACE(normalized, 'Œ', 'OE');
+    SET normalized = REPLACE(normalized, 'ß', 'ss');
+
+    SET normalized = REPLACE(normalized, 'I', 'I');
+
+    
+    SET normalized = LOWER(normalized);
+
+    
+    SET normalized = REPLACE(normalized, 'à', 'a');
+    SET normalized = REPLACE(normalized, 'á', 'a');
+    SET normalized = REPLACE(normalized, 'â', 'a');
+    SET normalized = REPLACE(normalized, 'ã', 'a');
+    SET normalized = REPLACE(normalized, 'ä', 'a');
+    SET normalized = REPLACE(normalized, 'å', 'a');
+    SET normalized = REPLACE(normalized, 'ā', 'a');
+    SET normalized = REPLACE(normalized, 'ă', 'a');
+    SET normalized = REPLACE(normalized, 'ą', 'a');
+
+    SET normalized = REPLACE(normalized, 'è', 'e');
+    SET normalized = REPLACE(normalized, 'é', 'e');
+    SET normalized = REPLACE(normalized, 'ê', 'e');
+    SET normalized = REPLACE(normalized, 'ë', 'e');
+    SET normalized = REPLACE(normalized, 'ē', 'e');
+    SET normalized = REPLACE(normalized, 'ė', 'e');
+    SET normalized = REPLACE(normalized, 'ę', 'e');
+    SET normalized = REPLACE(normalized, 'ě', 'e');
+
+    SET normalized = REPLACE(normalized, 'ì', 'i');
+    SET normalized = REPLACE(normalized, 'í', 'i');
+    SET normalized = REPLACE(normalized, 'î', 'i');
+    SET normalized = REPLACE(normalized, 'ï', 'i');
+    SET normalized = REPLACE(normalized, 'ī', 'i');
+    SET normalized = REPLACE(normalized, 'į', 'i');
+    SET normalized = REPLACE(normalized, 'ı', 'i');
+
+    SET normalized = REPLACE(normalized, 'ò', 'o');
+    SET normalized = REPLACE(normalized, 'ó', 'o');
+    SET normalized = REPLACE(normalized, 'ô', 'o');
+    SET normalized = REPLACE(normalized, 'õ', 'o');
+    SET normalized = REPLACE(normalized, 'ö', 'o');
+    SET normalized = REPLACE(normalized, 'ø', 'o');
+    SET normalized = REPLACE(normalized, 'ō', 'o');
+    SET normalized = REPLACE(normalized, 'ő', 'o');
+
+    SET normalized = REPLACE(normalized, 'ù', 'u');
+    SET normalized = REPLACE(normalized, 'ú', 'u');
+    SET normalized = REPLACE(normalized, 'û', 'u');
+    SET normalized = REPLACE(normalized, 'ü', 'u');
+    SET normalized = REPLACE(normalized, 'ū', 'u');
+    SET normalized = REPLACE(normalized, 'ų', 'u');
+    SET normalized = REPLACE(normalized, 'ű', 'u');
+
+    SET normalized = REPLACE(normalized, 'ý', 'y');
+    SET normalized = REPLACE(normalized, 'ÿ', 'y');
+
+    SET normalized = REPLACE(normalized, 'ć', 'c');
+    SET normalized = REPLACE(normalized, 'č', 'c');
+    SET normalized = REPLACE(normalized, 'ç', 'c');
+
+    SET normalized = REPLACE(normalized, 'ď', 'd');
+    SET normalized = REPLACE(normalized, 'đ', 'd');
+    SET normalized = REPLACE(normalized, 'ð', 'd');
+
+    SET normalized = REPLACE(normalized, 'ģ', 'g');
+    SET normalized = REPLACE(normalized, 'ğ', 'g');
+
+    SET normalized = REPLACE(normalized, 'ķ', 'k');
+
+    SET normalized = REPLACE(normalized, 'ł', 'l');
+    SET normalized = REPLACE(normalized, 'ļ', 'l');
+
+    SET normalized = REPLACE(normalized, 'ń', 'n');
+    SET normalized = REPLACE(normalized, 'ň', 'n');
+    SET normalized = REPLACE(normalized, 'ņ', 'n');
+    SET normalized = REPLACE(normalized, 'ñ', 'n');
+
+    SET normalized = REPLACE(normalized, 'ř', 'r');
+
+    SET normalized = REPLACE(normalized, 'ś', 's');
+    SET normalized = REPLACE(normalized, 'š', 's');
+    SET normalized = REPLACE(normalized, 'ş', 's');
+    SET normalized = REPLACE(normalized, 'ș', 's');
+
+    SET normalized = REPLACE(normalized, 'ť', 't');
+    SET normalized = REPLACE(normalized, 'ţ', 't');
+    SET normalized = REPLACE(normalized, 'ț', 't');
+    SET normalized = REPLACE(normalized, 'þ', 'th');
+
+    SET normalized = REPLACE(normalized, 'ź', 'z');
+    SET normalized = REPLACE(normalized, 'ż', 'z');
+    SET normalized = REPLACE(normalized, 'ž', 'z');
+
+    SET normalized = REPLACE(normalized, 'æ', 'ae');
+    SET normalized = REPLACE(normalized, 'œ', 'oe');
+
+    RETURN normalized;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -1027,3 +1450,4 @@ CREATE TABLE `workpoint_social_media` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+-- Dump completed on 2025-12-29 15:51:17

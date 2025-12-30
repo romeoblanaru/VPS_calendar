@@ -311,6 +311,7 @@ try {
             'booking_phone_nr' => $workingPoint['booking_phone_nr'] ?? 'unavailable',
             'country' => $workingPoint['country'] ?? 'unavailable',
             'language' => $workingPoint['language'] ?? 'unavailable',
+            'currency' => $workingPoint['curency'] ?? 'EUR',
             'we_handle' => $workingPoint['we_handle'] ?? 'unavailable',
             'specialist_relevance' => $workingPoint['specialist_relevance'] ?? 'unavailable'
         ],
