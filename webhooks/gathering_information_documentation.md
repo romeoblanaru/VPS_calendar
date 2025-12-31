@@ -109,7 +109,10 @@ curl -X POST "http://yourdomain.com/webhooks/gathering_information.php" \
     "workplace_phone_nr": "44111222336",
     "email": "central@beautyco.com",
     "booking_phone_nr": "+123456789",
-    "language": "EN"
+    "booking_sms_number": "+123456789",
+    "country": "RO",
+    "language": "EN",
+    "currency": "EUR"
   },
   "specialists": [
     {
@@ -290,6 +293,8 @@ You can control the availability window by providing `start_date` and `end_date`
 ## Recent Changes
 
 **Updated Response Structure (Latest Version):**
+- ✅ Added `booking_sms_number` to the `working_point` section (December 2025)
+- ✅ Added `currency` to the `working_point` section (December 2025)
 - ✅ Added `booking_phone_nr` and `language` to the `working_point` section
 - ✅ Added `country`, `we_handle`, and `specialist_relevance` fields to the `working_point` section
 - ✅ Added `official_company_name`, `email_address`, and `country` to the `company_details` section
@@ -299,7 +304,8 @@ You can control the availability window by providing `start_date` and `end_date`
 **Database Query Updates:**
 - Enhanced the SELECT statement to include `o.oficial_company_name` and `o.email_address` from the organisations table
 - The `country` field was already being selected and is now included in the response
-- Added `country`, `language`, `we_handle`, and `specialist_relevance` fields from working_points table to the response payload
+- Added `country`, `language`, `currency`, `we_handle`, and `specialist_relevance` fields from working_points table to the response payload
+- Added `booking_sms_number` field from working_points table for SMS notifications configuration
 
 ## Response Fields Description
 
@@ -320,8 +326,10 @@ You can control the availability window by providing `start_date` and `end_date`
 - `workplace_phone_nr`: General workplace phone
 - `email`: Working point email address
 - `booking_phone_nr`: Phone number used for booking appointments
+- `booking_sms_number`: Phone number used for SMS notifications (may be the same as booking_phone_nr or a dedicated SMS service number)
 - `country`: Country code where the working point is located
 - `language`: Primary language used at this working point
+- `currency`: Currency code used for pricing (e.g., EUR, USD, RON, GBP)
 - `we_handle`: Information about what services/cases this working point handles
 - `specialist_relevance`: Relevance or importance level of specialists at this working point
 

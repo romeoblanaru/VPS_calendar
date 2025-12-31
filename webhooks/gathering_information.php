@@ -309,6 +309,7 @@ try {
             'workplace_phone_nr' => $workingPoint['workplace_phone_nr'],
             'email' => $workingPoint['email'],
             'booking_phone_nr' => $workingPoint['booking_phone_nr'] ?? 'unavailable',
+            'booking_sms_number' => $workingPoint['booking_sms_number'] ?? 'unavailable',
             'country' => $workingPoint['country'] ?? 'unavailable',
             'language' => $workingPoint['language'] ?? 'unavailable',
             'currency' => $workingPoint['curency'] ?? 'EUR',

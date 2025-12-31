@@ -38,7 +38,7 @@ CREATE TABLE `booking` (
   `client_transcript_conversation` mediumtext COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`unic_id`),
   KEY `idx_google_event_id` (`google_event_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=362 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=367 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -625,7 +625,7 @@ CREATE TABLE `booking_event_queue` (
   `processed` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_processed` (`processed`,`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=365 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=370 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -649,7 +649,7 @@ CREATE TABLE `booking_sms_queue` (
   PRIMARY KEY (`id`),
   KEY `idx_status` (`status`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=250 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=255 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -697,7 +697,7 @@ CREATE TABLE `conversation_memory` (
   KEY `idx_workplace` (`worplace_id`),
   KEY `idx_finalized_action` (`finalized_action`),
   KEY `idx_source` (`source`)
-) ENGINE=InnoDB AUTO_INCREMENT=340 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores conversation memory with client details and workplace information';
+) ENGINE=InnoDB AUTO_INCREMENT=349 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores conversation memory with client details and workplace information';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -719,7 +719,7 @@ CREATE TABLE `gcal_worker_signals` (
   KEY `idx_processed_created` (`processed`,`created_at`),
   KEY `idx_specialist` (`specialist_id`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -775,7 +775,7 @@ CREATE TABLE `google_calendar_sync_queue` (
   KEY `idx_queue_specialist` (`specialist_id`),
   KEY `idx_queue_booking` (`booking_id`),
   CONSTRAINT `google_calendar_sync_queue_chk_1` CHECK (json_valid(`payload`))
-) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1074,7 +1074,7 @@ CREATE TABLE `webhook_logs` (
   KEY `idx_related_working_point_id` (`related_working_point_id`),
   KEY `idx_webhook_logs_composite` (`webhook_name`,`created_at`,`is_successful`),
   KEY `idx_webhook_logs_date_range` (`created_at`,`is_successful`)
-) ENGINE=InnoDB AUTO_INCREMENT=37960 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs of all webhook calls to the system';
+) ENGINE=InnoDB AUTO_INCREMENT=38429 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs of all webhook calls to the system';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1093,10 +1093,11 @@ CREATE TABLE `working_points` (
   `directions` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `user` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `password` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `lead_person_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `lead_person_phone_nr` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `workplace_phone_nr` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `booking_phone_nr` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lead_person_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Workpoint SUPERVISOR full name\r\n(printed out to the clients for contact whne the bot conversation fails)',
+  `lead_person_phone_nr` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'the phone number of the Worpoint Supervisor ',
+  `workplace_phone_nr` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'OPTIONAL it could be a landline phone nr',
+  `booking_phone_nr` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'VERY IMPORTANT (it shall be unique) and is the number where the bot respond and is used as BUSSINESS IDENTIFYER',
+  `booking_sms_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'the phone number used for SMS, (it could be the same number as the booking_phone_nr , or our own sms server phone number , build \r\nfor the country)\r\n',
   `ip_address` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `organisation_id` int DEFAULT NULL,
@@ -1450,4 +1451,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-29 15:51:17
+-- Dump completed on 2025-12-31 13:22:02
