@@ -4369,6 +4369,7 @@ if ($supervisor_mode && $selected_specialist) {
         // Time Off Modal Functions
         let currentTimeOffYear = new Date().getFullYear();
         let selectedTimeOffDates = new Set();
+        let timeOffDetails = {}; // Stores { date: { type: 'full'|'partial', workStart: 'HH:MM', workEnd: 'HH:MM' } }
         let timeOffSpecialistId = null;
         let timeOffWorkpointId = null;
         
@@ -4653,6 +4654,8 @@ if ($supervisor_mode && $selected_specialist) {
             
             if (selectedTimeOffDates.has(dateStr)) {
                 selectedTimeOffDates.delete(dateStr);
+                delete timeOffDetails[dateStr];
+                autoSaveRemoveDayOff(dateStr);
                 if (isToday) {
                     element.style.background = '#007bff';
                     element.style.color = '#fff';
@@ -4664,6 +4667,8 @@ if ($supervisor_mode && $selected_specialist) {
                 }
             } else {
                 selectedTimeOffDates.add(dateStr);
+                timeOffDetails[dateStr] = { type: 'full' };
+                autoSaveAddFullDayOff(dateStr);
                 element.style.background = '#dc3545';
                 element.style.color = '#fff';
                 element.title = 'Day off';
@@ -4675,26 +4680,56 @@ if ($supervisor_mode && $selected_specialist) {
             const listDiv = document.getElementById('selectedDaysOffList');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
+
             // Filter only future dates
             const datesArray = Array.from(selectedTimeOffDates)
                 .filter(date => new Date(date + 'T12:00:00') >= today)
                 .sort();
-            
+
             if (datesArray.length === 0) {
                 listDiv.innerHTML = '<em style="color: #999;">No future days off selected</em>';
             } else {
                 listDiv.innerHTML = datesArray.map(date => {
                     const d = new Date(date + 'T12:00:00');
-                    return `<div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 4px 0; background: #fff; border: 1px solid #ddd; border-radius: 2px; white-space: nowrap;">
-                        <span style="font-size: 12px; color: #dc3545;">
-                            ${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        <span onclick="removeDayOff('${date}')" 
-                              style="color: #dc3545; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 2px; margin-left: 4px;"
-                              title="Remove">
-                            ×
-                        </span>
+                    const dayOffData = timeOffDetails[date] || { type: 'full' };
+                    const isPartial = dayOffData.type === 'partial';
+                    const dropdownId = `dropdown-${date}`;
+
+                    return `<div style="margin: 4px 0;">
+                        <div onclick="toggleDayOffDropdown('${date}')"
+                             style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #dc3545; color: white; border-radius: 3px; cursor: pointer; white-space: nowrap;">
+                            <span style="font-size: 12px; font-weight: 500;">
+                                ${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            <span onclick="event.stopPropagation(); removeDayOff('${date}')"
+                                  style="color: white; cursor: pointer; font-size: 18px; font-weight: bold; padding: 0 2px; margin-left: 4px;"
+                                  title="Remove">
+                                ×
+                            </span>
+                        </div>
+                        <div id="${dropdownId}" style="display: none; background: #f8f9fa; border: 1px solid #ddd; border-radius: 3px; padding: 8px; margin-top: 2px; font-size: 11px;">
+                            <div style="margin-bottom: 6px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 600;">Type:</label>
+                                <select onchange="updateDayOffType('${date}', this.value)" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 2px; font-size: 11px;">
+                                    <option value="full" ${!isPartial ? 'selected' : ''}>Fully Off</option>
+                                    <option value="partial" ${isPartial ? 'selected' : ''}>Partially Off</option>
+                                </select>
+                            </div>
+                            <div id="partial-${date}" style="display: ${isPartial ? 'block' : 'none'};">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 600;">Working Hours:</label>
+                                <div style="display: flex; gap: 4px; align-items: center;">
+                                    <input type="time" id="start-${date}" value="${dayOffData.workStart || ''}"
+                                           onchange="updateWorkingHours('${date}')"
+                                           style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 2px; font-size: 11px;"
+                                           placeholder="From">
+                                    <span>to</span>
+                                    <input type="time" id="end-${date}" value="${dayOffData.workEnd || ''}"
+                                           onchange="updateWorkingHours('${date}')"
+                                           style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 2px; font-size: 11px;"
+                                           placeholder="Until">
+                                </div>
+                            </div>
+                        </div>
                     </div>`;
                 }).join('');
             }
@@ -4702,35 +4737,102 @@ if ($supervisor_mode && $selected_specialist) {
         
         function removeDayOff(dateStr) {
             selectedTimeOffDates.delete(dateStr);
+            delete timeOffDetails[dateStr];
             generateTimeOffCalendar();
             updateSelectedDaysList();
         }
-        
+
+        function toggleDayOffDropdown(date) {
+            const dropdown = document.getElementById(`dropdown-${date}`);
+            if (dropdown) {
+                const isVisible = dropdown.style.display !== 'none';
+                // Close all other dropdowns first
+                document.querySelectorAll('[id^="dropdown-"]').forEach(dd => {
+                    if (dd.id !== `dropdown-${date}`) {
+                        dd.style.display = 'none';
+                    }
+                });
+                dropdown.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+
+        function updateDayOffType(date, type) {
+            if (!timeOffDetails[date]) {
+                timeOffDetails[date] = {};
+            }
+            timeOffDetails[date].type = type;
+
+            // Show/hide partial fields
+            const partialDiv = document.getElementById(`partial-${date}`);
+            if (partialDiv) {
+                partialDiv.style.display = type === 'partial' ? 'block' : 'none';
+            }
+
+            // Auto-save the type change
+            if (type === 'full') {
+                timeOffDetails[date].workStart = null;
+                timeOffDetails[date].workEnd = null;
+                autoSaveConvertToFull(date);
+            } else if (type === 'partial') {
+                autoSaveConvertToPartial(date);
+            }
+        }
+
+        function updateWorkingHours(date) {
+            const startInput = document.getElementById(`start-${date}`);
+            const endInput = document.getElementById(`end-${date}`);
+
+            if (!timeOffDetails[date]) {
+                timeOffDetails[date] = { type: 'partial' };
+            }
+
+            const workStart = startInput ? startInput.value : null;
+            const workEnd = endInput ? endInput.value : null;
+
+            timeOffDetails[date].workStart = workStart;
+            timeOffDetails[date].workEnd = workEnd;
+
+            // Auto-save working hours if both are filled
+            if (workStart && workEnd) {
+                autoSaveUpdateWorkingHours(date, workStart, workEnd);
+            }
+        }
+
         function clearAllTimeOff() {
             if (confirm('Are you sure you want to clear all selected days off?')) {
                 selectedTimeOffDates.clear();
+                timeOffDetails = {};
                 generateTimeOffCalendar();
                 updateSelectedDaysList();
             }
         }
         
         function loadTimeOffDates() {
-            // Load existing time off dates from database
+            // Load existing time off dates and details from database
             const formData = new FormData();
-            formData.append('action', 'get_time_off');
+            formData.append('action', 'get_time_off_details');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('supervisor_mode', 'true');
-            
-            fetch('admin/specialist_time_off_ajax.php', {
+
+            fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.dates) {
+                if (data.success) {
                     selectedTimeOffDates.clear();
-                    data.dates.forEach(date => selectedTimeOffDates.add(date));
+                    timeOffDetails = {};
+
+                    if (data.dates) {
+                        data.dates.forEach(date => selectedTimeOffDates.add(date));
+                    }
+
+                    if (data.details) {
+                        timeOffDetails = data.details;
+                    }
+
                     generateTimeOffCalendar();
                     updateSelectedDaysList();
                 }
@@ -4745,6 +4847,7 @@ if ($supervisor_mode && $selected_specialist) {
             formData.append('action', 'save_time_off');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('dates', JSON.stringify(Array.from(selectedTimeOffDates)));
+            formData.append('details', JSON.stringify(timeOffDetails));
             formData.append('supervisor_mode', 'true');
             
             fetch('admin/specialist_time_off_ajax.php', {
@@ -4766,7 +4869,117 @@ if ($supervisor_mode && $selected_specialist) {
                 alert('An error occurred while saving days off.');
             });
         }
-        
+
+        // Auto-save functions
+        function autoSaveAddFullDayOff(date) {
+            const formData = new FormData();
+            formData.append('action', 'add_full_day');
+            formData.append('specialist_id', timeOffSpecialistId);
+            formData.append('date', date);
+            formData.append('supervisor_mode', 'true');
+
+            fetch('admin/specialist_time_off_auto_ajax.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Auto-save add failed:', data.message);
+                }
+            })
+            .catch(error => console.error('Auto-save error:', error));
+        }
+
+        function autoSaveRemoveDayOff(date) {
+            const formData = new FormData();
+            formData.append('action', 'remove_day');
+            formData.append('specialist_id', timeOffSpecialistId);
+            formData.append('date', date);
+            formData.append('supervisor_mode', 'true');
+
+            fetch('admin/specialist_time_off_auto_ajax.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Auto-save remove failed:', data.message);
+                }
+            })
+            .catch(error => console.error('Auto-save error:', error));
+        }
+
+        function autoSaveConvertToPartial(date) {
+            const formData = new FormData();
+            formData.append('action', 'convert_to_partial');
+            formData.append('specialist_id', timeOffSpecialistId);
+            formData.append('date', date);
+            formData.append('supervisor_mode', 'true');
+
+            fetch('admin/specialist_time_off_auto_ajax.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Auto-save convert to partial failed:', data.message);
+                }
+            })
+            .catch(error => console.error('Auto-save error:', error));
+        }
+
+        function autoSaveConvertToFull(date) {
+            const formData = new FormData();
+            formData.append('action', 'convert_to_full');
+            formData.append('specialist_id', timeOffSpecialistId);
+            formData.append('date', date);
+            formData.append('supervisor_mode', 'true');
+
+            fetch('admin/specialist_time_off_auto_ajax.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Auto-save convert to full failed:', data.message);
+                }
+            })
+            .catch(error => console.error('Auto-save error:', error));
+        }
+
+        function autoSaveUpdateWorkingHours(date, workStart, workEnd) {
+            const formData = new FormData();
+            formData.append('action', 'update_working_hours');
+            formData.append('specialist_id', timeOffSpecialistId);
+            formData.append('date', date);
+            formData.append('work_start', workStart);
+            formData.append('work_end', workEnd);
+            formData.append('supervisor_mode', 'true');
+
+            fetch('admin/specialist_time_off_auto_ajax.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Auto-save working hours failed:', data.message);
+                } else {
+                    console.log('Working hours saved:', data.message);
+                }
+            })
+            .catch(error => console.error('Auto-save error:', error));
+        }
+
                 function loadScheduleDataForModal(specialistId, workpointId) {
             const formData = new FormData();
             formData.append('action', 'get_schedule');
