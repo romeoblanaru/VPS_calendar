@@ -4239,7 +4239,98 @@ if ($supervisor_mode && $selected_specialist) {
             document.getElementById('modifyScheduleForm').reset();
             document.getElementById('modifyScheduleError').style.display = 'none';
         }
-        
+
+        function toggleShiftVisibility(shiftNumber, isVisible) {
+            const table = document.querySelector('#modifyScheduleModal .schedule-editor-table');
+            if (!table) return;
+
+            const display = isVisible ? '' : 'none';
+            const flexDisplay = isVisible ? 'flex' : 'none';
+
+            // Toggle Quick Options section shifts
+            if (shiftNumber === 1) {
+                const quickOptionsShift1 = document.getElementById('quickOptionsShift1');
+                if (quickOptionsShift1) quickOptionsShift1.style.display = flexDisplay;
+            } else if (shiftNumber === 2) {
+                const quickOptionsShift2 = document.getElementById('quickOptionsShift2');
+                if (quickOptionsShift2) quickOptionsShift2.style.display = flexDisplay;
+            } else if (shiftNumber === 3) {
+                const quickOptionsShift3 = document.getElementById('quickOptionsShift3');
+                if (quickOptionsShift3) quickOptionsShift3.style.display = flexDisplay;
+            }
+
+            // Toggle header columns
+            const headerRows = table.querySelectorAll('thead tr');
+            if (shiftNumber === 1) {
+                // First header row - Shift 1 title (columns 2-4)
+                if (headerRows[0]) {
+                    const shift1Header = headerRows[0].cells[1]; // "Shift 1" header
+                    if (shift1Header) shift1Header.style.display = display;
+                }
+                // Second header row - Start/End/checkbox columns (2-4)
+                if (headerRows[1]) {
+                    for (let i = 1; i <= 3; i++) {
+                        if (headerRows[1].cells[i]) headerRows[1].cells[i].style.display = display;
+                    }
+                }
+                // Separator column after shift 1
+                if (headerRows[0].cells[2]) headerRows[0].cells[2].style.display = display;
+                if (headerRows[1].cells[4]) headerRows[1].cells[4].style.display = display;
+            } else if (shiftNumber === 2) {
+                // First header row - Shift 2 title (columns 6-8)
+                if (headerRows[0]) {
+                    const shift2Header = headerRows[0].cells[3]; // "Shift 2" header
+                    if (shift2Header) shift2Header.style.display = display;
+                }
+                // Second header row - Start/End/checkbox columns (6-8)
+                if (headerRows[1]) {
+                    for (let i = 5; i <= 7; i++) {
+                        if (headerRows[1].cells[i]) headerRows[1].cells[i].style.display = display;
+                    }
+                }
+                // Separator column after shift 2
+                if (headerRows[0].cells[4]) headerRows[0].cells[4].style.display = display;
+                if (headerRows[1].cells[8]) headerRows[1].cells[8].style.display = display;
+            } else if (shiftNumber === 3) {
+                // First header row - Shift 3 title (columns 10-12)
+                if (headerRows[0]) {
+                    const shift3Header = headerRows[0].cells[5]; // "Shift 3" header
+                    if (shift3Header) shift3Header.style.display = display;
+                }
+                // Second header row - Start/End/checkbox columns (10-12)
+                if (headerRows[1]) {
+                    for (let i = 9; i <= 11; i++) {
+                        if (headerRows[1].cells[i]) headerRows[1].cells[i].style.display = display;
+                    }
+                }
+            }
+
+            // Toggle body columns for all days
+            const bodyRows = table.querySelectorAll('tbody tr');
+            bodyRows.forEach(row => {
+                if (shiftNumber === 1) {
+                    // Shift 1 columns (2-4: start, end, clear)
+                    for (let i = 1; i <= 3; i++) {
+                        if (row.cells[i]) row.cells[i].style.display = display;
+                    }
+                    // Separator column after shift 1
+                    if (row.cells[4]) row.cells[4].style.display = display;
+                } else if (shiftNumber === 2) {
+                    // Shift 2 columns (6-8: start, end, clear)
+                    for (let i = 5; i <= 7; i++) {
+                        if (row.cells[i]) row.cells[i].style.display = display;
+                    }
+                    // Separator column after shift 2
+                    if (row.cells[8]) row.cells[8].style.display = display;
+                } else if (shiftNumber === 3) {
+                    // Shift 3 columns (10-12: start, end, clear)
+                    for (let i = 9; i <= 11; i++) {
+                        if (row.cells[i]) row.cells[i].style.display = display;
+                    }
+                }
+            });
+        }
+
         function deleteScheduleFromModal() {
             const specialistName = document.getElementById('modifyScheduleTitle').textContent.match(/Schedule: (.+?) at/)?.[1] || 'this specialist';
             const workpointName = document.getElementById('modifyScheduleTitle').textContent.match(/at (.+)$/)?.[1] || 'this location';
@@ -5505,7 +5596,7 @@ if ($supervisor_mode && $selected_specialist) {
                         <h4 style="font-size: 14px; margin-bottom: 15px;">⚡ Quick Options</h4>
                         <div class="schedule-editor-table-container">
                             <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #e9ecef;">
-                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap;">
                                     <!-- Day Selector -->
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <label style="font-size: 12px; font-weight: 600; color: #333;">Day:</label>
@@ -5517,21 +5608,21 @@ if ($supervisor_mode && $selected_specialist) {
                                     </div>
                                     
                                     <!-- Shift 1 -->
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div id="quickOptionsShift1" style="display: flex; align-items: center; gap: 8px;">
                                         <label style="font-size: 12px; font-weight: 600; color: #333; min-width: 50px;">Shift 1:</label>
                                         <input type="time" id="modifyShift1Start" class="form-control shift1-start-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="Start">
                                         <input type="time" id="modifyShift1End" class="form-control shift1-end-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="End">
                                     </div>
-                                    
+
                                     <!-- Shift 2 -->
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div id="quickOptionsShift2" style="display: flex; align-items: center; gap: 8px;">
                                         <label style="font-size: 12px; font-weight: 600; color: #333; min-width: 50px;">Shift 2:</label>
                                         <input type="time" id="modifyShift2Start" class="form-control shift2-start-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="Start">
                                         <input type="time" id="modifyShift2End" class="form-control shift2-end-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="End">
                                     </div>
-                                    
+
                                     <!-- Shift 3 -->
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div id="quickOptionsShift3" style="display: flex; align-items: center; gap: 8px;">
                                         <label style="font-size: 12px; font-weight: 600; color: #333; min-width: 50px;">Shift 3:</label>
                                         <input type="time" id="modifyShift3Start" class="form-control shift3-start-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="Start">
                                         <input type="time" id="modifyShift3End" class="form-control shift3-end-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="End">
@@ -5546,7 +5637,23 @@ if ($supervisor_mode && $selected_specialist) {
                     
                     <!-- Individual Day Editor -->
                     <div class="individual-edit-section">
-                        <h4>📋 Individual Day Editor</h4>
+                        <h4 style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>📋 Individual Day Editor</span>
+                            <div style="font-size: 12px; font-weight: normal;">
+                                <label style="margin-right: 15px; cursor: pointer;">
+                                    <input type="checkbox" id="toggleShift1" checked onchange="toggleShiftVisibility(1, this.checked)" style="margin-right: 5px;">
+                                    Shift 1
+                                </label>
+                                <label style="margin-right: 15px; cursor: pointer;">
+                                    <input type="checkbox" id="toggleShift2" checked onchange="toggleShiftVisibility(2, this.checked)" style="margin-right: 5px;">
+                                    Shift 2
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" id="toggleShift3" checked onchange="toggleShiftVisibility(3, this.checked)" style="margin-right: 5px;">
+                                    Shift 3
+                                </label>
+                            </div>
+                        </h4>
                         <div class="schedule-editor-table-container">
                             <table class="schedule-editor-table">
                                 <thead>
