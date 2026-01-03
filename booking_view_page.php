@@ -5546,12 +5546,7 @@ if ($supervisor_mode && $selected_specialist) {
                     
                     <!-- Individual Day Editor -->
                     <div class="individual-edit-section">
-                        <h4 style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>📋 Individual Day Editor</span>
-                            <a href="#" onclick="openTimeOffModal(); return false;" style="font-size: 12px; color: #007bff; text-decoration: none; font-weight: normal;" title="Manage holidays and days off">
-                                <i class="fas fa-calendar-times"></i> Holidays and Days off
-                            </a>
-                        </h4>
+                        <h4>📋 Individual Day Editor</h4>
                         <div class="schedule-editor-table-container">
                             <table class="schedule-editor-table">
                                 <thead>
@@ -5584,10 +5579,14 @@ if ($supervisor_mode && $selected_specialist) {
                             </table>
                         </div>
                         <!-- All Buttons inside Individual Day Editor -->
-                        <div style="text-align: right; margin-top: 10px; padding-bottom: 10px;">
-                            <button type="button" class="btn-delete" onclick="deleteScheduleFromModal()" style="padding: 5px 12px !important; border-radius: 0 !important; font-size: 11px !important; margin-left: 5px;" title="Delete all schedules for this specialist at this location">
-                                <i class="fas fa-times" style="font-size: 10px;"></i> Delete
-                            </button>
+                        <div style="margin-top: 10px; padding-bottom: 10px; overflow: hidden;">
+                            <a href="#" onclick="openTimeOffModal(); return false;" style="float: left; font-size: 14px; color: #007bff; text-decoration: none; font-weight: 600; line-height: 27px;" title="Manage holidays and days off">
+                                <i class="fas fa-calendar-times"></i> Holidays and Days off
+                            </a>
+                            <div style="float: right;">
+                                <button type="button" class="btn-delete" onclick="deleteScheduleFromModal()" style="padding: 5px 12px !important; border-radius: 0 !important; font-size: 11px !important; margin-left: 5px;" title="Delete all schedules for this specialist at this location">
+                                    <i class="fas fa-times" style="font-size: 10px;"></i> Delete
+                                </button>
                             <button type="button" style="background: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-left: 5px;" 
                                     onmouseover="this.style.background='#5a6268';"
                                     onmouseout="this.style.background='#6c757d';"
@@ -5595,13 +5594,14 @@ if ($supervisor_mode && $selected_specialist) {
                                     title="Close without saving changes">
                                 <i class="fas fa-times" style="margin-right: 3px; font-size: 10px;"></i>Cancel
                             </button>
-                            <button type="button" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 5px 12px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2); transition: all 0.3s ease; margin-left: 5px;" 
+                            <button type="button" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 5px 12px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2); transition: all 0.3s ease; margin-left: 5px;"
                                     onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(0, 123, 255, 0.3)';"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0, 123, 255, 0.2)';"
                                     onclick="updateScheduleFromModal()"
                                     title="Save schedule changes">
                                 <i class="fas fa-save" style="margin-right: 3px; font-size: 10px;"></i>Update
                             </button>
+                            </div>
                         </div>
                     </div>
                     
