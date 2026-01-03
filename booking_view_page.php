@@ -1511,6 +1511,63 @@ if ($supervisor_mode && $selected_specialist) {
                                                             }
                                                             ?>
                                                         </div>
+                                                        <?php
+                                                        // Display Days Off for this specialist
+                                                        $stmt_time_off = $pdo->prepare("
+                                                            SELECT date_off, start_time, end_time
+                                                            FROM specialist_time_off
+                                                            WHERE specialist_id = ? AND date_off >= CURDATE()
+                                                            ORDER BY date_off, id
+                                                        ");
+                                                        $stmt_time_off->execute([$spec['unic_id']]);
+                                                        $time_off_records = $stmt_time_off->fetchAll(PDO::FETCH_ASSOC);
+
+                                                        if (!empty($time_off_records)) {
+                                                            // Group by date
+                                                            $time_off_by_date = [];
+                                                            foreach ($time_off_records as $record) {
+                                                                $date = $record['date_off'];
+                                                                if (!isset($time_off_by_date[$date])) {
+                                                                    $time_off_by_date[$date] = [];
+                                                                }
+                                                                $time_off_by_date[$date][] = $record;
+                                                            }
+
+                                                            echo '<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #dee2e6;">';
+
+                                                            foreach ($time_off_by_date as $date => $records) {
+                                                                $date_obj = new DateTime($date);
+                                                                $formatted_date = $date_obj->format('D, j M');
+
+                                                                // Determine if full day or partial
+                                                                if (count($records) === 1 &&
+                                                                    $records[0]['start_time'] === '00:01:00' &&
+                                                                    $records[0]['end_time'] === '23:59:00') {
+                                                                    // Full day off
+                                                                    echo '<div style="font-size: 0.75em; color: #999; margin-bottom: 3px;">';
+                                                                    echo '<span style="color: #dc3545;">⊗</span> ' . $formatted_date . '. <span style="font-style: italic;">Full Day OFF</span>';
+                                                                    echo '</div>';
+                                                                } else if (count($records) >= 2) {
+                                                                    // Partial day - calculate working hours
+                                                                    $record1 = $records[0];
+                                                                    $record2 = $records[1];
+
+                                                                    $workStartTime = strtotime("1970-01-01 " . $record1['end_time']) + 60;
+                                                                    $workStart = date('H:i', $workStartTime);
+
+                                                                    $workEndTime = strtotime("1970-01-01 " . $record2['start_time']) - 60;
+                                                                    $workEnd = date('H:i', $workEndTime);
+
+                                                                    echo '<div style="font-size: 0.75em; color: #999; margin-bottom: 3px;">';
+                                                                    echo '<span style="color: #f59e0b; font-size: 1.2em;">◐</span> ' . $formatted_date . '. <span style="font-style: italic;">Partial Day OFF</span><br>';
+                                                                    echo '<span style="font-size: 0.9em; color: #aaa; margin-left: 12px;">(working only: ' . substr($workStart, 0, 2) . '<sup>' . substr($workStart, 3, 2) . '</sup>-' . substr($workEnd, 0, 2) . '<sup>' . substr($workEnd, 3, 2) . '</sup>)</span>';
+                                                                    echo '</div>';
+                                                                }
+                                                            }
+
+                                                            echo '</div>';
+                                                        }
+                                                        ?>
                                                     </div>
                                                 </div>
                                             <?php 
@@ -1802,6 +1859,63 @@ if ($supervisor_mode && $selected_specialist) {
                                                             }
                                                             ?>
                                                             </div>
+                                                            <?php
+                                                            // Display Days Off for this specialist
+                                                            $stmt_time_off = $pdo->prepare("
+                                                                SELECT date_off, start_time, end_time
+                                                                FROM specialist_time_off
+                                                                WHERE specialist_id = ? AND date_off >= CURDATE()
+                                                                ORDER BY date_off, id
+                                                            ");
+                                                            $stmt_time_off->execute([$specialist_id]);
+                                                            $time_off_records = $stmt_time_off->fetchAll(PDO::FETCH_ASSOC);
+
+                                                            if (!empty($time_off_records)) {
+                                                                // Group by date
+                                                                $time_off_by_date = [];
+                                                                foreach ($time_off_records as $record) {
+                                                                    $date = $record['date_off'];
+                                                                    if (!isset($time_off_by_date[$date])) {
+                                                                        $time_off_by_date[$date] = [];
+                                                                    }
+                                                                    $time_off_by_date[$date][] = $record;
+                                                                }
+
+                                                                echo '<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #dee2e6;">';
+
+                                                                foreach ($time_off_by_date as $date => $records) {
+                                                                    $date_obj = new DateTime($date);
+                                                                    $formatted_date = $date_obj->format('D, j M');
+
+                                                                    // Determine if full day or partial
+                                                                    if (count($records) === 1 &&
+                                                                        $records[0]['start_time'] === '00:01:00' &&
+                                                                        $records[0]['end_time'] === '23:59:00') {
+                                                                        // Full day off
+                                                                        echo '<div style="font-size: 0.75em; color: #999; margin-bottom: 3px;">';
+                                                                        echo '<span style="color: #dc3545;">⊗</span> ' . $formatted_date . '. <span style="font-style: italic;">Full Day OFF</span>';
+                                                                        echo '</div>';
+                                                                    } else if (count($records) >= 2) {
+                                                                        // Partial day - calculate working hours
+                                                                        $record1 = $records[0];
+                                                                        $record2 = $records[1];
+
+                                                                        $workStartTime = strtotime("1970-01-01 " . $record1['end_time']) + 60;
+                                                                        $workStart = date('H:i', $workStartTime);
+
+                                                                        $workEndTime = strtotime("1970-01-01 " . $record2['start_time']) - 60;
+                                                                        $workEnd = date('H:i', $workEndTime);
+
+                                                                        echo '<div style="font-size: 0.75em; color: #999; margin-bottom: 3px;">';
+                                                                        echo '<span style="color: #f59e0b; font-size: 1.2em;">◐</span> ' . $formatted_date . '. <span style="font-style: italic;">Partial Day OFF</span><br>';
+                                                                        echo '<span style="font-size: 0.9em; color: #aaa; margin-left: 12px;">(working only: ' . substr($workStart, 0, 2) . '<sup>' . substr($workStart, 3, 2) . '</sup>-' . substr($workEnd, 0, 2) . '<sup>' . substr($workEnd, 3, 2) . '</sup>)</span>';
+                                                                        echo '</div>';
+                                                                    }
+                                                                }
+
+                                                                echo '</div>';
+                                                            }
+                                                            ?>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -4572,7 +4686,9 @@ if ($supervisor_mode && $selected_specialist) {
                         textColor = '#6c757d';
                         cursor = 'not-allowed';
                     } else if (selectedTimeOffDates.has(dateStr)) {
-                        bgColor = '#dc3545';
+                        // Check if partial or full day off
+                        const dayOffData = timeOffDetails[dateStr] || { type: 'full' };
+                        bgColor = dayOffData.type === 'partial' ? '#f59e0b' : '#dc3545';
                         textColor = '#fff';
                     } else if (isToday) {
                         bgColor = '#007bff';
@@ -4604,7 +4720,8 @@ if ($supervisor_mode && $selected_specialist) {
                     if (hasBookings) {
                         dayCell.title = `${bookingCount} booking${bookingCount > 1 ? 's' : ''} (bookings need to be canceled before selecting this day off)`;
                     } else if (selectedTimeOffDates.has(dateStr)) {
-                        dayCell.title = 'Day off';
+                        const dayOffData = timeOffDetails[dateStr] || { type: 'full' };
+                        dayCell.title = dayOffData.type === 'partial' ? 'Partial Day OFF' : 'Full Day OFF';
                     } else if (isToday) {
                         dayCell.title = 'Today';
                     } else {
@@ -4695,11 +4812,14 @@ if ($supervisor_mode && $selected_specialist) {
                     const isPartial = dayOffData.type === 'partial';
                     const dropdownId = `dropdown-${date}`;
 
+                    const buttonBgColor = isPartial ? '#f59e0b' : '#dc3545';
+                    const buttonIcon = isPartial ? '◐' : '⊗';
+
                     return `<div style="margin: 4px 0;">
                         <div onclick="toggleDayOffDropdown('${date}')"
-                             style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #dc3545; color: white; border-radius: 3px; cursor: pointer; white-space: nowrap;">
+                             style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: ${buttonBgColor}; color: white; border-radius: 3px; cursor: pointer; white-space: nowrap;">
                             <span style="font-size: 12px; font-weight: 500;">
-                                ${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                <span style="font-size: 1.1em; margin-right: 4px;">${buttonIcon}</span>${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                             <span onclick="event.stopPropagation(); removeDayOff('${date}')"
                                   style="color: white; cursor: pointer; font-size: 18px; font-weight: bold; padding: 0 2px; margin-left: 4px;"

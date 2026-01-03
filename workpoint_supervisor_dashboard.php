@@ -257,12 +257,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'workpoint_stats') {
                                 </div>
                             </div>
                         </div>
-                        <div>
+                        <div class="me-3">
                             <div class="card" style="width: 225px; height: 180px;">
                                 <div class="card-body d-flex flex-column">
                                     <h6 class="card-title"><i class="fas fa-comments"></i> Communication</h6>
                                     <p class="card-text flex-grow-1" style="font-size: 0.9rem;">Configure WhatsApp Business and Facebook Messenger connections.</p>
                                     <button class="btn btn-success btn-sm" onclick="openCommunicationSetupModal()">Setup Communication</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="card" style="width: 225px; height: 180px;">
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title"><i class="fas fa-calendar-times"></i> Workpoint Holidays</h6>
+                                    <p class="card-text flex-grow-1" style="font-size: 0.9rem;">Manage business closures and partial opening hours for holidays.</p>
+                                    <button class="btn btn-warning btn-sm" onclick="openWorkpointHolidaysModal()">Manage Holidays</button>
                                 </div>
                             </div>
                         </div>
@@ -4155,6 +4164,450 @@ if (isset($_GET['action']) && $_GET['action'] === 'workpoint_stats') {
                 console.error('Error:', error);
                 alert('Error saving templates');
             });
+        }
+
+        // ========== WORKPOINT HOLIDAYS MANAGEMENT ==========
+        let workpointTimeOffData = new Set();
+        let workpointTimeOffDetails = {}; // Stores { date: { type, workStart, workEnd, isRecurring, description } }
+        let workpointHolidaysWorkpointId = null;
+
+        function openWorkpointHolidaysModal() {
+            const workpointId = <?= $_SESSION['workpoint_id'] ?? 0 ?>;
+            if (!workpointId) {
+                alert('No workpoint selected');
+                return;
+            }
+
+            workpointHolidaysWorkpointId = workpointId;
+
+            // Load existing holidays
+            loadWorkpointHolidays(workpointId);
+
+            // Create modal
+            const modal = document.createElement('div');
+            modal.id = 'workpointHolidaysModal';
+            modal.className = 'modal';
+            modal.style.cssText = 'display:block; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; overflow-y:auto;';
+            modal.innerHTML = `
+                <div style="background:#fff; width:90%; max-width:1200px; height:90vh; margin:2% auto; overflow-y:auto; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,0.2);">
+                    <div style="background:#ffc107; color:#000; padding:16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:1;">
+                        <h3 style="margin:0;"><i class="fas fa-calendar-times"></i> Workpoint Holidays & Closures</h3>
+                        <span style="cursor:pointer; font-size:32px; font-weight:bold; color:#000; line-height:1;" onclick="closeWorkpointHolidaysModal()">&times;</span>
+                    </div>
+                    <div style="padding:20px;">
+                        <!-- Table layout matching specialist holidays -->
+                        <table style="width:100%; margin:0; padding:0; border:0; border-spacing:0;">
+                            <tr>
+                                <td style="vertical-align:top; border:0; margin:0; padding:0;">
+                                    <div id="workpointInfo" style="margin-bottom:10px; font-size:14px;">
+                                        <!-- Workpoint info will be displayed here -->
+                                    </div>
+                                </td>
+                                <td rowspan="3" style="vertical-align:top; border:0; margin:0; padding:0; width:200px;">
+                                    <!-- Selected dates summary -->
+                                    <div style="padding:10px; background:#f8f9fa; border-radius:5px; margin-left:10px; height:600px; box-sizing:border-box; overflow-y:auto;">
+                                        <h5 style="margin-bottom:10px; text-align:center; font-size:0.9em;">Selected Holidays</h5>
+                                        <div id="selectedWorkpointHolidaysList" style="text-align:left;">
+                                            <!-- Selected dates will be listed here -->
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align:top; border:0; margin:0; padding:0;">
+                                    <!-- 12 month calendar grid -->
+                                    <div id="workpointHolidaysCalendar" style="display:grid; grid-template-columns:repeat(4, minmax(200px, 1fr)); gap:0px;">
+                                        <!-- Months will be generated here -->
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align:top; border:0; margin:0; padding:0;">
+                                    <!-- Empty row to ensure proper height -->
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            renderWorkpointHolidaysCalendar();
+        }
+
+        function closeWorkpointHolidaysModal() {
+            const modal = document.getElementById('workpointHolidaysModal');
+            if (modal) modal.remove();
+        }
+
+        function loadWorkpointHolidays(workpointId) {
+            const formData = new FormData();
+            formData.append('action', 'get_time_off_details');
+            formData.append('workingpoint_id', workpointId);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    workpointTimeOffData = new Set(data.dates || []);
+                    workpointTimeOffDetails = data.details || {};
+                    renderWorkpointHolidaysCalendar();
+                    updateSelectedWorkpointHolidaysList();
+                }
+            })
+            .catch(error => console.error('Error loading holidays:', error));
+        }
+
+        function renderWorkpointHolidaysCalendar() {
+            const container = document.getElementById('workpointHolidaysCalendar');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+
+            // Start with current month
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            for (let i = 0; i < 12; i++) {
+                const monthIndex = (currentMonth + i) % 12;
+                const year = currentYear + Math.floor((currentMonth + i) / 12);
+                const monthDiv = document.createElement('div');
+                monthDiv.style.cssText = 'background:white; border:1px solid #ddd; border-radius:3px; padding:6px; transform:scale(0.75); transform-origin:top left; margin-bottom:-50px; margin-right:-70px;';
+
+                // Month header with year and month
+                const monthHeader = document.createElement('div');
+                monthHeader.style.cssText = 'text-align:center; font-weight:bold; margin-bottom:5px; color:#333; font-size:13px;';
+                monthHeader.textContent = `${year} ${monthNames[monthIndex]}`;
+                monthDiv.appendChild(monthHeader);
+
+                // Days grid
+                const daysGrid = document.createElement('div');
+                daysGrid.style.cssText = 'display:grid; grid-template-columns:repeat(7, 1fr); gap:0px; font-size:11px;';
+
+                // Day headers - Monday first, weekends in red
+                const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                dayHeaders.forEach((day, index) => {
+                    const dayHeader = document.createElement('div');
+                    const isWeekend = index >= 5;
+                    dayHeader.style.cssText = `text-align:center; font-weight:bold; color:${isWeekend ? '#dc3545' : '#666'}; padding:2px; font-size:10px;`;
+                    dayHeader.textContent = day;
+                    daysGrid.appendChild(dayHeader);
+                });
+
+                // Get first day of month and number of days
+                let firstDay = new Date(year, monthIndex, 1).getDay();
+                // Adjust for Monday as first day (0 = Sunday, so convert to Monday = 0)
+                firstDay = firstDay === 0 ? 6 : firstDay - 1;
+                const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+                // Empty cells for days before month starts
+                for (let j = 0; j < firstDay; j++) {
+                    const emptyCell = document.createElement('div');
+                    daysGrid.appendChild(emptyCell);
+                }
+
+                // Days of month
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    const dateStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                    // Check if this date is today
+                    const isToday = dateStr === todayStr;
+
+                    // Check if weekend
+                    const dayOfWeek = new Date(year, monthIndex, day).getDay();
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                    // Base styling
+                    let bgColor = '#fff';
+                    let textColor = isWeekend ? '#dc3545' : '#333';
+                    let cursor = 'pointer';
+
+                    const isSelected = workpointTimeOffData.has(dateStr);
+                    if (isSelected) {
+                        const dayOffData = workpointTimeOffDetails[dateStr] || { type: 'full' };
+                        bgColor = dayOffData.type === 'partial' ? '#f59e0b' : '#dc3545';
+                        textColor = '#fff';
+                    } else if (isToday) {
+                        bgColor = '#007bff';
+                        textColor = '#fff';
+                    }
+
+                    dayCell.style.cssText = `
+                        text-align:center;
+                        padding:6px 4px;
+                        cursor:${cursor};
+                        border:none;
+                        background:${bgColor};
+                        color:${textColor};
+                        transition:all 0.2s;
+                        font-size:12px;
+                        width:28px;
+                        height:28px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        border-radius:50%;
+                        margin:2px auto;
+                    `;
+
+                    dayCell.textContent = day;
+                    dayCell.dataset.date = dateStr;
+
+                    // Set tooltip
+                    if (isSelected) {
+                        const dayOffData = workpointTimeOffDetails[dateStr] || { type: 'full' };
+                        dayCell.title = dayOffData.type === 'partial' ? 'Partial Day Closure' : 'Full Day Closure';
+                    } else if (isToday) {
+                        dayCell.title = 'Today';
+                    } else {
+                        dayCell.title = '';
+                    }
+
+                    // Click handler
+                    dayCell.onclick = function() {
+                        toggleWorkpointHoliday(dateStr);
+                    };
+
+                    // Hover effect
+                    dayCell.onmouseover = function() {
+                        if (!isSelected && !isToday) {
+                            this.style.background = '#f0f0f0';
+                        }
+                    };
+
+                    dayCell.onmouseout = function() {
+                        if (!isSelected && !isToday) {
+                            this.style.background = '#fff';
+                        }
+                    };
+
+                    daysGrid.appendChild(dayCell);
+                }
+
+                monthDiv.appendChild(daysGrid);
+                container.appendChild(monthDiv);
+            }
+        }
+
+        function toggleWorkpointHoliday(dateStr) {
+            if (workpointTimeOffData.has(dateStr)) {
+                // Remove
+                workpointTimeOffData.delete(dateStr);
+                delete workpointTimeOffDetails[dateStr];
+                autoSaveRemoveWorkpointHoliday(dateStr);
+            } else {
+                // Add
+                workpointTimeOffData.add(dateStr);
+                workpointTimeOffDetails[dateStr] = { type: 'full', isRecurring: false, description: '' };
+                autoSaveAddWorkpointHoliday(dateStr);
+            }
+            renderWorkpointHolidaysCalendar();
+            updateSelectedWorkpointHolidaysList();
+        }
+
+        function updateSelectedWorkpointHolidaysList() {
+            const listDiv = document.getElementById('selectedWorkpointHolidaysList');
+            if (!listDiv) return;
+
+            const datesArray = Array.from(workpointTimeOffData).sort();
+
+            if (datesArray.length === 0) {
+                listDiv.innerHTML = '<em style="color:#999;">No holidays selected</em>';
+            } else {
+                listDiv.innerHTML = datesArray.map(date => {
+                    const d = new Date(date + 'T12:00:00');
+                    const dayOffData = workpointTimeOffDetails[date] || { type: 'full', isRecurring: false, description: '' };
+                    const isPartial = dayOffData.type === 'partial';
+                    const isRecurring = dayOffData.isRecurring || false;
+                    const description = dayOffData.description || '';
+                    const buttonBgColor = isPartial ? '#f59e0b' : '#dc3545';
+                    const buttonIcon = isPartial ? '◐' : '⊗';
+
+                    return `<div style="margin:6px 0;">
+                        <div onclick="toggleWorkpointHolidayDropdown('${date}')"
+                             style="display:flex; align-items:center; justify-content:space-between; padding:8px; background:${buttonBgColor}; color:white; border-radius:4px; cursor:pointer;">
+                            <span style="font-size:11px; font-weight:500;">
+                                <span style="font-size:1.1em; margin-right:4px;">${buttonIcon}</span>${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            <span onclick="event.stopPropagation(); removeWorkpointHoliday('${date}')"
+                                  style="color:white; cursor:pointer; font-size:18px; font-weight:bold; padding:0 4px;">×</span>
+                        </div>
+                        <div id="wp-dropdown-${date}" style="display:none; background:#f8f9fa; border:1px solid #ddd; border-radius:4px; padding:10px; margin-top:2px; font-size:11px;">
+                            <div style="margin-bottom:8px;">
+                                <label style="display:block; margin-bottom:4px; font-weight:600;">Description:</label>
+                                <input type="text" id="wp-desc-${date}" value="${description}" onchange="updateWorkpointDescription('${date}')"
+                                       placeholder="e.g., Christmas Day, Emergency Closure" style="width:100%; padding:5px; border:1px solid #ddd; border-radius:3px; font-size:11px;">
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <label style="cursor:pointer;">
+                                    <input type="checkbox" id="wp-recurring-${date}" ${isRecurring ? 'checked' : ''} onchange="updateWorkpointRecurring('${date}', this.checked)">
+                                    <span style="font-size:11px;">Recurring yearly holiday</span>
+                                </label>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <label style="display:block; margin-bottom:4px; font-weight:600;">Type:</label>
+                                <select id="wp-type-${date}" onchange="updateWorkpointDayOffType('${date}', this.value)" style="width:100%; padding:5px; border:1px solid #ddd; border-radius:3px; font-size:11px;">
+                                    <option value="full" ${!isPartial ? 'selected' : ''}>Fully Closed</option>
+                                    <option value="partial" ${isPartial ? 'selected' : ''}>Partially Open</option>
+                                </select>
+                            </div>
+                            <div id="wp-partial-${date}" style="display:${isPartial ? 'block' : 'none'};">
+                                <label style="display:block; margin-bottom:4px; font-weight:600;">Open Hours:</label>
+                                <div style="display:flex; gap:5px; align-items:center;">
+                                    <input type="time" id="wp-start-${date}" value="${dayOffData.workStart || ''}" onchange="updateWorkpointWorkingHours('${date}')"
+                                           style="flex:1; padding:5px; border:1px solid #ddd; border-radius:3px; font-size:11px;">
+                                    <span style="font-size:11px;">to</span>
+                                    <input type="time" id="wp-end-${date}" value="${dayOffData.workEnd || ''}" onchange="updateWorkpointWorkingHours('${date}')"
+                                           style="flex:1; padding:5px; border:1px solid #ddd; border-radius:3px; font-size:11px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function toggleWorkpointHolidayDropdown(date) {
+            const dropdown = document.getElementById(`wp-dropdown-${date}`);
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function removeWorkpointHoliday(date) {
+            workpointTimeOffData.delete(date);
+            delete workpointTimeOffDetails[date];
+            autoSaveRemoveWorkpointHoliday(date);
+            renderWorkpointHolidaysCalendar();
+            updateSelectedWorkpointHolidaysList();
+        }
+
+        function updateWorkpointDayOffType(date, type) {
+            if (type === 'partial' && workpointTimeOffDetails[date].type === 'full') {
+                autoSaveConvertWorkpointToPartial(date);
+            } else if (type === 'full' && workpointTimeOffDetails[date].type === 'partial') {
+                autoSaveConvertWorkpointToFull(date);
+            }
+            workpointTimeOffDetails[date].type = type;
+            document.getElementById(`wp-partial-${date}`).style.display = type === 'partial' ? 'block' : 'none';
+            updateSelectedWorkpointHolidaysList();
+            renderWorkpointHolidaysCalendar();
+        }
+
+        function updateWorkpointWorkingHours(date) {
+            const workStart = document.getElementById(`wp-start-${date}`).value;
+            const workEnd = document.getElementById(`wp-end-${date}`).value;
+
+            if (!workStart || !workEnd) return;
+
+            workpointTimeOffDetails[date].workStart = workStart;
+            workpointTimeOffDetails[date].workEnd = workEnd;
+            autoSaveUpdateWorkpointWorkingHours(date, workStart, workEnd);
+        }
+
+        function updateWorkpointRecurring(date, isRecurring) {
+            workpointTimeOffDetails[date].isRecurring = isRecurring;
+            autoSaveUpdateWorkpointRecurring(date, isRecurring);
+        }
+
+        function updateWorkpointDescription(date) {
+            const description = document.getElementById(`wp-desc-${date}`).value;
+            workpointTimeOffDetails[date].description = description;
+            autoSaveUpdateWorkpointDescription(date, description);
+        }
+
+        // Auto-save functions
+        function autoSaveAddWorkpointHoliday(date) {
+            const formData = new FormData();
+            formData.append('action', 'add_full_day');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+            formData.append('is_recurring', 0);
+            formData.append('description', '');
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        }
+
+        function autoSaveRemoveWorkpointHoliday(date) {
+            const formData = new FormData();
+            formData.append('action', 'remove_day');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        }
+
+        function autoSaveConvertWorkpointToPartial(date) {
+            const formData = new FormData();
+            formData.append('action', 'convert_to_partial');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        }
+
+        function autoSaveConvertWorkpointToFull(date) {
+            const formData = new FormData();
+            formData.append('action', 'convert_to_full');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        }
+
+        function autoSaveUpdateWorkpointWorkingHours(date, workStart, workEnd) {
+            const formData = new FormData();
+            formData.append('action', 'update_working_hours');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+            formData.append('work_start', workStart);
+            formData.append('work_end', workEnd);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        }
+
+        function autoSaveUpdateWorkpointRecurring(date, isRecurring) {
+            const formData = new FormData();
+            formData.append('action', 'update_recurring');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+            formData.append('is_recurring', isRecurring ? 1 : 0);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        }
+
+        function autoSaveUpdateWorkpointDescription(date, description) {
+            const formData = new FormData();
+            formData.append('action', 'update_description');
+            formData.append('workingpoint_id', workpointHolidaysWorkpointId);
+            formData.append('date', date);
+            formData.append('description', description);
+
+            fetch('admin/workpoint_time_off_auto_ajax.php', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
         }
     </script>
     <div id="responseModal" class="modal" style="display:none; position:fixed; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 10000;">
