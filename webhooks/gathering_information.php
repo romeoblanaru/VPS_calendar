@@ -80,20 +80,44 @@ function getAvailableSlots($pdo, $specialist_id, $working_place_id, $date) {
             return [];
         }
         
-        // Check if specialist has time off on this date
+        // Check if specialist has time off on this date (fetch ALL records for dual partial holidays)
         $timeOffStmt = $pdo->prepare("
-            SELECT start_time, end_time 
-            FROM specialist_time_off 
+            SELECT start_time, end_time
+            FROM specialist_time_off
             WHERE specialist_id = ? AND date_off = ?
+            ORDER BY start_time
         ");
         $timeOffStmt->execute([$specialist_id, $date]);
-        $timeOff = $timeOffStmt->fetch(PDO::FETCH_ASSOC);
-        
-        // If full day off, return empty slots
-        if ($timeOff && (!$timeOff['start_time'] || !$timeOff['end_time'])) {
-            return [];
+        $timeOffRecords = $timeOffStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // If any time off record is a full day off, return empty slots
+        foreach ($timeOffRecords as $timeOff) {
+            if (!$timeOff['start_time'] || !$timeOff['end_time']) {
+                return [];
+            }
         }
-        
+
+        // Check if workpoint has holidays on this date (both recurring and non-recurring)
+        $workpointHolidayStmt = $pdo->prepare("
+            SELECT start_time, end_time, is_recurring
+            FROM workingpoint_time_off
+            WHERE workingpoint_id = ?
+            AND (
+                (is_recurring = 0 AND date_off = ?)
+                OR (is_recurring = 1 AND DATE_FORMAT(date_off, '%m-%d') = DATE_FORMAT(?, '%m-%d'))
+            )
+            ORDER BY start_time
+        ");
+        $workpointHolidayStmt->execute([$working_place_id, $date, $date]);
+        $workpointHolidayRecords = $workpointHolidayStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // If any workpoint holiday is a full day, return empty slots
+        foreach ($workpointHolidayRecords as $holiday) {
+            if ($holiday['start_time'] === '00:01:00' && $holiday['end_time'] === '23:59:00') {
+                return [];
+            }
+        }
+
         // Get existing bookings for this date and specialist
         $bookingStmt = $pdo->prepare("
             SELECT TIME(booking_start_datetime) as start_time, TIME(booking_end_datetime) as end_time
@@ -103,14 +127,29 @@ function getAvailableSlots($pdo, $specialist_id, $working_place_id, $date) {
         ");
         $bookingStmt->execute([$specialist_id, $date]);
         $bookings = $bookingStmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Add time off period to bookings array if exists
-        if ($timeOff && $timeOff['start_time'] && $timeOff['end_time']) {
-            $bookings[] = [
-                'start_time' => $timeOff['start_time'],
-                'end_time' => $timeOff['end_time']
-            ];
-            // Re-sort bookings by start time
+
+        // Add ALL specialist time off periods to bookings array (handles dual partial holidays)
+        foreach ($timeOffRecords as $timeOff) {
+            if ($timeOff['start_time'] && $timeOff['end_time']) {
+                $bookings[] = [
+                    'start_time' => $timeOff['start_time'],
+                    'end_time' => $timeOff['end_time']
+                ];
+            }
+        }
+
+        // Add ALL workpoint holiday periods to bookings array (handles recurring holidays)
+        foreach ($workpointHolidayRecords as $holiday) {
+            if ($holiday['start_time'] && $holiday['end_time']) {
+                $bookings[] = [
+                    'start_time' => $holiday['start_time'],
+                    'end_time' => $holiday['end_time']
+                ];
+            }
+        }
+
+        // Re-sort bookings by start time if we added any time off or holiday periods
+        if (!empty($timeOffRecords) || !empty($workpointHolidayRecords)) {
             usort($bookings, function($a, $b) {
                 return strcmp($a['start_time'], $b['start_time']);
             });
@@ -511,8 +550,10 @@ try {
                 'procent_vat' => $service['procent_vat'] ?? 0
             ];
         }
-        
-        // Include working program only when date range is missing or invalid
+
+        // Designed this way for efficiency: Include working program (weekly schedule) only when date range
+        // is missing or invalid. When valid dates are provided, we return calculated available_slots instead.
+        // This avoids sending redundant data since available_slots are more precise and useful for booking.
         if (!$rangeIsValid) {
             $programStmt = $pdo->prepare("
                 SELECT day_of_week, shift1_start, shift1_end, shift2_start, shift2_end, shift3_start, shift3_end

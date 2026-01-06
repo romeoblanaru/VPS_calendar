@@ -148,6 +148,68 @@ if ($end_hour - $start_hour < 8) {
     $latest_end = sprintf('%02d:00', $start_hour + 8);
 }
 
+// Get workpoint holidays (both recurring and non-recurring)
+$workpoint_holidays = [];
+if ($supervisor_mode) {
+    // In supervisor mode, use workpoint_id from URL
+    if ($workpoint_id && $workpoint_id !== 'null' && $workpoint_id !== '') {
+        $stmt = $pdo->prepare("
+            SELECT date_off, start_time, end_time, is_recurring, description
+            FROM workingpoint_time_off
+            WHERE workingpoint_id = ?
+            ORDER BY date_off
+        ");
+        $stmt->execute([$workpoint_id]);
+        $workpoint_holidays = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} else {
+    // In specialist mode, get workpoint from working_points
+    if (!empty($working_points)) {
+        $wp = $working_points[0]; // Get the first (and only) working point
+        $stmt = $pdo->prepare("
+            SELECT date_off, start_time, end_time, is_recurring, description
+            FROM workingpoint_time_off
+            WHERE workingpoint_id = ?
+            ORDER BY date_off
+        ");
+        $stmt->execute([$wp['unic_id']]);
+        $workpoint_holidays = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+// Helper function to check if a date is a workpoint holiday (handles recurring)
+if (!function_exists('isWorkpointHoliday')) {
+    function isWorkpointHoliday($check_date, $check_time, $holidays) {
+        foreach ($holidays as $holiday) {
+            $holiday_date = $holiday['date_off'];
+            $is_recurring = (bool)$holiday['is_recurring'];
+
+            // For recurring holidays, only compare month-day (MM-DD)
+            if ($is_recurring) {
+                $check_month_day = substr($check_date, 5); // Get MM-DD from YYYY-MM-DD
+                $holiday_month_day = substr($holiday_date, 5); // Get MM-DD from YYYY-MM-DD
+
+                if ($check_month_day === $holiday_month_day) {
+                    // Recurring holiday matches! Now check time
+                    if ($check_time >= $holiday['start_time'] && $check_time <= $holiday['end_time']) {
+                        return ['is_holiday' => true, 'description' => $holiday['description']];
+                    }
+                }
+            } else {
+                // Non-recurring: exact date match required
+                if ($check_date === $holiday_date) {
+                    // Date matches! Now check time
+                    if ($check_time >= $holiday['start_time'] && $check_time <= $holiday['end_time']) {
+                        return ['is_holiday' => true, 'description' => $holiday['description']];
+                    }
+                }
+            }
+        }
+
+        return ['is_holiday' => false, 'description' => ''];
+    }
+}
+
 $time_slots = generateTimeSlots($earliest_start, $latest_end);
 
 // Calculate positions for all bookings
@@ -636,6 +698,31 @@ if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($
     opacity: 0.9;
 }
 
+/* Workpoint holiday cells - darker gray background with holiday name */
+.day-cell.workpoint-holiday {
+    background: #f0f0f0 !important;
+    cursor: not-allowed !important;
+    opacity: 1;
+    position: relative;
+}
+
+.day-cell.workpoint-holiday::after {
+    content: attr(data-holiday-name);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.65rem;
+    color: #666;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Past time cells within working hours - white background but not clickable */
 .day-cell.non-working[data-is-working="true"] {
     background: white;
@@ -1061,18 +1148,29 @@ if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($
                             }
                             
                             if ($supervisor_mode) {
-                                // In supervisor mode, let JavaScript handle working hours
-                                $is_working = false; // Will be set by JavaScript
+                                // In supervisor mode, check working hours for the selected specialist
+                                $is_working = false;
                                 $workpoint_class = '';
-                                
-                                // Use the global workpoint_id for supervisor mode
-                                // $workpoint_id is already set globally for supervisor mode
                                 $workpoint_name = '';
+
+                                // Use the global workpoint_id for supervisor mode
                                 if ($workpoint_id) {
-                                    // Get workpoint name from database or use a default
+                                    // Get workpoint name from database
                                     $stmt = $pdo->prepare("SELECT name_of_the_place FROM working_points WHERE unic_id = ?");
                                     $stmt->execute([$workpoint_id]);
                                     $workpoint_name = $stmt->fetchColumn() ?: 'Workpoint ' . $workpoint_id;
+
+                                    // Check if the selected specialist has working hours at this time
+                                    // Use the first specialist from tabs if selected_specialist_id is not set
+                                    $check_specialist_id = $selected_specialist_id ?? (!empty($specialists_for_tabs) ? $specialists_for_tabs[0]['unic_id'] : null);
+
+                                    if ($check_specialist_id) {
+                                        $working_hours = getWorkingHours($pdo, $check_specialist_id, $workpoint_id, $day['date']);
+                                        $is_working = isWithinWorkingHours($time . ':00', $working_hours);
+                                        if ($is_working) {
+                                            $workpoint_class = 'working-primary';
+                                        }
+                                    }
                                 }
                             } else {
                                 // Check all working points for this specialist
@@ -1122,16 +1220,23 @@ if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($
                                 }
                             }
                             ?>
-                            <?php 
+                            <?php
                             // Check if this time slot is in the past using working point timezone if available, otherwise organization timezone
-                            $org_timezone = ($supervisor_mode && isset($workpoint)) ? getTimezoneForWorkingPoint($workpoint) : 
-                                           ((!$supervisor_mode && !empty($working_points)) ? getTimezoneForWorkingPoint($working_points[0]) : 
+                            $org_timezone = ($supervisor_mode && isset($workpoint)) ? getTimezoneForWorkingPoint($workpoint) :
+                                           ((!$supervisor_mode && !empty($working_points)) ? getTimezoneForWorkingPoint($working_points[0]) :
                                            getTimezoneForOrganisation($organisation));
                             $current_org = new DateTime('now', new DateTimeZone($org_timezone));
                             $slot_datetime = new DateTime($day['date'] . ' ' . $time . ':00', new DateTimeZone($org_timezone));
                             $is_past = $slot_datetime < $current_org;
+
+                            // Check if this date/time is a workpoint holiday (both recurring and non-recurring)
+                            // In supervisor mode, show holidays on ALL time slots (regardless of working hours)
+                            // In specialist mode, only show holidays during working hours
+                            $holiday_check = isWorkpointHoliday($day['date'], $time . ':00', $workpoint_holidays);
+                            $is_workpoint_holiday = $supervisor_mode ? $holiday_check['is_holiday'] : ($holiday_check['is_holiday'] && $is_working);
+                            $holiday_name = $holiday_check['description'];
                             ?>
-                            <td class="day-cell <?= $is_day_off ? 'day-off' : (!$is_working ? 'non-working' : '') ?> <?= $workpoint_class ?>"
+                            <td class="day-cell <?= $is_workpoint_holiday ? 'workpoint-holiday' : ($is_day_off ? 'day-off' : (!$is_working ? 'non-working' : '')) ?> <?= $workpoint_class ?>"
                                 data-day="<?= $day['date'] ?>"
                                 data-time="<?= $time ?>"
                                 data-day-index="<?= $day_index ?>"
@@ -1143,10 +1248,13 @@ if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($
                                 data-workpoint-id="<?= $workpoint_id ?>"
                                 data-workpoint-name="<?= htmlspecialchars($workpoint_name) ?>"
                                 <?php endif; ?>
-                                <?php if ($is_day_off): ?>
+                                <?= $is_workpoint_holiday ? 'data-holiday-name="'.htmlspecialchars($holiday_name).'"' : '' ?>
+                                <?php if ($is_workpoint_holiday): ?>
+                                title="<?= htmlspecialchars($holiday_name) ?>"
+                                <?php elseif ($is_day_off): ?>
                                 title="Specialist day off"
                                 <?php endif; ?>
-                                <?php if (!$is_past && !$is_day_off && ($is_working || $supervisor_mode)): ?>
+                                <?php if (!$is_past && !$is_day_off && !$is_workpoint_holiday && ($is_working || $supervisor_mode)): ?>
                                 <?php if ($supervisor_mode): ?>
                                 onclick="openAddBookingModalWithWorkpoint('<?= $day['date'] ?>', '<?= $time ?>', currentSpecialistId, '<?= $workpoint_id ?? '' ?>', '<?= htmlspecialchars($workpoint_name ?? '') ?>')"
                                 <?php else: ?>
@@ -1623,23 +1731,27 @@ function updateWorkingHoursForSpecialist(specialistId) {
     if (!specialistWorkingHours) {
         return;
     }
-    
+
     // Get time off dates for this specialist
     const specialistTimeOff = timeOffData[specialistId] || [];
-    
+
     // Update each day cell's working hours status and click functionality
     document.querySelectorAll('.day-cell').forEach(cell => {
         const dayDate = cell.getAttribute('data-day');
         const timeSlot = cell.getAttribute('data-time');
         const dayWorkingHours = specialistWorkingHours[dayDate];
-        
-        // Remove existing working/non-working/day-off classes
+
+        // Check if this cell is a workpoint holiday (these should be preserved!)
+        const isWorkpointHoliday = cell.classList.contains('workpoint-holiday');
+        const holidayName = cell.getAttribute('data-holiday-name');
+
+        // Remove existing working/non-working/day-off classes (but NOT workpoint-holiday!)
         cell.classList.remove('working', 'non-working', 'day-off');
-        
+
         // Check if this is a day off
         if (specialistTimeOff[dayDate]) {
             const timeOffInfo = specialistTimeOff[dayDate];
-            
+
             // Check if it's a partial or full day off
             if (timeOffInfo.start_time && timeOffInfo.end_time && timeSlot) {
                 // Partial day off - check if this time slot is within the range
@@ -1664,20 +1776,20 @@ function updateWorkingHoursForSpecialist(specialistId) {
                 return; // Skip further processing for this cell
             }
         }
-        
+
         // Check if this time slot is within working hours
         if (timeSlot && dayWorkingHours && dayWorkingHours.length > 0) {
             // Check if current time in organization timezone is past this slot
             const now = new Date();
             const currentDate = now.toLocaleDateString('en-CA', { timeZone: organizationTimezone }); // YYYY-MM-DD format
-            const currentTime = now.toLocaleTimeString('en-US', { 
+            const currentTime = now.toLocaleTimeString('en-US', {
                 timeZone: organizationTimezone,
                 hour12: false,
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit'
             });
-            
+
             // Compare date and time
             let isPast = false;
             if (dayDate < currentDate) {
@@ -1686,19 +1798,30 @@ function updateWorkingHoursForSpecialist(specialistId) {
                 isPast = timeSlot < currentTime.substring(0, 5); // Same date, compare time
             }
             // If dayDate > currentDate, isPast remains false (future date)
-            
+
             // Check if this time slot is within any working shift
             let isWithinWorkingHours = false;
             for (const shift of dayWorkingHours) {
                 const shiftStart = shift.start.substring(0, 5); // Get HH:MM format
                 const shiftEnd = shift.end.substring(0, 5);
-                
+
                 if (timeSlot >= shiftStart && timeSlot <= shiftEnd) {
                     isWithinWorkingHours = true;
                     break;
                 }
             }
-            
+
+            // If this is a workpoint holiday, ALWAYS keep it as a holiday (supervisor mode)
+            if (isWorkpointHoliday) {
+                cell.classList.add('workpoint-holiday');
+                cell.style.cursor = 'not-allowed';
+                cell.style.backgroundColor = '#f0f0f0';
+                cell.style.opacity = '1';
+                cell.onclick = null;
+                cell.title = holidayName || 'Workpoint holiday';
+                return; // Skip further processing for this cell
+            }
+
             if (isWithinWorkingHours) {
                 if (!isPast) {
                     // Future time slot within working hours - make it clickable
@@ -1732,7 +1855,19 @@ function updateWorkingHoursForSpecialist(specialistId) {
                 cell.onclick = null;
             }
         } else {
-            // No working hours for this day - gray background
+            // No working hours for this day
+            // If this is a workpoint holiday, ALWAYS keep it as a holiday (supervisor mode)
+            if (isWorkpointHoliday) {
+                cell.classList.add('workpoint-holiday');
+                cell.style.cursor = 'not-allowed';
+                cell.style.backgroundColor = '#f0f0f0';
+                cell.style.opacity = '1';
+                cell.onclick = null;
+                cell.title = holidayName || 'Workpoint holiday';
+                return; // Skip further processing for this cell
+            }
+
+            // Show as non-working (gray background)
             cell.classList.add('non-working');
             cell.style.cursor = 'default';
             cell.style.backgroundColor = '#f8f9fa';

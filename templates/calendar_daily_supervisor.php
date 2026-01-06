@@ -55,14 +55,14 @@ foreach ($specialists as $spec) {
 $specialist_time_off = [];
 foreach ($specialists as $spec) {
     $stmt = $pdo->prepare("
-        SELECT start_time, end_time 
-        FROM specialist_time_off 
-        WHERE specialist_id = ? 
+        SELECT start_time, end_time
+        FROM specialist_time_off
+        WHERE specialist_id = ?
         AND date_off = ?
     ");
     $stmt->execute([$spec['unic_id'], $display_date]);
     $time_off_info = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if ($time_off_info) {
         $specialist_time_off[$spec['unic_id']] = [
             'start_time' => $time_off_info['start_time'],
@@ -70,6 +70,52 @@ foreach ($specialists as $spec) {
         ];
     } else {
         $specialist_time_off[$spec['unic_id']] = null;
+    }
+}
+
+// Get workpoint holidays (both recurring and non-recurring)
+$workpoint_holidays = [];
+if (isset($workpoint['unic_id']) && $workpoint['unic_id']) {
+    $stmt = $pdo->prepare("
+        SELECT date_off, start_time, end_time, is_recurring, description
+        FROM workingpoint_time_off
+        WHERE workingpoint_id = ?
+        ORDER BY date_off
+    ");
+    $stmt->execute([$workpoint['unic_id']]);
+    $workpoint_holidays = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Helper function to check if a date is a workpoint holiday (handles recurring)
+if (!function_exists('isWorkpointHoliday')) {
+    function isWorkpointHoliday($check_date, $check_time, $holidays) {
+        foreach ($holidays as $holiday) {
+            $holiday_date = $holiday['date_off'];
+            $is_recurring = (bool)$holiday['is_recurring'];
+
+            // For recurring holidays, only compare month-day (MM-DD)
+            if ($is_recurring) {
+                $check_month_day = substr($check_date, 5); // Get MM-DD from YYYY-MM-DD
+                $holiday_month_day = substr($holiday_date, 5); // Get MM-DD from YYYY-MM-DD
+
+                if ($check_month_day === $holiday_month_day) {
+                    // Recurring holiday matches! Now check time
+                    if ($check_time >= $holiday['start_time'] && $check_time <= $holiday['end_time']) {
+                        return ['is_holiday' => true, 'description' => $holiday['description']];
+                    }
+                }
+            } else {
+                // Non-recurring: exact date match required
+                if ($check_date === $holiday_date) {
+                    // Date matches! Now check time
+                    if ($check_time >= $holiday['start_time'] && $check_time <= $holiday['end_time']) {
+                        return ['is_holiday' => true, 'description' => $holiday['description']];
+                    }
+                }
+            }
+        }
+
+        return ['is_holiday' => false, 'description' => ''];
     }
 }
 
@@ -749,6 +795,31 @@ function calculateSupervisorBookingPositions($day_bookings, $time_slots) {
     opacity: 0.9;
 }
 
+/* Workpoint holiday cells - darker gray background with holiday name */
+.specialist-cell.workpoint-holiday {
+    background: #f0f0f0 !important;
+    cursor: not-allowed !important;
+    opacity: 1;
+    position: relative;
+}
+
+.specialist-cell.workpoint-holiday::after {
+    content: attr(data-holiday-name);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.65rem;
+    color: #666;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .specialist-column:hover {
     background: rgba(102, 126, 234, 0.1);
 }
@@ -967,7 +1038,7 @@ function calculateSupervisorBookingPositions($day_bookings, $time_slots) {
                         // Check if specialist has day off
                         $is_day_off = false;
                         $time_off_info = $specialist_time_off[$spec['unic_id']] ?? null;
-                        
+
                         if ($time_off_info) {
                             if ($time_off_info['start_time'] && $time_off_info['end_time']) {
                                 // Partial day off - check if this time slot is within the range
@@ -980,16 +1051,25 @@ function calculateSupervisorBookingPositions($day_bookings, $time_slots) {
                                 $is_day_off = true;
                             }
                         }
+
+                        // Check if this date/time is a workpoint holiday (both recurring and non-recurring)
+                        // Only show workpoint holidays during working hours
+                        $holiday_check = isWorkpointHoliday($display_date, $time . ':00', $workpoint_holidays);
+                        $is_workpoint_holiday = $holiday_check['is_holiday'] && $is_working;
+                        $holiday_name = $holiday_check['description'];
                         ?>
-                        <div class="specialist-cell <?= $is_day_off ? 'day-off' : (!$is_working ? 'non-working' : '') ?> <?= $is_past ? 'past' : '' ?> <?= $is_current ? 'current-time' : '' ?>"
+                        <div class="specialist-cell <?= $is_workpoint_holiday ? 'workpoint-holiday' : ($is_day_off ? 'day-off' : (!$is_working ? 'non-working' : '')) ?> <?= $is_past ? 'past' : '' ?> <?= $is_current ? 'current-time' : '' ?>"
                              data-time="<?= $time ?>"
                              data-time-index="<?= $time_index ?>"
                              data-specialist-id="<?= $spec['unic_id'] ?>"
                              data-is-day-off="<?= $is_day_off ? 'true' : 'false' ?>"
-                             <?php if ($is_day_off): ?>
+                             <?= $is_workpoint_holiday ? 'data-holiday-name="'.htmlspecialchars($holiday_name).'"' : '' ?>
+                             <?php if ($is_workpoint_holiday): ?>
+                             title="<?= htmlspecialchars($holiday_name) ?>"
+                             <?php elseif ($is_day_off): ?>
                              title="Specialist day off"
                              <?php endif; ?>
-                             <?php if (!$is_past && !$is_day_off && $is_working): ?>
+                             <?php if (!$is_past && !$is_day_off && !$is_workpoint_holiday && $is_working): ?>
                              onclick="openAddBookingModalWithWorkpoint('<?= $display_date ?>', '<?= $time ?>', '<?= $spec['unic_id'] ?>', '<?= $workpoint['unic_id'] ?>', '<?= htmlspecialchars($workpoint['name_of_the_place']) ?>')"
                              <?php endif; ?>>
                         </div>

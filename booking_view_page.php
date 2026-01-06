@@ -254,15 +254,15 @@ if ($supervisor_mode) {
 $time_off_dates = [];
 if ($supervisor_mode && $selected_specialist) {
     $stmt = $pdo->prepare("
-        SELECT date_off, start_time, end_time 
-        FROM specialist_time_off 
-        WHERE specialist_id = ? 
+        SELECT date_off, start_time, end_time
+        FROM specialist_time_off
+        WHERE specialist_id = ?
         AND date_off BETWEEN ? AND ?
         ORDER BY date_off
     ");
     $stmt->execute([$selected_specialist, $start_date, $end_date]);
     $time_off_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Create lookup array by date
     foreach ($time_off_data as $off) {
         $time_off_dates[$off['date_off']] = [
@@ -272,15 +272,15 @@ if ($supervisor_mode && $selected_specialist) {
     }
 } elseif (!$supervisor_mode && $specialist_id) {
     $stmt = $pdo->prepare("
-        SELECT date_off, start_time, end_time 
-        FROM specialist_time_off 
-        WHERE specialist_id = ? 
+        SELECT date_off, start_time, end_time
+        FROM specialist_time_off
+        WHERE specialist_id = ?
         AND date_off BETWEEN ? AND ?
         ORDER BY date_off
     ");
     $stmt->execute([$specialist_id, $start_date, $end_date]);
     $time_off_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Create lookup array by date
     foreach ($time_off_data as $off) {
         $time_off_dates[$off['date_off']] = [
@@ -288,6 +288,19 @@ if ($supervisor_mode && $selected_specialist) {
             'end_time' => $off['end_time']
         ];
     }
+}
+
+// Get workpoint holidays (both recurring and non-recurring)
+$workpoint_holidays = [];
+if (isset($workpoint_id)) {
+    $stmt = $pdo->prepare("
+        SELECT date_off, start_time, end_time, is_recurring, description
+        FROM workingpoint_time_off
+        WHERE workingpoint_id = ?
+        ORDER BY date_off
+    ");
+    $stmt->execute([$workpoint_id]);
+    $workpoint_holidays = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 <!DOCTYPE html>
