@@ -265,7 +265,17 @@ if ((!isset($_SESSION['user_id']) && !isset($_SESSION['user'])) || $_SESSION['ro
                 <i class="fas fa-external-link-alt"></i> Open Tool
             </button>
         </div>
-        
+
+        <!-- Tool Card 7: Check Availability Tester -->
+        <div class="tool-card">
+            <h3><i class="fas fa-calendar-check" style="color: #ff6b35;"></i> Check Availability Tester</h3>
+            <p>Test and debug the check_availability function with custom parameters. View detailed performance breakdowns, timing analysis, and webhook calls made during execution.</p>
+            <div class="tool-url">https://voice.rom2.co.uk/check-availability</div>
+            <button onclick="window.open('https://voice.rom2.co.uk/check-availability', '_blank')">
+                <i class="fas fa-external-link-alt"></i> Open Tool
+            </button>
+        </div>
+
         <!-- Add New Card -->
         <div class="tool-card add-card" onclick="document.getElementById('addToolModal').style.display='block'">
             <i class="fas fa-plus"></i>
