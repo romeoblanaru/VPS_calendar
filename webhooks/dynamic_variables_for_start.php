@@ -24,7 +24,7 @@ require_once '../includes/webhook_logger.php';
 header('Content-Type: application/json');
 
 // Configuration: Number of digits to match from the end of phone numbers
-$PHONE_MATCH_DIGITS = 8;
+$PHONE_MATCH_DIGITS = 9;
 
 // Initialize webhook logger
 $logger = new WebhookLogger($pdo, 'dynamic_variables_for_start');
@@ -57,33 +57,79 @@ try {
     
     // Find working point and organisation by phone number (matching last N digits)
     $stmt = $pdo->prepare("
-        SELECT 
+        SELECT
             wp.name_of_the_place,
             wp.address,
             wp.unic_id as working_point_id,
             o.alias_name,
             o.unic_id as organisation_id
-        FROM working_points wp 
-        JOIN organisations o ON wp.organisation_id = o.unic_id 
+        FROM working_points wp
+        JOIN organisations o ON wp.organisation_id = o.unic_id
         WHERE RIGHT(REPLACE(wp.booking_phone_nr, ' ', ''), ?) = ?
+        ORDER BY wp.unic_id
     ");
     $stmt->execute([$PHONE_MATCH_DIGITS, $phone_suffix]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$result) {
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (empty($results)) {
         $errorResponse = [
             'error' => 'No working point found for phone number: ' . $assigned_phone_nr . ' (matched last ' . $PHONE_MATCH_DIGITS . ' digits: ' . $phone_suffix . ')',
             'status' => 'error',
             'timestamp' => date('Y-m-d H:i:s')
         ];
-        
+
         http_response_code(404);
         echo json_encode($errorResponse);
-        
+
         // Log the error
         $logger->logError('No working point found for phone number: ' . $assigned_phone_nr . ' (matched last ' . $PHONE_MATCH_DIGITS . ' digits: ' . $phone_suffix . ')', null, 404);
         exit();
     }
+
+    // Check for duplicate phone numbers
+    if (count($results) > 1) {
+        $workingPoints = [];
+        foreach ($results as $wp) {
+            $workingPoints[] = '[' . $wp['working_point_id'] . '][' . $wp['name_of_the_place'] . ']';
+        }
+
+        $errorResponse = [
+            'error' => 'Multiple working points using the same booking_phone_nr: ' . implode(', ', $workingPoints),
+            'status' => 'error',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'duplicate_count' => count($results),
+            'working_points' => array_map(function($wp) {
+                return [
+                    'working_point_id' => $wp['working_point_id'],
+                    'name_of_the_place' => $wp['name_of_the_place'],
+                    'organisation_id' => $wp['organisation_id'],
+                    'alias_name' => $wp['alias_name']
+                ];
+            }, $results)
+        ];
+
+        http_response_code(409); // 409 Conflict
+        echo json_encode($errorResponse);
+
+        // Log the error
+        $logger->logError(
+            'Multiple working points using the same booking_phone_nr: ' . implode(', ', $workingPoints),
+            null,
+            409,
+            [
+                'additional_data' => [
+                    'duplicate_count' => count($results),
+                    'working_point_ids' => array_column($results, 'working_point_id'),
+                    'phone_number_provided' => $assigned_phone_nr,
+                    'phone_suffix_matched' => $phone_suffix
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Only one result found - proceed normally
+    $result = $results[0];
     
     // Build response structure
     $response = [

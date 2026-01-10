@@ -1,0 +1,338 @@
+<?php
+/**
+ * Update Services Name Webhook
+ *
+ * This webhook handles updating the English translation of service names in the calendar system.
+ * It accepts service identification and updates the name_of_service_in_english field.
+ *
+ * Endpoint: /webhooks/update_services_name.php
+ * Method: POST (JSON)
+ *
+ * Input Parameters (JSON):
+ * - service_id (required): ID of the service to update (maps to unic_id in services table)
+ * - service_name (required): Current service name for validation (name_of_service)
+ * - name_of_service_in_english (required): English translation of the service name
+ *
+ * Output: JSON response with update details or error information
+ *
+ * @author Calendar System
+ * @version 1.0
+ * @since 2025-01-15
+ */
+
+// Include required files
+require_once '../includes/db.php';
+require_once '../includes/webhook_logger.php';
+
+// Set content type to JSON
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle OPTIONS request for CORS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// Initialize webhook logger
+$logger = new WebhookLogger($pdo, 'update_services_name');
+
+try {
+    // Get JSON input
+    $json_input = file_get_contents('php://input');
+    $data = json_decode($json_input, true);
+
+    // Check for JSON parsing errors
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $errorResponse = [
+            'error' => 'Invalid JSON format: ' . json_last_error_msg(),
+            'status' => 'error',
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+
+        http_response_code(400);
+        echo json_encode($errorResponse);
+
+        $logger->logError(
+            'Invalid JSON input: ' . json_last_error_msg(),
+            null,
+            400,
+            [
+                'additional_data' => [
+                    'raw_input' => substr($json_input, 0, 500) // Log first 500 chars
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Get parameters from JSON
+    $service_id = $data['service_id'] ?? null;
+    $service_name = $data['service_name'] ?? null;
+    $name_of_service_in_english = $data['name_of_service_in_english'] ?? null;
+
+    // Define required fields
+    $required_fields = [
+        'service_id' => $service_id,
+        'service_name' => $service_name,
+        'name_of_service_in_english' => $name_of_service_in_english
+    ];
+
+    // Validate required parameters
+    $missing_fields = [];
+    foreach ($required_fields as $field_name => $field_value) {
+        if ($field_value === null || $field_value === '') {
+            $missing_fields[] = $field_name;
+        }
+    }
+
+    if (!empty($missing_fields)) {
+        $errorResponse = [
+            'error' => 'Missing required parameters: ' . implode(', ', $missing_fields),
+            'status' => 'error',
+            'required_fields' => array_keys($required_fields),
+            'missing_fields' => $missing_fields,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+
+        http_response_code(400);
+        echo json_encode($errorResponse);
+
+        // Log the validation error
+        $logger->logError(
+            'Missing required parameters: ' . implode(', ', $missing_fields),
+            null,
+            400,
+            [
+                'additional_data' => [
+                    'missing_fields' => $missing_fields,
+                    'provided_fields' => array_keys(array_filter($required_fields, function($v) { return $v !== null && $v !== ''; }))
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Validate service_id is numeric
+    if (!is_numeric($service_id) || $service_id <= 0) {
+        $errorResponse = [
+            'error' => 'Invalid service_id: must be a positive integer',
+            'status' => 'error',
+            'service_id' => $service_id,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+
+        http_response_code(400);
+        echo json_encode($errorResponse);
+
+        $logger->logError(
+            'Invalid service_id format: ' . $service_id,
+            null,
+            400,
+            [
+                'additional_data' => [
+                    'invalid_service_id' => $service_id
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Verify that service exists and service_name matches
+    $stmt = $pdo->prepare("
+        SELECT unic_id, name_of_service, name_of_service_in_english, id_specialist, id_work_place, id_organisation, deleted, suspended
+        FROM services
+        WHERE unic_id = ?
+    ");
+    $stmt->execute([$service_id]);
+    $service = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$service) {
+        $errorResponse = [
+            'error' => 'Service not found',
+            'status' => 'error',
+            'service_id' => $service_id,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+
+        http_response_code(404);
+        echo json_encode($errorResponse);
+
+        // Log the error
+        $logger->logError(
+            "Service not found: {$service_id}",
+            null,
+            404,
+            [
+                'additional_data' => [
+                    'requested_service_id' => $service_id
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Check if service is deleted or suspended
+    if ($service['deleted'] == 1 || $service['suspended'] == 1) {
+        $errorResponse = [
+            'error' => 'Service is deleted or suspended and cannot be updated',
+            'status' => 'error',
+            'service_id' => $service_id,
+            'is_deleted' => $service['deleted'] == 1,
+            'is_suspended' => $service['suspended'] == 1,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+
+        http_response_code(400);
+        echo json_encode($errorResponse);
+
+        $logger->logError(
+            "Attempted to update deleted/suspended service: {$service_id}",
+            null,
+            400,
+            [
+                'additional_data' => [
+                    'service_id' => $service_id,
+                    'deleted' => $service['deleted'],
+                    'suspended' => $service['suspended']
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Validate that service_name matches the database
+    if ($service['name_of_service'] !== $service_name) {
+        $errorResponse = [
+            'error' => 'Service name mismatch: provided service_name does not match database record',
+            'status' => 'error',
+            'service_id' => $service_id,
+            'provided_service_name' => $service_name,
+            'actual_service_name' => $service['name_of_service'],
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+
+        http_response_code(400);
+        echo json_encode($errorResponse);
+
+        $logger->logError(
+            "Service name mismatch for service {$service_id}",
+            null,
+            400,
+            [
+                'additional_data' => [
+                    'service_id' => $service_id,
+                    'provided_name' => $service_name,
+                    'actual_name' => $service['name_of_service']
+                ]
+            ]
+        );
+        exit();
+    }
+
+    // Store old value for logging
+    $old_english_name = $service['name_of_service_in_english'];
+
+    // Update the service English name
+    $stmt = $pdo->prepare("
+        UPDATE services
+        SET name_of_service_in_english = ?
+        WHERE unic_id = ?
+    ");
+
+    $update_success = $stmt->execute([$name_of_service_in_english, $service_id]);
+
+    if (!$update_success) {
+        throw new Exception('Failed to update service name in database');
+    }
+
+    // Check if any rows were affected
+    $rows_affected = $stmt->rowCount();
+
+    // Build success response
+    $response = [
+        'status' => 'success',
+        'message' => 'Service English name updated successfully',
+        'service_details' => [
+            'service_id' => $service_id,
+            'name_of_service' => $service['name_of_service'],
+            'name_of_service_in_english' => $name_of_service_in_english,
+            'previous_english_name' => $old_english_name ?? 'not set',
+            'specialist_id' => $service['id_specialist'],
+            'working_point_id' => $service['id_work_place'],
+            'organisation_id' => $service['id_organisation']
+        ],
+        'rows_affected' => $rows_affected,
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+
+    // Log successful update
+    $logger->logSuccess($response, null, [
+        'service_id' => $service_id,
+        'specialist_id' => $service['id_specialist'],
+        'working_point_id' => $service['id_work_place'],
+        'organisation_id' => $service['id_organisation'],
+        'additional_data' => [
+            'service_name' => $service['name_of_service'],
+            'old_english_name' => $old_english_name,
+            'new_english_name' => $name_of_service_in_english,
+            'rows_affected' => $rows_affected
+        ]
+    ]);
+
+    // Return success response
+    http_response_code(200);
+    echo json_encode($response);
+
+} catch (PDOException $e) {
+    // Database error
+    $errorResponse = [
+        'error' => 'Database error occurred while updating service name',
+        'status' => 'error',
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+
+    http_response_code(500);
+    echo json_encode($errorResponse);
+
+    // Log the database error
+    $logger->logError(
+        'Database error during service name update: ' . $e->getMessage(),
+        $e->getTraceAsString(),
+        500,
+        [
+            'service_id' => $service_id ?? null,
+            'additional_data' => [
+                'error_code' => $e->getCode(),
+                'sql_state' => $e->errorInfo[0] ?? null
+            ]
+        ]
+    );
+
+} catch (Exception $e) {
+    // General error
+    $errorResponse = [
+        'error' => 'An unexpected error occurred while updating service name',
+        'status' => 'error',
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+
+    http_response_code(500);
+    echo json_encode($errorResponse);
+
+    // Log the general error
+    $logger->logError(
+        'Unexpected error during service name update: ' . $e->getMessage(),
+        $e->getTraceAsString(),
+        500,
+        [
+            'service_id' => $service_id ?? null,
+            'additional_data' => [
+                'error_type' => get_class($e)
+            ]
+        ]
+    );
+}
+?>

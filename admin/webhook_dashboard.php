@@ -14,7 +14,12 @@ function parseWebhookDocumentation($filePath) {
         'examples' => []
     ];
 
-    if (preg_match('/^#\s+(.+)$/m', $content, $matches)) $info['title'] = trim($matches[1]);
+    if (preg_match('/^#\s+(.+)$/m', $content, $matches)) {
+        $title = trim($matches[1]);
+        // Clean up common suffixes
+        $title = preg_replace('/\s+(Webhook\s+Documentation|Documentation|Webhook)$/i', '', $title);
+        $info['title'] = $title;
+    }
 
     $sections = preg_split('/^##\s+/m', $content, -1, PREG_SPLIT_NO_EMPTY);
 
@@ -69,29 +74,19 @@ function getWebhookFiles() {
             if ($fileInfo['extension'] === 'php') {
                 // This is a webhook implementation
                 $webhookName = $fileInfo['filename'];
-                
+
                 if (!isset($webhooks[$webhookName])) {
                     $webhooks[$webhookName] = [];
                 }
-                
+
                 $webhooks[$webhookName]['implementation'] = $file;
-                
+
                 // Look for corresponding documentation
-                $docFile = $webhookName . '_documentation.md';
+                $docFile = $webhookName . '.md';
                 if (file_exists($webhooksDir . $docFile)) {
                     $webhooks[$webhookName]['documentation'] = $docFile;
                     $webhooks[$webhookName]['parsed_doc'] = parseWebhookDocumentation($webhooksDir . $docFile);
                 }
-            } elseif ($fileInfo['extension'] === 'md' && strpos($file, '_documentation') !== false) {
-                // This is documentation, check if we already have the webhook
-                $webhookName = str_replace('_documentation.md', '', $file);
-                
-                if (!isset($webhooks[$webhookName])) {
-                    $webhooks[$webhookName] = [];
-                }
-                
-                $webhooks[$webhookName]['documentation'] = $file;
-                $webhooks[$webhookName]['parsed_doc'] = parseWebhookDocumentation($filePath);
             }
         }
     }

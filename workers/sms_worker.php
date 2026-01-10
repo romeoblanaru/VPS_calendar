@@ -88,29 +88,31 @@ function getSMSSettings($pdo, $workpoint_id, $action) {
 
 // Process template variables
 function processTemplate($template, $booking_data, $pdo) {
-    // Get additional data for template variables
+    // Get additional data for template variables including SMS routing fields
     $stmt = $pdo->prepare("
-        SELECT 
+        SELECT
             wp.name_of_the_place as workpoint_name,
             wp.address as workpoint_address,
             wp.workplace_phone_nr as workpoint_phone,
             wp.booking_phone_nr as booking_phone,
+            wp.booking_sms_number as sms_phone,
             s.name as specialist_name,
             sv.name_of_service as service_name,
-            o.alias_name as organisation_alias
+            o.alias_name as organisation_alias,
+            o.oficial_company_name as organisation_name
         FROM working_points wp
         LEFT JOIN specialists s ON s.unic_id = ?
         LEFT JOIN services sv ON sv.unic_id = ?
         LEFT JOIN organisations o ON o.unic_id = s.organisation_id
         WHERE wp.unic_id = ?
     ");
-    
+
     $stmt->execute([
         $booking_data['id_specialist'],
         $booking_data['service_id'],
         $booking_data['id_work_place']
     ]);
-    
+
     $extra_data = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Format dates
@@ -136,12 +138,20 @@ function processTemplate($template, $booking_data, $pdo) {
     ];
     
     $message = str_replace(array_keys($replacements), array_values($replacements), $template);
-    
-    return ['message' => $message, 'sender_phone' => $extra_data['booking_phone'] ?? $extra_data['workpoint_phone'] ?? '+447768261021'];
+
+    // Return message with routing information
+    return [
+        'message' => $message,
+        'sender_phone' => $extra_data['booking_phone'] ?? $extra_data['workpoint_phone'] ?? '+447768261021',
+        'sms_phone_number' => $extra_data['sms_phone'] ?? null,
+        'booking_phone_number' => $extra_data['booking_phone'] ?? null,
+        'workpoint_name' => $extra_data['workpoint_name'] ?? null,
+        'organisation_name' => $extra_data['organisation_name'] ?? null
+    ];
 }
 
-// Send SMS via API
-function sendSMS($to, $from, $message) {
+// Send SMS via API (with shared gateway support)
+function sendSMS($to, $from, $message, $sms_phone_number = null, $booking_phone_number = null, $workpoint_name = null, $organisation_name = null) {
     // Phone numbers are already cleaned when inserted into database
 
     $smsApiUrl = 'http://localhost:8088/api/send-sms';
@@ -150,6 +160,20 @@ function sendSMS($to, $from, $message) {
         'message' => $message,
         'from' => $from
     ];
+
+    // Add routing fields for shared gateway support
+    if ($sms_phone_number) {
+        $smsData['sms_phone_number'] = $sms_phone_number;
+    }
+    if ($booking_phone_number) {
+        $smsData['booking_phone_number'] = $booking_phone_number;
+    }
+    if ($workpoint_name) {
+        $smsData['workpoint_name'] = $workpoint_name;
+    }
+    if ($organisation_name) {
+        $smsData['organisation_name'] = $organisation_name;
+    }
 
     $ch = curl_init($smsApiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -244,16 +268,35 @@ function processQueueItem($pdo, $item) {
     
     // Process template and send SMS
     $template_data = processTemplate($settings['setting_value'], $booking_data, $pdo);
-    
+
+    // Determine SMS mode
+    $sms_mode = $template_data['sms_phone_number'] ? 'shared_gateway' : 'dedicated_pi';
+
     // Log SMS details before sending
     logMessage("================================================================================");
     logMessage("Preparing SMS for booking {$booking_data['unic_id']} - Action: {$item['action']}");
     logMessage("  To: {$booking_data['client_phone_nr']}");
     logMessage("  From: {$template_data['sender_phone']}");
+    if ($sms_mode === 'shared_gateway') {
+        logMessage("  Mode: Shared SMS Gateway");
+        logMessage("  SMS Gateway: {$template_data['sms_phone_number']}");
+        logMessage("  Booking Phone: {$template_data['booking_phone_number']}");
+        logMessage("  Workpoint: {$template_data['workpoint_name']}");
+    } else {
+        logMessage("  Mode: Dedicated Pi Gateway");
+    }
     logMessage("  Message: " . substr($template_data['message'], 0, 100) . (strlen($template_data['message']) > 100 ? '...' : ''));
     logMessage("  API Endpoint: http://localhost:8088/api/send-sms");
 
-    $sms_result = sendSMS($booking_data['client_phone_nr'], $template_data['sender_phone'], $template_data['message']);
+    $sms_result = sendSMS(
+        $booking_data['client_phone_nr'],
+        $template_data['sender_phone'],
+        $template_data['message'],
+        $template_data['sms_phone_number'],
+        $template_data['booking_phone_number'],
+        $template_data['workpoint_name'],
+        $template_data['organisation_name']
+    );
 
     if ($sms_result['success']) {
         logMessage("✓ SMS sent successfully for booking {$booking_data['unic_id']}");

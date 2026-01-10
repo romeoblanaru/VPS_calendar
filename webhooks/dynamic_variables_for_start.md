@@ -4,6 +4,8 @@
 
 The `dynamic_variables_for_start` webhook is designed to provide dynamic variables to Telnyx for usage at the introductory stage of the answering process. It accepts a phone number and returns the associated place name, address, and organization alias for use in call flows.
 
+**IMPORTANT**: This webhook returns successful response **only if** the assigned phone number is **unique** in the database when matching the `booking_phone_nr`. If multiple working points share the same phone number, the webhook will return an error (HTTP 409 Conflict) listing all conflicting working points to prevent ambiguous results.
+
 ## Phone Number Matching
 
 The webhook uses a configurable phone number matching system that matches the last N digits of phone numbers, regardless of country code or formatting. This allows the webhook to work with phone numbers in various formats:
@@ -18,7 +20,7 @@ The webhook uses a configurable phone number matching system that matches the la
 At the top of the webhook file, you can configure the number of digits to match:
 
 ```php
-$PHONE_MATCH_DIGITS = 8;  // Change to 9 or 10 as needed
+$PHONE_MATCH_DIGITS = 9;  // Change to 8 or 10 as needed
 ```
 
 ### Matching Logic
@@ -27,10 +29,10 @@ $PHONE_MATCH_DIGITS = 8;  // Change to 9 or 10 as needed
 2. **Extract last N digits**: Take the last `$PHONE_MATCH_DIGITS` digits
 3. **Match against database**: Compare with the last N digits of stored phone numbers
 
-**Example**: If `$PHONE_MATCH_DIGITS = 8`:
-- Input: `+123456789` → Cleaned: `123456789` → Matched: `23456789`
-- Input: `+44 1234 56789` → Cleaned: `44123456789` → Matched: `12345678`
-- Database: `+123456789` → Cleaned: `123456789` → Matched: `23456789`
+**Example**: If `$PHONE_MATCH_DIGITS = 9`:
+- Input: `+123456789` → Cleaned: `123456789` → Matched: `123456789`
+- Input: `+44 1234 56789` → Cleaned: `44123456789` → Matched: `123456789`
+- Database: `+123456789` → Cleaned: `123456789` → Matched: `123456789`
 
 ## Endpoint
 
@@ -104,7 +106,7 @@ curl "http://your-domain.com/webhooks/dynamic_variables_for_start.php?assigned_p
 curl "http://your-domain.com/webhooks/dynamic_variables_for_start.php?assigned_phone_nr=%2B44%201234%2056789"
 ```
 
-All these formats will match the same working point if the last 8 digits match.
+All these formats will match the same working point if the last 9 digits match.
 
 ### POST Request Example
 
@@ -165,9 +167,38 @@ curl "http://your-domain.com/webhooks/dynamic_variables_for_start.php?assigned_p
 **Response:**
 ```json
 {
-    "error": "No working point found for phone number: +999999999 (matched last 8 digits: 99999999)",
+    "error": "No working point found for phone number: +999999999 (matched last 9 digits: 999999999)",
     "status": "error",
     "timestamp": "2025-01-15 14:30:25"
+}
+```
+
+#### Multiple Working Points with Same Phone Number (409 Conflict)
+```bash
+curl "http://your-domain.com/webhooks/dynamic_variables_for_start.php?assigned_phone_nr=+123456789"
+```
+
+**Response:**
+```json
+{
+    "error": "Multiple working points using the same booking_phone_nr: [1][Central Branch], [5][North Branch]",
+    "status": "error",
+    "timestamp": "2025-01-15 14:30:25",
+    "duplicate_count": 2,
+    "working_points": [
+        {
+            "working_point_id": 1,
+            "name_of_the_place": "Central Branch",
+            "organisation_id": 10,
+            "alias_name": "Company A"
+        },
+        {
+            "working_point_id": 5,
+            "name_of_the_place": "North Branch",
+            "organisation_id": 15,
+            "alias_name": "Company B"
+        }
+    ]
 }
 ```
 
@@ -208,6 +239,30 @@ curl "http://your-domain.com/webhooks/dynamic_variables_for_start.php?assigned_p
 }
 ```
 
+#### Multiple Working Points (409 Conflict)
+```json
+{
+    "error": "Multiple working points using the same booking_phone_nr: [1][Central Branch], [5][North Branch]",
+    "status": "error",
+    "timestamp": "2025-01-15 14:30:25",
+    "duplicate_count": 2,
+    "working_points": [
+        {
+            "working_point_id": 1,
+            "name_of_the_place": "Central Branch",
+            "organisation_id": 10,
+            "alias_name": "Company A"
+        },
+        {
+            "working_point_id": 5,
+            "name_of_the_place": "North Branch",
+            "organisation_id": 15,
+            "alias_name": "Company B"
+        }
+    ]
+}
+```
+
 #### Server Error (500 Internal Server Error)
 ```json
 {
@@ -236,9 +291,20 @@ The webhook queries the following database tables:
 
 1. **Input Validation**: Validates that `assigned_phone_nr` parameter is provided
 2. **Database Query**: Joins `working_points` and `organisations` tables to find matching records
-3. **Data Extraction**: Extracts `name_of_the_place`, `address`, and `alias_name` from the result
-4. **Response Building**: Constructs JSON response with dynamic variables
-5. **Logging**: Logs all requests and responses using WebhookLogger
+3. **Duplicate Detection**: Checks if multiple working points share the same phone number
+4. **Data Extraction**: Extracts `name_of_the_place`, `address`, and `alias_name` from the result
+5. **Response Building**: Constructs JSON response with dynamic variables
+6. **Logging**: Logs all requests and responses using WebhookLogger
+
+### Duplicate Phone Number Handling
+
+If multiple working points share the same `booking_phone_nr`:
+- Returns HTTP 409 (Conflict) status code
+- Error message lists all conflicting working points in format: `[id][name_of_the_place]`
+- Provides structured `working_points` array with full details of each duplicate
+- Logs the conflict with all working point IDs for administrative review
+
+This prevents ambiguous responses and alerts administrators to configuration issues that need resolution.
 
 ## Usage in Telnyx
 
@@ -272,8 +338,8 @@ The webhook uses the WebhookLogger class to track:
     "related_organisation_id": 1,
     "additional_data": {
         "phone_number_provided": "+123456789",
-        "phone_suffix_matched": "23456789",
-        "match_digits_used": 8,
+        "phone_suffix_matched": "123456789",
+        "match_digits_used": 9,
         "place_name": "Central Branch",
         "place_address": "Main St 1, City",
         "organisation_alias": "BeautyCo"
@@ -331,6 +397,10 @@ The webhook uses the WebhookLogger class to track:
 4. **Empty Parameter**
    - Input: `assigned_phone_nr=`
    - Expected: 400 Bad Request
+
+5. **Duplicate Phone Numbers**
+   - Input: `assigned_phone_nr=+123456789` (where multiple working points share this number)
+   - Expected: 409 Conflict with list of all matching working points
 
 ### Test Commands
 
