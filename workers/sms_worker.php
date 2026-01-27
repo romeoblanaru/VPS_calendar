@@ -142,7 +142,7 @@ function processTemplate($template, $booking_data, $pdo) {
     // Return message with routing information
     return [
         'message' => $message,
-        'sender_phone' => $extra_data['booking_phone'] ?? $extra_data['workpoint_phone'] ?? '+447768261021',
+        'sender_phone' => $extra_data['sms_phone'] ?? $extra_data['booking_phone'] ?? $extra_data['workpoint_phone'] ?? '+447768261021',
         'sms_phone_number' => $extra_data['sms_phone'] ?? null,
         'booking_phone_number' => $extra_data['booking_phone'] ?? null,
         'workpoint_name' => $extra_data['workpoint_name'] ?? null,
@@ -154,7 +154,7 @@ function processTemplate($template, $booking_data, $pdo) {
 function sendSMS($to, $from, $message, $sms_phone_number = null, $booking_phone_number = null, $workpoint_name = null, $organisation_name = null) {
     // Phone numbers are already cleaned when inserted into database
 
-    $smsApiUrl = 'http://localhost:8088/api/send-sms';
+    $smsApiUrl = 'http://my-bookings.co.uk:8088/api/send-sms';
     $smsData = [
         'to' => $to,
         'message' => $message,
@@ -286,7 +286,7 @@ function processQueueItem($pdo, $item) {
         logMessage("  Mode: Dedicated Pi Gateway");
     }
     logMessage("  Message: " . substr($template_data['message'], 0, 100) . (strlen($template_data['message']) > 100 ? '...' : ''));
-    logMessage("  API Endpoint: http://localhost:8088/api/send-sms");
+    logMessage("  API Endpoint: http://my-bookings.co.uk:8088/api/send-sms");
 
     $sms_result = sendSMS(
         $booking_data['client_phone_nr'],

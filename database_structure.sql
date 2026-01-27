@@ -38,8 +38,17 @@ CREATE TABLE `booking` (
   `client_transcript_conversation` mediumtext COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`unic_id`),
   KEY `idx_google_event_id` (`google_event_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=367 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=389 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booking`
+--
+
+LOCK TABLES `booking` WRITE;
+/*!40000 ALTER TABLE `booking` DISABLE KEYS */;
+/*!40000 ALTER TABLE `booking` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -509,6 +518,15 @@ CREATE TABLE `booking_canceled` (
   KEY `idx_booking_canceled_google_event_id` (`google_event_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Backup table for cancelled bookings with cancellation tracking';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booking_canceled`
+--
+
+LOCK TABLES `booking_canceled` WRITE;
+/*!40000 ALTER TABLE `booking_canceled` DISABLE KEYS */;
+/*!40000 ALTER TABLE `booking_canceled` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -609,6 +627,15 @@ CREATE TABLE `booking_changes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `booking_changes`
+--
+
+LOCK TABLES `booking_changes` WRITE;
+/*!40000 ALTER TABLE `booking_changes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `booking_changes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `booking_event_queue`
 --
 
@@ -625,8 +652,17 @@ CREATE TABLE `booking_event_queue` (
   `processed` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_processed` (`processed`,`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=370 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=392 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booking_event_queue`
+--
+
+LOCK TABLES `booking_event_queue` WRITE;
+/*!40000 ALTER TABLE `booking_event_queue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `booking_event_queue` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `booking_sms_queue`
@@ -649,8 +685,17 @@ CREATE TABLE `booking_sms_queue` (
   PRIMARY KEY (`id`),
   KEY `idx_status` (`status`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=255 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=277 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booking_sms_queue`
+--
+
+LOCK TABLES `booking_sms_queue` WRITE;
+/*!40000 ALTER TABLE `booking_sms_queue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `booking_sms_queue` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `client_last_check`
@@ -670,6 +715,15 @@ CREATE TABLE `client_last_check` (
   KEY `idx_workpoint_check` (`workpoint_id`,`last_check_timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `client_last_check`
+--
+
+LOCK TABLES `client_last_check` WRITE;
+/*!40000 ALTER TABLE `client_last_check` DISABLE KEYS */;
+/*!40000 ALTER TABLE `client_last_check` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `conversation_memory`
@@ -697,8 +751,17 @@ CREATE TABLE `conversation_memory` (
   KEY `idx_workplace` (`worplace_id`),
   KEY `idx_finalized_action` (`finalized_action`),
   KEY `idx_source` (`source`)
-) ENGINE=InnoDB AUTO_INCREMENT=349 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores conversation memory with client details and workplace information';
+) ENGINE=InnoDB AUTO_INCREMENT=424 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores conversation memory with client details and workplace information';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `conversation_memory`
+--
+
+LOCK TABLES `conversation_memory` WRITE;
+/*!40000 ALTER TABLE `conversation_memory` DISABLE KEYS */;
+/*!40000 ALTER TABLE `conversation_memory` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `gcal_worker_signals`
@@ -719,8 +782,17 @@ CREATE TABLE `gcal_worker_signals` (
   KEY `idx_processed_created` (`processed`,`created_at`),
   KEY `idx_specialist` (`specialist_id`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `gcal_worker_signals`
+--
+
+LOCK TABLES `gcal_worker_signals` WRITE;
+/*!40000 ALTER TABLE `gcal_worker_signals` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gcal_worker_signals` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `google_calendar_credentials`
@@ -751,6 +823,15 @@ CREATE TABLE `google_calendar_credentials` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `google_calendar_credentials`
+--
+
+LOCK TABLES `google_calendar_credentials` WRITE;
+/*!40000 ALTER TABLE `google_calendar_credentials` DISABLE KEYS */;
+/*!40000 ALTER TABLE `google_calendar_credentials` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `google_calendar_sync_queue`
 --
 
@@ -775,8 +856,17 @@ CREATE TABLE `google_calendar_sync_queue` (
   KEY `idx_queue_specialist` (`specialist_id`),
   KEY `idx_queue_booking` (`booking_id`),
   CONSTRAINT `google_calendar_sync_queue_chk_1` CHECK (json_valid(`payload`))
-) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `google_calendar_sync_queue`
+--
+
+LOCK TABLES `google_calendar_sync_queue` WRITE;
+/*!40000 ALTER TABLE `google_calendar_sync_queue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `google_calendar_sync_queue` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `ip_address`
@@ -796,8 +886,17 @@ CREATE TABLE `ip_address` (
   UNIQUE KEY `ip_address` (`ip_address`),
   KEY `phone_number` (`phone_number`),
   KEY `date_of_insertion` (`date_of_insertion`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores client VPN configurations with IP addresses and private keys';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Stores client VPN configurations with IP addresses and private keys';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ip_address`
+--
+
+LOCK TABLES `ip_address` WRITE;
+/*!40000 ALTER TABLE `ip_address` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ip_address` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `logs`
@@ -818,6 +917,41 @@ CREATE TABLE `logs` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `logs`
+--
+
+LOCK TABLES `logs` WRITE;
+/*!40000 ALTER TABLE `logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `macro_droid_sms`
+--
+
+DROP TABLE IF EXISTS `macro_droid_sms`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `macro_droid_sms` (
+  `idd` int NOT NULL AUTO_INCREMENT,
+  `workpoint_id` int NOT NULL,
+  `workpoint_name` varchar(255) NOT NULL,
+  `sms_phone_nr` varchar(20) NOT NULL,
+  `droid_link` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  PRIMARY KEY (`idd`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `macro_droid_sms`
+--
+
+LOCK TABLES `macro_droid_sms` WRITE;
+/*!40000 ALTER TABLE `macro_droid_sms` DISABLE KEYS */;
+/*!40000 ALTER TABLE `macro_droid_sms` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `organisations`
@@ -844,6 +978,15 @@ CREATE TABLE `organisations` (
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `organisations`
+--
+
+LOCK TABLES `organisations` WRITE;
+/*!40000 ALTER TABLE `organisations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `organisations` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `services`
@@ -874,6 +1017,15 @@ CREATE TABLE `services` (
   KEY `idx_name_english_price_normalized` (`name_english_normalized`,`price_of_service`)
 ) ENGINE=InnoDB AUTO_INCREMENT=190 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `services`
+--
+
+LOCK TABLES `services` WRITE;
+/*!40000 ALTER TABLE `services` DISABLE KEYS */;
+/*!40000 ALTER TABLE `services` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -927,11 +1079,19 @@ CREATE TABLE `specialist_time_off` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_specialist_date` (`specialist_id`,`date_off`),
   KEY `idx_specialist_id` (`specialist_id`),
   KEY `idx_date_off` (`date_off`)
-) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `specialist_time_off`
+--
+
+LOCK TABLES `specialist_time_off` WRITE;
+/*!40000 ALTER TABLE `specialist_time_off` DISABLE KEYS */;
+/*!40000 ALTER TABLE `specialist_time_off` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `specialists`
@@ -954,6 +1114,15 @@ CREATE TABLE `specialists` (
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `specialists`
+--
+
+LOCK TABLES `specialists` WRITE;
+/*!40000 ALTER TABLE `specialists` DISABLE KEYS */;
+/*!40000 ALTER TABLE `specialists` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `specialists_setting_and_attr`
@@ -983,6 +1152,15 @@ CREATE TABLE `specialists_setting_and_attr` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `specialists_setting_and_attr`
+--
+
+LOCK TABLES `specialists_setting_and_attr` WRITE;
+/*!40000 ALTER TABLE `specialists_setting_and_attr` DISABLE KEYS */;
+/*!40000 ALTER TABLE `specialists_setting_and_attr` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `super_users`
 --
 
@@ -1000,6 +1178,15 @@ CREATE TABLE `super_users` (
   PRIMARY KEY (`unic_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `super_users`
+--
+
+LOCK TABLES `super_users` WRITE;
+/*!40000 ALTER TABLE `super_users` DISABLE KEYS */;
+/*!40000 ALTER TABLE `super_users` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `voice_config`
@@ -1031,6 +1218,15 @@ CREATE TABLE `voice_config` (
   KEY `idx_workpoint_active` (`workpoint_id`,`is_active`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `voice_config`
+--
+
+LOCK TABLES `voice_config` WRITE;
+/*!40000 ALTER TABLE `voice_config` DISABLE KEYS */;
+/*!40000 ALTER TABLE `voice_config` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `webhook_logs`
@@ -1074,8 +1270,17 @@ CREATE TABLE `webhook_logs` (
   KEY `idx_related_working_point_id` (`related_working_point_id`),
   KEY `idx_webhook_logs_composite` (`webhook_name`,`created_at`,`is_successful`),
   KEY `idx_webhook_logs_date_range` (`created_at`,`is_successful`)
-) ENGINE=InnoDB AUTO_INCREMENT=38429 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs of all webhook calls to the system';
+) ENGINE=InnoDB AUTO_INCREMENT=44518 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs of all webhook calls to the system';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `webhook_logs`
+--
+
+LOCK TABLES `webhook_logs` WRITE;
+/*!40000 ALTER TABLE `webhook_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `webhook_logs` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `working_points`
@@ -1111,6 +1316,15 @@ CREATE TABLE `working_points` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `working_points`
+--
+
+LOCK TABLES `working_points` WRITE;
+/*!40000 ALTER TABLE `working_points` DISABLE KEYS */;
+/*!40000 ALTER TABLE `working_points` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `working_program`
 --
 
@@ -1130,8 +1344,17 @@ CREATE TABLE `working_program` (
   `shift3_start` time DEFAULT NULL,
   `shift3_end` time DEFAULT NULL,
   PRIMARY KEY (`unic_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=848 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=866 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `working_program`
+--
+
+LOCK TABLES `working_program` WRITE;
+/*!40000 ALTER TABLE `working_program` DISABLE KEYS */;
+/*!40000 ALTER TABLE `working_program` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `workingpoint_settings_and_attr`
@@ -1153,8 +1376,50 @@ CREATE TABLE `workingpoint_settings_and_attr` (
   UNIQUE KEY `unique_workpoint_setting` (`working_point_id`,`setting_key`),
   KEY `idx_working_point_id` (`working_point_id`),
   KEY `idx_setting_key` (`setting_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `workingpoint_settings_and_attr`
+--
+
+LOCK TABLES `workingpoint_settings_and_attr` WRITE;
+/*!40000 ALTER TABLE `workingpoint_settings_and_attr` DISABLE KEYS */;
+/*!40000 ALTER TABLE `workingpoint_settings_and_attr` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `workingpoint_time_off`
+--
+
+DROP TABLE IF EXISTS `workingpoint_time_off`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `workingpoint_time_off` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `workingpoint_id` int NOT NULL,
+  `date_off` date NOT NULL,
+  `start_time` time NOT NULL DEFAULT '00:01:00',
+  `end_time` time NOT NULL DEFAULT '23:59:00',
+  `is_recurring` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1=recurring yearly (e.g. Christmas), 0=one-time closure',
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Holiday name or reason (e.g. Christmas Day, Emergency Closure)',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_workingpoint_id` (`workingpoint_id`),
+  KEY `idx_date_off` (`date_off`),
+  KEY `idx_is_recurring` (`is_recurring`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `workingpoint_time_off`
+--
+
+LOCK TABLES `workingpoint_time_off` WRITE;
+/*!40000 ALTER TABLE `workingpoint_time_off` DISABLE KEYS */;
+/*!40000 ALTER TABLE `workingpoint_time_off` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `workpoint_social_media`
@@ -1188,6 +1453,19 @@ CREATE TABLE `workpoint_social_media` (
   KEY `idx_is_active` (`is_active`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WhatsApp and Facebook Messenger credentials for each workpoint';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `workpoint_social_media`
+--
+
+LOCK TABLES `workpoint_social_media` WRITE;
+/*!40000 ALTER TABLE `workpoint_social_media` DISABLE KEYS */;
+/*!40000 ALTER TABLE `workpoint_social_media` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping events for database 'nuuitasi_calendar4'
+--
 
 --
 -- Dumping routines for database 'nuuitasi_calendar4'
@@ -1451,4 +1729,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-31 13:22:02
+-- Dump completed on 2026-01-27 20:07:44
