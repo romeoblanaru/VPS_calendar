@@ -1,0 +1,13 @@
+
+# Bot Monitoring Jobs (added by setup script)
+# Check bot health every 5 minutes and restart if needed
+*/5 * * * * cd /srv/project_1/bot_1 && ./monitor.sh >/dev/null 2>&1
+
+# Check for errors every 3 minutes and send alerts
+*/3 * * * * cd /srv/project_1/bot_1 && ./error-monitor.sh >/dev/null 2>&1
+
+# Memory monitoring every 10 minutes
+*/10 * * * * cd /srv/project_1/bot_1 && ./memory-monitor.sh >/dev/null 2>&1
+
+*/5 * * * * /srv/project_1/calendar/workers/nchan_health_check.sh >/dev/null 2>&1
+*/5 * * * * cd /srv/project_1/bot_1 && ./translate-monitor.sh >/dev/null 2>&1
