@@ -139,12 +139,29 @@ function processTemplate($template, $booking_data, $pdo) {
     
     $message = str_replace(array_keys($replacements), array_values($replacements), $template);
 
+    // Helper function to validate phone numbers (treat '0', '00', and short numbers as invalid)
+    $validatePhone = function($phone) {
+        if (!$phone) return null;
+        // Remove all non-digit characters to check length
+        $digitsOnly = preg_replace('/\D/', '', $phone);
+        // If it's just '0', '00', or has less than 10 digits, treat as null
+        if ($digitsOnly === '0' || $digitsOnly === '00' || strlen($digitsOnly) < 10) {
+            return null;
+        }
+        return $phone;
+    };
+
+    // Validate each phone number, treating '0' and '00' as null
+    $validated_sms_phone = $validatePhone($extra_data['sms_phone'] ?? null);
+    $validated_booking_phone = $validatePhone($extra_data['booking_phone'] ?? null);
+    $validated_workpoint_phone = $validatePhone($extra_data['workpoint_phone'] ?? null);
+
     // Return message with routing information
     return [
         'message' => $message,
-        'sender_phone' => $extra_data['sms_phone'] ?? $extra_data['booking_phone'] ?? $extra_data['workpoint_phone'] ?? '+447768261021',
-        'sms_phone_number' => $extra_data['sms_phone'] ?? null,
-        'booking_phone_number' => $extra_data['booking_phone'] ?? null,
+        'sender_phone' => $validated_sms_phone ?? $validated_booking_phone ?? $validated_workpoint_phone ?? '+447768261021',
+        'sms_phone_number' => $validated_sms_phone,
+        'booking_phone_number' => $validated_booking_phone,
         'workpoint_name' => $extra_data['workpoint_name'] ?? null,
         'organisation_name' => $extra_data['organisation_name'] ?? null
     ];

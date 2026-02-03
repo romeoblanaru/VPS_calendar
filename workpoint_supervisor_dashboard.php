@@ -226,7 +226,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'workpoint_stats') {
                                 <div class="card-body d-flex flex-column">
                                     <h6 class="card-title"><i class="fas fa-calendar"></i> Calendar Management</h6>
                                     <p class="card-text flex-grow-1" style="font-size: 0.9rem;">Manage bookings and schedules for this workpoint.</p>
-                                    <a href="booking_view_page.php?working_point_user_id=<?= $_SESSION['workpoint_id'] ?>&supervisor_mode=true" class="btn btn-primary btn-sm">Go To Calendar</a>
+                                    <a href="booking_supervisor_view.php?working_point_user_id=<?= $_SESSION['workpoint_id'] ?>" class="btn btn-primary btn-sm">Go To Calendar</a>
                                 </div>
                             </div>
                         </div>

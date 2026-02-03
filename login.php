@@ -15,13 +15,13 @@ if (isset($_SESSION['user'])) {
     if  ($_SESSION['role'] == 'admin_user') {
         header("Location: admin/admin_dashboard.php");
     } elseif ($_SESSION['role'] == 'specialist_user') {
-        header("Location: booking_view_page.php?specialist_id=" . $_SESSION['specialist_id']);
+        header("Location: booking_specialist_view.php?specialist_id=" . $_SESSION['specialist_id']);
     } elseif ($_SESSION['role'] == 'organisation_user') {
         header("Location: organisation_dashboard.php");
     } elseif ($_SESSION['role'] == 'workpoint_user') {
         header("Location: workpoint_supervisor_dashboard.php");
     } else {
-        header("Location: booking_view_page.php");
+        header("Location: booking_specialist_view.php");
     }
     exit;
 }
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         $_SESSION['organisation_id'] = $user['organisation_id'];
         $_SESSION['login_attempts'] = 0;
         
-        header("Location: booking_view_page.php?specialist_id=" . $user['unic_id']);
+        header("Location: booking_specialist_view.php?specialist_id=" . $user['unic_id']);
         exit;
     }
 

@@ -7,7 +7,11 @@
 require_once 'includes/calendar_functions.php';
 
 // Check if this is supervisor mode
-$supervisor_mode = isset($_GET['supervisor_mode']) && $_GET['supervisor_mode'] === 'true';
+// Supervisor mode should already be set by the parent file
+// If not set, check the GET parameter (fallback)
+if (!isset($supervisor_mode)) {
+    $supervisor_mode = isset($_GET['supervisor_mode']) && $_GET['supervisor_mode'] === 'true';
+}
 
 if ($supervisor_mode) {
     // Supervisor mode - show all specialists in one monthly view

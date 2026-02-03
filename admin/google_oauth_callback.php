@@ -234,7 +234,7 @@ try {
              }
              
              echo "<div class='d-flex justify-content-between'>";
-             echo "<a href='../booking_view_page.php?specialist_id={$specialist_id}' class='btn btn-secondary'><i class='fas fa-arrow-left'></i> Cancel</a>";
+             echo "<a href='../booking_specialist_view.php?specialist_id={$specialist_id}' class='btn btn-secondary'><i class='fas fa-arrow-left'></i> Cancel</a>";
              echo "<button type='submit' class='btn btn-primary' id='submitBtn'><i class='fas fa-check'></i> Use Selected Calendar</button>";
              echo "</div></form></div></div></div></div></div>";
              
@@ -324,14 +324,14 @@ try {
         echo "✓ Credentials stored successfully for specialist: {$credential_row['specialist_name']}<br>";
         echo "✓ Calendar connected: {$selected_calendar['summary']}<br>";
         echo "<p>Redirecting back to booking page in 2 seconds...</p>";
-        echo "<p><a href='../booking_view_page.php?specialist_id={$specialist_id}&gcal_success=1' style='background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;'>Continue to Booking Page (Manual)</a></p>";
-        echo "<script>setTimeout(function(){ window.location.href = '../booking_view_page.php?specialist_id={$specialist_id}&gcal_success=1&refresh=1'; }, 2000);</script>";
+        echo "<p><a href='../booking_specialist_view.php?specialist_id={$specialist_id}&gcal_success=1' style='background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;'>Continue to Booking Page (Manual)</a></p>";
+        echo "<script>setTimeout(function(){ window.location.href = '../booking_specialist_view.php?specialist_id={$specialist_id}&gcal_success=1&refresh=1'; }, 2000);</script>";
         echo "</body></html>";
         exit;
     }
     
     // Redirect back to booking page with success message
-    $redirect_url = '../booking_view_page.php?specialist_id=' . $specialist_id . '&gcal_success=1&refresh=1';
+    $redirect_url = '../booking_specialist_view.php?specialist_id=' . $specialist_id . '&gcal_success=1&refresh=1';
     header('Location: ' . $redirect_url);
     exit;
     
@@ -343,14 +343,14 @@ try {
         echo "<div style='color: red; background: #ffe6e6; padding: 10px; border: 1px solid #ff0000;'>";
         echo "✗ OAuth Error: " . htmlspecialchars($e->getMessage()) . "<br>";
         echo "</div>";
-        echo "<p><a href='../booking_view_page.php" . (isset($specialist_id) ? "?specialist_id=$specialist_id" : "") . "'>Back to Booking Page</a></p>";
+        echo "<p><a href='../booking_specialist_view.php" . (isset($specialist_id) ? "?specialist_id=$specialist_id" : "") . "'>Back to Booking Page</a></p>";
         echo "</body></html>";
         exit;
     }
     
     // Redirect back with error message
     $error_msg = urlencode($e->getMessage());
-    $redirect_url = '../booking_view_page.php?gcal_error=' . $error_msg;
+    $redirect_url = '../booking_specialist_view.php?gcal_error=' . $error_msg;
     
     if (isset($specialist_id)) {
         $redirect_url .= '&specialist_id=' . $specialist_id;
