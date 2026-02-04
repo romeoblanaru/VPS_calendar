@@ -886,7 +886,7 @@ if (isset($workpoint_id)) {
                                 <li><a class="dropdown-item" href="#" onclick="openSMSConfirmationSetup(); return false;" style="font-size: 13px;">
                                     <i class="fas fa-sms" style="width: 20px; color: #1e88e5;"></i> SMS Confirmation Setup</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="openWorkpointHolidays(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays and Off Days</a></li>
+                                    <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays & Closures</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="openManageServices(); return false;" style="font-size: 13px;">
                                     <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
@@ -4017,6 +4017,81 @@ if (isset($workpoint_id)) {
             }
         };
 
+        // Workpoint Holidays & Closures - Lazy Loading
+        let workpointHolidaysLoaded = false;
+
+        // Get current workpoint ID from PHP
+        window.currentWorkpointId = <?= json_encode($workpoint_id ?? 0) ?>;
+        console.log('Initial workpoint ID from PHP:', window.currentWorkpointId); // Debug
+
+        // Lazy loading wrapper for Workpoint Holidays Modal
+        window.openWorkpointHolidays = function() {
+            // Use the workpoint ID from PHP
+            window.currentWorkpointId = <?= json_encode($workpoint_id ?? 0) ?>;
+            console.log('Workpoint ID when opening modal:', window.currentWorkpointId); // Debug
+
+            if (!workpointHolidaysLoaded) {
+                // Load the Workpoint Holidays script
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/workpoint-holidays.js?v=' + Date.now();
+                script.onload = function() {
+                    workpointHolidaysLoaded = true;
+                    // The script replaces openWorkpointHolidaysModal with the real function
+                    // Now call it
+                    if (typeof window.openWorkpointHolidaysModal === 'function') {
+                        window.openWorkpointHolidaysModal();
+                    }
+                };
+                script.onerror = function() {
+                    console.error('Failed to load Workpoint Holidays modal script');
+                    alert('Failed to load Workpoint Holidays functionality. Please try again.');
+                };
+                document.head.appendChild(script);
+            } else {
+                // Already loaded, the real function has replaced the wrapper
+                if (typeof window.openWorkpointHolidaysModal === 'function') {
+                    window.openWorkpointHolidaysModal();
+                }
+            }
+        };
+
+        // Alias for compatibility
+        window.openWorkpointHolidaysModal = window.openWorkpointHolidays;
+
+        // SMS Templates - Lazy Loading
+        let smsTemplatesLoaded = false;
+
+        // Lazy loading wrapper for SMS Templates Modal
+        window.openSMSConfirmationSetup = function() {
+            console.log('Opening SMS Templates with workpoint ID:', window.currentWorkpointId); // Debug
+
+            if (!smsTemplatesLoaded) {
+                // Load the SMS Templates script
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/sms-templates.js?v=' + Date.now();
+                script.onload = function() {
+                    smsTemplatesLoaded = true;
+                    // The script replaces manageSMSTemplate with the real function
+                    // Now call it
+                    if (typeof window.manageSMSTemplate === 'function') {
+                        window.manageSMSTemplate();
+                    }
+                };
+                script.onerror = function() {
+                    console.error('Failed to load SMS Templates modal script');
+                    alert('Failed to load SMS Templates functionality. Please try again.');
+                };
+                document.head.appendChild(script);
+            } else {
+                // Already loaded, the real function has replaced the wrapper
+                if (typeof window.manageSMSTemplate === 'function') {
+                    window.manageSMSTemplate();
+                }
+            }
+        };
+
+        // Alias for compatibility
+        window.manageSMSTemplate = window.openSMSConfirmationSetup;
 
         // Auto-save functions (window-scoped for external access)
         window.autoSaveAddFullDayOff = function(date) {
