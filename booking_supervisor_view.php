@@ -2998,817 +2998,277 @@ if (isset($workpoint_id)) {
         
 
         
-        // Add Specialist Modal Functions
+        // Add Specialist Modal - Lazy Loading
+        let addSpecialistModalLoaded = false;
+
+        // Lazy loading wrapper for Add Specialist Modal
         function openAddSpecialistModal(workpointId, organisationId) {
-            const modal = document.getElementById('addSpecialistModal');
-            if (!modal) {
-                return;
-            }
-            
-            modal.style.display = 'flex';
-            document.getElementById('workpointId').value = workpointId;
-            document.getElementById('organisationId').value = organisationId;
-            
-            // Set workpoint info if provided
-            if (workpointId) {
-                document.getElementById('workpointSelect').style.display = 'none';
-                document.getElementById('workpointLabel').style.display = 'none';
-                
-                // Get workpoint details
-                fetch('admin/get_working_point_details.php?workpoint_id=' + workpointId)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('workingScheduleTitle').textContent = '📋 Working Schedule at ' + data.workpoint.name_of_the_place + ' (' + data.workpoint.address + ')';
-                        }
-                    })
-                    .catch(error => {
-                        // Handle error silently
-                    });
-                
-                // Load available specialists for this organisation and workpoint
-                loadAvailableSpecialists(organisationId, workpointId);
+            if (!addSpecialistModalLoaded) {
+                // Load the Add Specialist script
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    addSpecialistModalLoaded = true;
+                    // Now call the real function
+                    if (typeof window.openAddSpecialistModal === 'function') {
+                        window.openAddSpecialistModal(workpointId, organisationId);
+                    }
+                };
+                script.onerror = function() {
+                    console.error('Failed to load Add Specialist modal script');
+                    alert('Failed to load Add Specialist functionality. Please try again.');
+                };
+                document.head.appendChild(script);
             } else {
-                document.getElementById('workpointSelect').style.display = 'block';
-                document.getElementById('workpointLabel').style.display = 'block';
-                document.getElementById('workpointLabel').textContent = 'Assign to Working Point *';
-                
-                // Load working points for this organisation
-                loadWorkingPointsForOrganisation(organisationId);
+                // Already loaded, call the real function
+                if (typeof window.openAddSpecialistModalReal === 'function') {
+                    window.openAddSpecialistModalReal(workpointId, organisationId);
+                }
             }
-            
-            // Load schedule editor
-            loadScheduleEditor();
-        }
-        
-        function closeAddSpecialistModal() {
-            document.getElementById('addSpecialistModal').style.display = 'none';
-            document.getElementById('addSpecialistForm').reset();
-            document.getElementById('scheduleEditorTableBody').innerHTML = '';
-        }
-        
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('addSpecialistModal');
-            if (event.target === modal) {
-                closeAddSpecialistModal();
-            }
-        }
-        
-        function loadWorkingPointsForOrganisation(organisationId) {
-            fetch('admin/get_working_points.php?organisation_id=' + organisationId)
-                .then(response => response.json())
-                .then(data => {
-                    const workpointSelect = document.getElementById('workpointSelect');
-                    workpointSelect.innerHTML = '<option value="">Select a working point...</option>';
-                    
-                    data.forEach(wp => {
-                        const option = document.createElement('option');
-                        option.value = wp.unic_id;
-                        option.textContent = wp.name_of_the_place + ' - ' + wp.address;
-                        workpointSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    // Handle error silently
-                });
-        }
-        
-        function loadScheduleEditor() {
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            const tableBody = document.getElementById('scheduleEditorTableBody');
-            tableBody.innerHTML = '';
-            
-            days.forEach(day => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="day-name">${day}</td>
-                    <td><input type="time" class="shift1-start-time" name="shift1_start_${day.toLowerCase()}" value=""></td>
-                    <td><input type="time" class="shift1-end-time" name="shift1_end_${day.toLowerCase()}" value=""></td>
-                    <td><button type="button" class="btn-clear-shift" onclick="clearShift(this, 1)">Clear</button></td>
-                    <td><input type="time" class="shift2-start-time" name="shift2_start_${day.toLowerCase()}" value=""></td>
-                    <td><input type="time" class="shift2-end-time" name="shift2_end_${day.toLowerCase()}" value=""></td>
-                    <td><button type="button" class="btn-clear-shift" onclick="clearShift(this, 2)">Clear</button></td>
-                    <td><input type="time" class="shift3-start-time" name="shift3_start_${day.toLowerCase()}" value=""></td>
-                    <td><input type="time" class="shift3-end-time" name="shift3_end_${day.toLowerCase()}" value=""></td>
-                    <td><button type="button" class="btn-clear-shift" onclick="clearShift(this, 3)">Clear</button></td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-        
-        function loadAvailableSpecialists(organisationId, workpointId) {
-            fetch(`admin/get_available_specialists.php?organisation_id=${organisationId}&workpoint_id=${workpointId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const specialistSelect = document.getElementById('specialistSelection');
-                    
-                    // Clear existing options except the first two
-                    while (specialistSelect.children.length > 2) {
-                        specialistSelect.removeChild(specialistSelect.lastChild);
-                    }
-                    
-                    if (data.success && data.specialists.length > 0) {
-                        data.specialists.forEach(specialist => {
-                            const option = document.createElement('option');
-                            option.value = specialist.unic_id;
-                            option.textContent = `${specialist.name} - ${specialist.speciality}`;
-                            specialistSelect.appendChild(option);
-                        });
-                    } else {
-                        // Add a message if no specialists available
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.textContent = 'No available specialists found';
-                        option.disabled = true;
-                        specialistSelect.appendChild(option);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading specialists:', error);
-                });
         }
 
+        // Function stub for onSelectUnassignedSpecialist (needed for orphan specialists dropdown)
         function onSelectUnassignedSpecialist(specialistId) {
             if (!specialistId) return;
-            // Open modify schedule modal for selected orphan specialist targeting current workpoint
-            const currentWorkpointId = '<?= isset($workpoint['unic_id']) ? (int)$workpoint['unic_id'] : (int)($_GET['working_point_user_id'] ?? 0) ?>';
+            // Use the current workpoint ID from window object (set by PHP)
+            const currentWorkpointId = window.currentWorkpointId || <?= json_encode($workpoint_id ?? 0) ?>;
             openModifyScheduleModal(specialistId, currentWorkpointId);
             // Reset selection so it can be re-used
             const sel = document.getElementById('unassignedSpecialistsSelect');
             if (sel) sel.value = '';
         }
-        
-        function handleSpecialistSelection() {
-            const specialistSelect = document.getElementById('specialistSelection');
-            const selectedValue = specialistSelect.value;
-            
-            if (selectedValue === 'new') {
-                // New specialist mode - enable all fields
-                enableFormFields();
-                clearFormFields();
-            } else if (selectedValue && selectedValue !== '') {
-                // Existing specialist mode - load data and make fields read-only
-                loadSpecialistData(selectedValue);
-                disableFormFields();
-            }
-        }
-        
-        function enableFormFields() {
-            const fields = ['specialistName', 'specialistSpeciality', 'specialistEmail', 'specialistPhone', 'specialistUser', 'specialistPassword', 'emailScheduleHour', 'emailScheduleMinute'];
-            fields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.readOnly = false;
-                    field.disabled = false;
-                    field.style.backgroundColor = '#fff';
-                } else {
-                    console.warn('Field not found:', fieldId);
-                }
-            });
-        }
-        
-        function disableFormFields() {
-            const fields = ['specialistName', 'specialistSpeciality', 'specialistEmail', 'specialistPhone', 'specialistUser', 'specialistPassword', 'emailScheduleHour', 'emailScheduleMinute'];
-            fields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.readOnly = true;
-                    field.disabled = true;
-                    field.style.backgroundColor = '#f8f9fa';
-                } else {
-                    console.warn('Field not found:', fieldId);
-                }
-            });
-        }
-        
-        function clearFormFields() {
-            const fields = ['specialistName', 'specialistSpeciality', 'specialistEmail', 'specialistPhone', 'specialistUser', 'specialistPassword', 'emailScheduleHour', 'emailScheduleMinute'];
-            fields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.value = '';
-                }
-            });
-            // Reset to default values
-            document.getElementById('emailScheduleHour').value = '9';
-            document.getElementById('emailScheduleMinute').value = '0';
-        }
-        
-        function loadSpecialistData(specialistId) {
-            fetch(`admin/get_specialist_data.php?specialist_id=${specialistId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const specialist = data.specialist;
-                        
-                        // Populate form fields
-                        const nameField = document.getElementById('specialistName');
-                        const specialityField = document.getElementById('specialistSpeciality');
-                        const emailField = document.getElementById('specialistEmail');
-                        const phoneField = document.getElementById('specialistPhone');
-                        const userField = document.getElementById('specialistUser');
-                        const passwordField = document.getElementById('specialistPassword');
-                        const hourField = document.getElementById('emailScheduleHour');
-                        const minuteField = document.getElementById('emailScheduleMinute');
-                        
-                        if (nameField) nameField.value = specialist.name || '';
-                        if (specialityField) specialityField.value = specialist.speciality || '';
-                        if (emailField) emailField.value = specialist.email || '';
-                        if (phoneField) phoneField.value = specialist.phone_nr || '';
-                        if (userField) userField.value = specialist.user || '';
-                        if (passwordField) passwordField.value = ''; // Don't populate password
-                        if (hourField) hourField.value = specialist.h_of_email_schedule || '9';
-                        if (minuteField) minuteField.value = specialist.m_of_email_schedule || '0';
-                    } else {
-                        console.error('Failed to load specialist data:', data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading specialist data:', error);
-                });
-        }
-        
-        function clearShift(button, shiftNum) {
-            const row = button.closest('tr');
-            const startInput = row.querySelector(`.shift${shiftNum}-start-time`);
-            const endInput = row.querySelector(`.shift${shiftNum}-end-time`);
-            startInput.value = '';
-            endInput.value = '';
-        }
-        
-        function applyAllShifts() {
-            const dayRange = document.getElementById('quickOptionsDaySelect').value;
-            let days;
-            
-            switch(dayRange) {
-                case 'mondayToFriday':
-                    days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-                    break;
-                case 'saturday':
-                    days = ['saturday'];
-                    break;
-                case 'sunday':
-                    days = ['sunday'];
-                    break;
-                default:
-                    return;
-            }
-            
-            // Get shift times
-            const shift1Start = document.getElementById('shift1Start').value;
-            const shift1End = document.getElementById('shift1End').value;
-            const shift2Start = document.getElementById('shift2Start').value;
-            const shift2End = document.getElementById('shift2End').value;
-            const shift3Start = document.getElementById('shift3Start').value;
-            const shift3End = document.getElementById('shift3End').value;
-            
-            // Check if at least one shift has values
-            const hasShift1 = shift1Start && shift1End;
-            const hasShift2 = shift2Start && shift2End;
-            const hasShift3 = shift3Start && shift3End;
-            
-            if (!hasShift1 && !hasShift2 && !hasShift3) {
-                return;
-            }
-            
-            // Apply shifts to all selected days
-            days.forEach(day => {
-                const row = document.querySelector(`tr:has(input[name="shift1_start_${day}"])`);
-                if (row) {
-                    // Apply Shift 1 only if values are provided
-                    if (hasShift1) {
-                        const startInput = row.querySelector('.shift1-start-time');
-                        const endInput = row.querySelector('.shift1-end-time');
-                        if (startInput && endInput) {
-                            startInput.value = shift1Start;
-                            endInput.value = shift1End;
-                        }
-                    }
-                    
-                    // Apply Shift 2 only if values are provided
-                    if (hasShift2) {
-                        const startInput = row.querySelector('.shift2-start-time');
-                        const endInput = row.querySelector('.shift2-end-time');
-                        if (startInput && endInput) {
-                            startInput.value = shift2Start;
-                            endInput.value = shift2End;
-                        }
-                    }
-                    
-                    // Apply Shift 3 only if values are provided
-                    if (hasShift3) {
-                        const startInput = row.querySelector('.shift3-start-time');
-                        const endInput = row.querySelector('.shift3-end-time');
-                        if (startInput && endInput) {
-                            startInput.value = shift3Start;
-                            endInput.value = shift3End;
-                        }
-                    }
-                }
-            });
-        }
-        
-        function submitAddSpecialist() {
-            const formData = new FormData(document.getElementById('addSpecialistForm'));
-            const specialistSelection = document.getElementById('specialistSelection').value;
-            
-            // Get workpoint_id and organisation_id
-            let workpointId = document.getElementById('workpointId').value;
-            const organisationId = document.getElementById('organisationId').value;
-            
-            // If hidden field is empty, try to get from select dropdown
-            if (!workpointId) {
-                workpointId = document.getElementById('workpointSelect').value;
-            }
-            
-            // Ensure both IDs are included
-            if (workpointId) {
-                formData.append('workpoint_id', workpointId);
-                formData.append('working_points[]', workpointId);
-            }
-            
-            if (organisationId) {
-                formData.append('organisation_id', organisationId);
-            }
-            
-            // Add schedule data
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            days.forEach(day => {
-                for (let shift = 1; shift <= 3; shift++) {
-                    const startInput = document.querySelector(`input[name="shift${shift}_start_${day}"]`);
-                    const endInput = document.querySelector(`input[name="shift${shift}_end_${day}"]`);
-                    if (startInput && endInput) {
-                        formData.append(`schedule[${day}][shift${shift}_start]`, startInput.value || '');
-                        formData.append(`schedule[${day}][shift${shift}_end]`, endInput.value || '');
-                    }
-                }
-            });
-            
-            // Determine action based on specialist selection
-            if (specialistSelection === 'new') {
-                // New specialist - use existing add_specialist_ajax.php
-                formData.append('action', 'add_new_specialist');
-                submitToAddSpecialist(formData);
-            } else {
-                // Existing specialist - use new reactivate_specialist_ajax.php
-                formData.append('action', 'reactivate_specialist');
-                formData.append('specialist_id', specialistSelection);
-                submitToReactivateSpecialist(formData);
-            }
-        }
-        
-        function submitToAddSpecialist(formData) {
-            fetch('admin/add_specialist_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Specialist added successfully!');
-                    closeAddSpecialistModal();
-                    // Reload the page to show the new specialist
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                alert('An error occurred while adding the specialist.');
-            });
-        }
-        
-        function submitToReactivateSpecialist(formData) {
-            // Get the required IDs from hidden fields
-            const workpointId = document.getElementById('workpointId').value;
-            const organisationId = document.getElementById('organisationId').value;
-            
-            // Add the required IDs to form data
-            formData.append('workpoint_id', workpointId);
-            formData.append('organisation_id', organisationId);
-            
-            fetch('admin/reactivate_specialist_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Specialist reactivated successfully!');
-                    closeAddSpecialistModal();
-                    // Reload the page to show the reactivated specialist
-                    location.reload();
-                } else {
-                    alert('Error: ' + (data.message || data.error));
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                alert('An error occurred while reactivating the specialist.');
-            });
-        }
-        
-        // Modify Specialist Modal Functions
-        function openModifySpecialistModal(specialistId, specialistName, workpointId) {
-            const modal = document.getElementById('modifySpecialistModal');
-            if (!modal) {
-                console.error('Modify specialist modal not found!');
-                return;
-            }
-            
-            // Update modal title with specialist ID
-            const modalTitle = modal.querySelector('.modify-modal-header h3');
-            if (modalTitle) {
-                modalTitle.innerHTML = `👥 Modify Specialist Details [${specialistId}]`;
-            }
-            
-            // Set modal IDs
-            const specialistIdField = document.getElementById('modifySpecialistId');
-            const workpointIdField = document.getElementById('modifyWorkpointId');
-            
-            if (specialistIdField) specialistIdField.value = specialistId;
-            if (workpointIdField) workpointIdField.value = workpointId;
-            
-            // Clear previous error messages
-            const errorElement = document.getElementById('modifySpecialistError');
-            if (errorElement) errorElement.style.display = 'none';
-            
-            // Load specialist data
-            loadSpecialistDataForModal(specialistId);
-            
-            // Show modal
-            modal.style.display = 'flex';
-        }
-        
-        function closeModifySpecialistModal() {
-            document.getElementById('modifySpecialistModal').style.display = 'none';
-            document.getElementById('modifySpecialistForm').reset();
-            document.getElementById('modifySpecialistError').style.display = 'none';
-        }
-        
-        function loadSpecialistDataForModal(specialistId) {
-            const formData = new FormData();
-            formData.append('action', 'get_specialist_data');
-            formData.append('specialist_id', specialistId);
-            
-            fetch('admin/modify_specialist_details.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const specialist = data.specialist;
-                    
-                    // Populate form fields with proper field mapping
-                    const nameField = document.getElementById('modifySpecialistNameField');
-                    const specialityField = document.getElementById('modifySpecialistSpeciality');
-                    const emailField = document.getElementById('modifySpecialistEmail');
-                    const phoneField = document.getElementById('modifySpecialistPhone');
-                    const userField = document.getElementById('modifySpecialistUser');
-                    const passwordField = document.getElementById('modifySpecialistPassword');
-                    const hourField = document.getElementById('modifySpecialistEmailHour');
-                    const minuteField = document.getElementById('modifySpecialistEmailMinute');
-                    
-                    if (nameField) nameField.value = specialist.name || '';
-                    if (specialityField) specialityField.value = specialist.speciality || '';
-                    if (emailField) emailField.value = specialist.email || '';
-                    if (phoneField) phoneField.value = specialist.phone_nr || '';
-                    if (userField) userField.value = specialist.user || '';
-                    if (passwordField) passwordField.value = ''; // Don't populate password for security
-                    if (hourField) hourField.value = specialist.h_of_email_schedule || '9';
-                    if (minuteField) minuteField.value = specialist.m_of_email_schedule || '0';
-                    
-                    // Show/hide email schedule fields based on daily_email_enabled
-                    const emailScheduleContainer = document.getElementById('emailScheduleContainer');
-                    if (emailScheduleContainer) {
-                        if (specialist.daily_email_enabled && specialist.daily_email_enabled != 0 && specialist.daily_email_enabled != null) {
-                            emailScheduleContainer.style.display = 'flex';
-                        } else {
-                            emailScheduleContainer.style.display = 'none';
-                        }
-                    }
-                    
-                    // Load services for this specialist
-                    loadSpecialistServicesForModal(specialistId);
-                } else {
-                    console.error('Failed to load specialist data:', data.message);
-                    document.getElementById('modifySpecialistError').textContent = 'Failed to load specialist data: ' + data.message;
-                    document.getElementById('modifySpecialistError').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading specialist data:', error);
-                document.getElementById('modifySpecialistError').textContent = 'An error occurred while loading specialist data.';
-                document.getElementById('modifySpecialistError').style.display = 'block';
-            });
-        }
-        
-        function loadSpecialistServicesForModal(specialistId) {
-            const servicesDisplay = document.getElementById('modifySpecialistServicesDisplay');
-            if (!servicesDisplay) return;
-            
-            // Show loading
-            servicesDisplay.innerHTML = '<div style="text-align: center; color: #6c757d;"><i class="fas fa-spinner fa-spin"></i> Loading services...</div>';
-            
-            // Fetch services from database with cache buster
-            const timestamp = new Date().getTime();
-            fetch(`admin/get_specialist_services.php?specialist_id=${specialistId}&t=${timestamp}`)
-                .then(response => response.json())
-                .then(data => {
 
-                    if (data.success && data.services.length > 0) {
-                        let servicesHTML = '<div style="max-height: 300px; overflow-y: auto;">';
-                        
-                        data.services.forEach(service => {
-                            const priceWithVat = service.price_of_service * (1 + service.procent_vat / 100);
-                            const isSuspended = service.suspended == 1;
-                            const serviceColor = isSuspended ? '#6c757d' : '#495057';
-                            
-                            servicesHTML += `
-                                <div class="service-item" style="padding: 8px 12px; margin-bottom: 4px; background: #f8f9fa; border-radius: 4px; font-size: 13px; transition: background-color 0.2s; cursor: pointer;"
-                                     onmouseover="this.style.backgroundColor='#e9ecef'"
-                                     onmouseout="this.style.backgroundColor='#f8f9fa'"
-                                     onclick="window.serviceReturnModal = 'modifySpecialist'; window.serviceReturnSpecialistId = '${specialistId}'; editSpecialistService(${service.unic_id}, '${service.name_of_service.replace(/'/g, "\\'")}', ${service.duration}, ${service.price_of_service}, ${service.procent_vat})">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <div style="flex: 1;">
-                                            <span style="color: ${serviceColor}; ${isSuspended ? 'opacity: 0.6;' : ''}">${service.name_of_service}</span>
-                                            ${isSuspended ? '<span style="font-size: 11px; color: #dc3545; margin-left: 8px;">(Suspended)</span>' : ''}
-                                            <div style="font-size: 11px; color: #6c757d; line-height: 1.2; margin-top: 2px;">
-                                                ${service.duration} min | ${priceWithVat.toFixed(2)}€ 
-                                                ${service.procent_vat > 0 ? `<span style="font-size: 10px;">(incl. ${service.procent_vat}% VAT)</span>` : ''}
-                                            </div>
-                                        </div>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="border: 1px solid #868e96; color: #868e96; padding: 1px 5px; border-radius: 4px; font-size: 11px; display: inline-block; min-width: 20px; text-align: center;" 
-                                                  title="Past bookings (last 30 days)">
-                                                ${service.past_bookings || 0}
-                                            </span>
-                                            <span style="border: 1px solid ${service.active_bookings > 0 ? '#28a745' : '#868e96'}; color: ${service.active_bookings > 0 ? '#28a745' : '#868e96'}; padding: 1px 5px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; min-width: 20px; text-align: center;"
-                                                  title="Active/Future bookings">
-                                                ${service.active_bookings || 0}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        
-                        servicesHTML += '</div>';
-                        servicesDisplay.innerHTML = servicesHTML;
-                    } else {
-                        servicesDisplay.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;"><em>No services assigned yet.</em></div>';
+        // Stub functions for Add Specialist form - these load the module if needed
+        function submitAddSpecialist() {
+            if (!addSpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    addSpecialistModalLoaded = true;
+                    if (typeof window.submitAddSpecialist === 'function') {
+                        window.submitAddSpecialist();
                     }
-                })
-                .catch(error => {
-                    console.error('Error loading services:', error);
-                    servicesDisplay.innerHTML = '<div style="text-align: center; color: #dc3545; padding: 20px;">Error loading services</div>';
-                });
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.submitAddSpecialist === 'function') {
+                    window.submitAddSpecialist();
+                }
+            }
         }
-        
+
+        function handleSpecialistSelection() {
+            if (!addSpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    addSpecialistModalLoaded = true;
+                    // Call the real function that was just loaded
+                    if (typeof window.handleSpecialistSelectionReal === 'function') {
+                        window.handleSpecialistSelectionReal();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                // Already loaded, call the real function
+                if (typeof window.handleSpecialistSelectionReal === 'function') {
+                    window.handleSpecialistSelectionReal();
+                }
+            }
+        }
+
+        function clearShift(button, shiftNum) {
+            if (!addSpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    addSpecialistModalLoaded = true;
+                    if (typeof window.clearShift === 'function') {
+                        window.clearShift(button, shiftNum);
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.clearShift === 'function') {
+                    window.clearShift(button, shiftNum);
+                }
+            }
+        }
+
+        function applyAllShifts() {
+            if (!addSpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    addSpecialistModalLoaded = true;
+                    if (typeof window.applyAllShifts === 'function') {
+                        window.applyAllShifts();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.applyAllShifts === 'function') {
+                    window.applyAllShifts();
+                }
+            }
+        }
+
+        function closeAddSpecialistModal() {
+            if (!addSpecialistModalLoaded) {
+                // If module not loaded, just hide the modal directly
+                const modal = document.getElementById('addSpecialistModal');
+                if (modal) modal.style.display = 'none';
+            } else {
+                if (typeof window.closeAddSpecialistModal === 'function') {
+                    window.closeAddSpecialistModal();
+                }
+            }
+        }
+
+        // Modify Specialist Modal - Lazy Loading
+        let modifySpecialistModalLoaded = false;
+
+        // Lazy loading wrapper for Modify Specialist Modal
+        function openModifySpecialistModal(specialistId, specialistName, workpointId) {
+            if (!modifySpecialistModalLoaded) {
+                // Load the Modify Specialist script
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/modify-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    modifySpecialistModalLoaded = true;
+                    // Now call the real function
+                    if (typeof window.openModifySpecialistModal === 'function') {
+                        window.openModifySpecialistModal(specialistId, specialistName, workpointId);
+                    }
+                };
+                script.onerror = function() {
+                    console.error('Failed to load Modify Specialist modal script');
+                    alert('Failed to load Modify Specialist functionality. Please try again.');
+                };
+                document.head.appendChild(script);
+            } else {
+                // Already loaded, call the real function
+                if (typeof window.openModifySpecialistModalReal === 'function') {
+                    window.openModifySpecialistModalReal(specialistId, specialistName, workpointId);
+                }
+            }
+        }
+
+        // Stub functions for Modify Specialist form - these load the module if needed
         function addNewService() {
-            const specialistId = document.getElementById('modifySpecialistId').value;
-            if (specialistId) {
-                // Mark that we're coming from Modify Specialist modal
-                window.serviceReturnModal = 'modifySpecialist';
-                window.serviceReturnSpecialistId = specialistId;
-                openAddServiceModalForSpecialist(specialistId);
-            }
-        }
-        
-        function loadSpecialistScheduleForModal(specialistId) {
-            const workpointId = document.getElementById('modifyWorkpointId').value;
-            
-            const formData = new FormData();
-            formData.append('action', 'get_schedule');
-            formData.append('specialist_id', specialistId);
-            formData.append('workpoint_id', workpointId);
-            
-            fetch('admin/modify_schedule_ajax.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const schedule = data.schedule;
-                    const scheduleDisplay = document.getElementById('modifySpecialistScheduleDisplay');
-                    
-                    if (schedule && schedule.length > 0) {
-                        // Create schedule display similar to the working schedule in the sidebar
-                        const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                        const dayNames = {
-                            'monday': 'Mon',
-                            'tuesday': 'Tue', 
-                            'wednesday': 'Wed',
-                            'thursday': 'Thu',
-                            'friday': 'Fri',
-                            'saturday': 'Sat',
-                            'sunday': 'Sun'
-                        };
-                        
-                        const scheduleLookup = {};
-                        schedule.forEach(item => {
-                            const day = item.day_of_week.toLowerCase();
-                            const shifts = [];
-                            
-                            // Check shift 1
-                            if (item.shift1_start && item.shift1_end && item.shift1_start !== '00:00:00' && item.shift1_end !== '00:00:00') {
-                                const start1 = item.shift1_start.substring(0, 5);
-                                const end1 = item.shift1_end.substring(0, 5);
-                                shifts.push(`<span style="background-color: #ffebee; color: #d32f2f; padding: 2px 6px; border-radius: 3px; margin: 0 2px;">${start1} - ${end1}</span>`);
-                            }
-                            
-                            // Check shift 2
-                            if (item.shift2_start && item.shift2_end && item.shift2_start !== '00:00:00' && item.shift2_end !== '00:00:00') {
-                                const start2 = item.shift2_start.substring(0, 5);
-                                const end2 = item.shift2_end.substring(0, 5);
-                                shifts.push(`<span style="background-color: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 3px; margin: 0 2px;">${start2} - ${end2}</span>`);
-                            }
-                            
-                            // Check shift 3
-                            if (item.shift3_start && item.shift3_end && item.shift3_start !== '00:00:00' && item.shift3_end !== '00:00:00') {
-                                const start3 = item.shift3_start.substring(0, 5);
-                                const end3 = item.shift3_end.substring(0, 5);
-                                shifts.push(`<span style="background-color: #e8f5e8; color: #2e7d32; padding: 2px 6px; border-radius: 3px; margin: 0 2px;">${start3} - ${end3}</span>`);
-                            }
-                            
-                            if (shifts.length > 0) {
-                                scheduleLookup[day] = shifts.join(' ');
-                            }
-                        });
-                        
-                        const scheduleLines = [];
-                        dayOrder.forEach(day => {
-                            if (scheduleLookup[day]) {
-                                const dayName = dayNames[day];
-                                scheduleLines.push(`<div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 35px; text-align: left;">${dayName}:</strong> ${scheduleLookup[day]}</div>`);
-                            }
-                        });
-                        
-                        scheduleDisplay.innerHTML = scheduleLines.join('');
-                    } else {
-                        scheduleDisplay.innerHTML = '<em style="color: #6c757d;">No schedule found for this specialist at this working point.</em>';
+            if (!modifySpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/modify-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    modifySpecialistModalLoaded = true;
+                    if (typeof window.addNewService === 'function') {
+                        window.addNewService();
                     }
-                } else {
-                    document.getElementById('modifySpecialistScheduleDisplay').innerHTML = '<em style="color: #dc3545;">Failed to load schedule data.</em>';
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.addNewService === 'function') {
+                    window.addNewService();
                 }
-            })
-            .catch(error => {
-                console.error('Error loading schedule:', error);
-                document.getElementById('modifySpecialistScheduleDisplay').innerHTML = '<em style="color: #dc3545;">Error loading schedule data.</em>';
-            });
-        }
-        
-        function deleteSpecialistSchedule() {
-            const specialistId = document.getElementById('modifySpecialistId').value;
-            const workpointId = document.getElementById('modifyWorkpointId').value;
-            
-            if (!confirm('Are you sure you want to delete the schedule for this specialist at this working point? This action cannot be undone.')) {
-                return;
             }
-            
-            const formData = new FormData();
-            formData.append('action', 'delete_schedule');
-            formData.append('specialist_id', specialistId);
-            formData.append('workpoint_id', workpointId);
-            
-            fetch('admin/modify_schedule_ajax.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reflect changes in left panel and orphan dropdown
-                    location.reload();
-                } else {
-                    alert('Error: ' + (data.message || 'Failed to delete schedule.'));
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting schedule:', error);
-                alert('An error occurred while deleting the schedule.');
-            });
         }
-        
+
         function updateSpecialistDetails() {
-            const formData = new FormData(document.getElementById('modifySpecialistForm'));
-            formData.append('action', 'update_specialist');
-            
-            // Disable submit button
-            const submitBtn = event.target;
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = 'Updating...';
-            submitBtn.disabled = true;
-            
-            fetch('admin/modify_specialist_details.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Specialist updated successfully!');
-                    closeModifySpecialistModal();
-                    // Reload the page to show updated data
-                    location.reload();
-                } else {
-                    document.getElementById('modifySpecialistError').textContent = data.message || 'Failed to update specialist.';
-                    document.getElementById('modifySpecialistError').style.display = 'block';
+            if (!modifySpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/modify-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    modifySpecialistModalLoaded = true;
+                    if (typeof window.updateSpecialistDetails === 'function') {
+                        window.updateSpecialistDetails();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.updateSpecialistDetails === 'function') {
+                    window.updateSpecialistDetails();
                 }
-            })
-            .catch(error => {
-                console.error('Error updating specialist:', error);
-                document.getElementById('modifySpecialistError').textContent = 'An error occurred while updating the specialist.';
-                document.getElementById('modifySpecialistError').style.display = 'block';
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
-        }
-        
-        function deleteSpecialistFromModal() {
-            const specialistId = document.getElementById('modifySpecialistId').value;
-            const specialistName = document.getElementById('modifySpecialistNameField').value;
-            
-            // Show delete confirmation modal
-            document.getElementById('deleteSpecialistConfirmName').textContent = specialistName;
-            document.getElementById('deleteSpecialistConfirmModal').style.display = 'flex';
-            document.getElementById('deleteSpecialistConfirmError').style.display = 'none';
-            document.getElementById('deleteSpecialistConfirmPassword').value = '';
-        }
-        
-        function closeDeleteSpecialistConfirmModal() {
-            document.getElementById('deleteSpecialistConfirmModal').style.display = 'none';
-            document.getElementById('deleteSpecialistConfirmForm').reset();
-            document.getElementById('deleteSpecialistConfirmError').style.display = 'none';
-        }
-        
-        function confirmDeleteSpecialistFromModal() {
-            const specialistId = document.getElementById('modifySpecialistId').value;
-            const password = document.getElementById('deleteSpecialistConfirmPassword').value;
-            
-            if (!password) {
-                document.getElementById('deleteSpecialistConfirmError').textContent = 'Please enter your password to confirm deletion.';
-                document.getElementById('deleteSpecialistConfirmError').style.display = 'block';
-                return;
             }
-            
-            const btn = document.getElementById('confirmDeleteSpecialistBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Deleting...';
-            btn.disabled = true;
-            
-            const formData = new FormData();
-            formData.append('action', 'delete_specialist');
-            formData.append('specialist_id', specialistId);
-            formData.append('password', password);
-            
-            fetch('admin/modify_specialist_details.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Specialist deleted successfully!');
-                    closeDeleteSpecialistConfirmModal();
-                    closeModifySpecialistModal();
-                    // Reload the page to reflect changes
-                    location.reload();
-                } else {
-                    document.getElementById('deleteSpecialistConfirmError').textContent = data.message || 'Failed to delete specialist.';
-                    document.getElementById('deleteSpecialistConfirmError').style.display = 'block';
+        }
+
+        function deleteSpecialistFromModal() {
+            if (!modifySpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/modify-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    modifySpecialistModalLoaded = true;
+                    if (typeof window.deleteSpecialistFromModal === 'function') {
+                        window.deleteSpecialistFromModal();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.deleteSpecialistFromModal === 'function') {
+                    window.deleteSpecialistFromModal();
                 }
-            })
-            .catch(error => {
-                console.error('Error deleting specialist:', error);
-                document.getElementById('deleteSpecialistConfirmError').textContent = 'An error occurred while deleting the specialist.';
-                document.getElementById('deleteSpecialistConfirmError').style.display = 'block';
-            })
-            .finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
+            }
         }
-        
+
         function modifySpecialistSchedule() {
-            const specialistId = document.getElementById('modifySpecialistId').value;
-            const workpointId = document.getElementById('modifyWorkpointId').value;
-            
-            // Close the modify specialist modal first
-            closeModifySpecialistModal();
-            
-            // Open the schedule modification modal
-            openModifyScheduleModal(specialistId, workpointId);
+            if (!modifySpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/modify-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    modifySpecialistModalLoaded = true;
+                    if (typeof window.modifySpecialistSchedule === 'function') {
+                        window.modifySpecialistSchedule();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.modifySpecialistSchedule === 'function') {
+                    window.modifySpecialistSchedule();
+                }
+            }
         }
-        
+
+        function closeModifySpecialistModal() {
+            if (!modifySpecialistModalLoaded) {
+                // If module not loaded, just hide the modal directly
+                const modal = document.getElementById('modifySpecialistModal');
+                if (modal) modal.style.display = 'none';
+            } else {
+                if (typeof window.closeModifySpecialistModal === 'function') {
+                    window.closeModifySpecialistModal();
+                }
+            }
+        }
+
+        function closeDeleteSpecialistConfirmModal() {
+            if (!modifySpecialistModalLoaded) {
+                // If module not loaded, just hide the modal directly
+                const modal = document.getElementById('deleteSpecialistConfirmModal');
+                if (modal) modal.style.display = 'none';
+            } else {
+                if (typeof window.closeDeleteSpecialistConfirmModal === 'function') {
+                    window.closeDeleteSpecialistConfirmModal();
+                }
+            }
+        }
+
+        function confirmDeleteSpecialistFromModal() {
+            if (!modifySpecialistModalLoaded) {
+                const script = document.createElement('script');
+                script.src = 'assets/js/modals/modify-specialist.js?v=' + Date.now();
+                script.onload = function() {
+                    modifySpecialistModalLoaded = true;
+                    if (typeof window.confirmDeleteSpecialistFromModal === 'function') {
+                        window.confirmDeleteSpecialistFromModal();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                if (typeof window.confirmDeleteSpecialistFromModal === 'function') {
+                    window.confirmDeleteSpecialistFromModal();
+                }
+            }
+        }
+
         // Schedule Modification Modal Functions
         function openModifyScheduleModal(specialistId, workpointId) {
             const modal = document.getElementById('modifyScheduleModal');
@@ -4560,7 +4020,7 @@ if (isset($workpoint_id)) {
                         </div>
                         <div class="form-group">
                             <label for="modifySpecialistPassword">Password</label>
-                            <input type="password" id="modifySpecialistPassword" name="password" class="form-control" placeholder="Leave blank to keep current password">
+                            <input type="text" id="modifySpecialistPassword" name="password" class="form-control" placeholder="Leave blank to keep current password">
                         </div>
                     </div>
                     
@@ -4744,7 +4204,7 @@ if (isset($workpoint_id)) {
                                 </div>
                                 <div style="flex: 1;">
                                     <label for="specialistPassword" style="font-size: 0.85rem;">Password *</label>
-                                    <input type="password" class="form-control" id="specialistPassword" name="password" required style="background-color: #e3f2fd;">
+                                    <input type="text" class="form-control" id="specialistPassword" name="password" required style="background-color: #e3f2fd;">
                                 </div>
                             </div>
                         </div>
