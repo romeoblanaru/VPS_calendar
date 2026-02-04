@@ -166,6 +166,27 @@ if (isset($workpoint_id)) {
     <link href="assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
     <link href="assets/css/booking_view_page.css?v=<?= time() ?>" rel="stylesheet">
     <style>
+        /* Fix for dropdown menus appearing under other elements */
+        .dropdown-menu {
+            z-index: 999999 !important;
+            position: absolute !important;
+        }
+
+        .dropdown {
+            position: relative !important;
+        }
+
+        /* Ensure title-box doesn't interfere with dropdowns */
+        .title-box {
+            z-index: 100;
+            position: relative;
+        }
+
+        /* Ensure dropdowns appear above calendar and other content */
+        .calendar-section, .sidebar, .widget {
+            z-index: 1;
+            position: relative;
+        }
         :root {
             --primary-color: #667eea;
             --secondary-color: #764ba2;
@@ -843,14 +864,36 @@ if (isset($workpoint_id)) {
         <!-- Title Box -->
         <div class="title-box">
             <div class="title-left">
-                <div class="current-time" id="currentTime">
-                    <?= date('l, F j, Y') ?> 
-                    <span class="time-badge" id="currentTimeClock"><?= date('H:i:s') ?></span>
-                    <br><small style="color: #666;"><?= 
-                        $supervisor_mode && $workpoint ? getTimezoneForWorkingPoint($workpoint) : 
-                        (!$supervisor_mode && !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) : 
-                        getTimezoneForOrganisation($organisation)) 
-                    ?></small>
+                <div style="margin-top: 10px;">
+                    <small><?= htmlspecialchars($_SESSION['user']) ?>
+                    <?php if ($supervisor_mode): ?>
+                    | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
+                    <?php endif; ?>
+                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
+                    </small>
+
+                    <!-- Menu Dropdown -->
+                    <div style="margin-top: 5px;">
+                        <div class="dropdown" style="display: inline-block;">
+                            <button class="btn btn-sm" type="button" id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                    style="padding: 4px 8px; font-size: 14px; background-color: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-bars" style="font-size: 14px;"></i>
+                                <span style="font-size: 12px;"><i class="fas fa-ellipsis-h" style="font-size: 10px; margin-right: 4px; vertical-align: baseline; position: relative; top: 3px;"></i>Click for more options</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="menuDropdown" style="z-index: 999999 !important;">
+                                <li><a class="dropdown-item" href="#" onclick="openCommunicationSetup(); return false;" style="font-size: 13px;">
+                                    <i class="fab fa-whatsapp" style="width: 20px; color: #25D366;"></i> Communication Setup</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openSMSConfirmationSetup(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-sms" style="width: 20px; color: #1e88e5;"></i> SMS Confirmation Setup</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openWorkpointHolidays(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays and Off Days</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openManageServices(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-chart-bar" style="width: 20px;"></i> Statistics</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="title-center">
@@ -883,20 +926,43 @@ if (isset($workpoint_id)) {
 
             </div>
             <div class="title-right">
-                <div class="language-selector">
-                    <button class="language-btn <?= $lang === 'en' ? 'active' : '' ?>" onclick="changeLanguage('en')">EN</button>
-                    <button class="language-btn <?= $lang === 'ro' ? 'active' : '' ?>" onclick="changeLanguage('ro')">RO</button>
-                    <button class="language-btn <?= $lang === 'lt' ? 'active' : '' ?>" onclick="changeLanguage('lt')">LT</button>
-                </div>
-                <div style="margin-top: 10px;">
-                    <small><?= htmlspecialchars($_SESSION['user']) ?>
-                    <?php if ($supervisor_mode): ?>
-                    | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
-                    <?php endif; ?>
-                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
-                    | <span id="realtime-status-btn" onclick="toggleRealtimeUpdates()" style="cursor: pointer; display: inline-block; margin: 0 8px; vertical-align: middle;" title="Real-time booking updates via SSE (Server-Sent Events) - Connecting...">
-                        <i class="status-icon fas fa-circle" style="font-size: 14px; color: #ffc107; transition: color 0.3s ease;"></i>
-                    </span></small>
+                <div class="current-time" id="currentTime">
+                    <small style="color: var(--primary-color); font-weight: 600;"><?= date('l, F j, Y') ?></small>
+                    <span class="time-badge" id="currentTimeClock" style="margin-left: 8px; padding: 3px 6px;"><?= date('H:i:s') ?></span>
+                    <br>
+                    <small style="color: #666;">
+                        <?php
+                        $timezone_str = $supervisor_mode && $workpoint ? getTimezoneForWorkingPoint($workpoint) :
+                            (!$supervisor_mode && !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) :
+                            getTimezoneForOrganisation($organisation));
+
+                        // Calculate GMT offset
+                        $tz = new DateTimeZone($timezone_str);
+                        $datetime = new DateTime('now', $tz);
+                        $offset_seconds = $tz->getOffset($datetime);
+                        $offset_hours = $offset_seconds / 3600;
+                        $gmt_offset = sprintf("GMT%+d", $offset_hours);
+                        ?>
+                        <?= $timezone_str ?> <span style="font-size: 11px;">(<?= $gmt_offset ?>)</span>
+
+                        <!-- Language Dropdown -->
+                        <div class="dropdown" style="display: inline-block; margin-left: 8px; margin-right: 8px; position: relative;">
+                            <button class="btn btn-sm dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                    style="padding: 1px 6px; font-size: 12px; background-color: #f8f9fa; border: 1px solid #dee2e6; line-height: 1.3;">
+                                <?= strtoupper($lang) ?>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" style="min-width: 80px; z-index: 999999 !important;">
+                                <li><a class="dropdown-item <?= $lang === 'en' ? 'active' : '' ?>" href="#" onclick="changeLanguage('en'); return false;" style="font-size: 12px;">English</a></li>
+                                <li><a class="dropdown-item <?= $lang === 'ro' ? 'active' : '' ?>" href="#" onclick="changeLanguage('ro'); return false;" style="font-size: 12px;">Română</a></li>
+                                <li><a class="dropdown-item <?= $lang === 'lt' ? 'active' : '' ?>" href="#" onclick="changeLanguage('lt'); return false;" style="font-size: 12px;">Lietuvių</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- SSE Status Indicator -->
+                        <span id="realtime-status-btn" onclick="toggleRealtimeUpdates()" style="cursor: pointer; display: inline-block; margin-left: 5px; vertical-align: middle;" title="Real-time booking updates via SSE (Server-Sent Events) - Connecting...">
+                            <i class="status-icon fas fa-circle" style="font-size: 12px; color: #ffc107; transition: color 0.3s ease;"></i>
+                        </span>
+                    </small>
                 </div>
             </div>
         </div>
