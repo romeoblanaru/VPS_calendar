@@ -1,0 +1,698 @@
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-color: #dee2e6;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Discrete mandatory field indicators */
+        .required-indicator {
+            color: #dc3545aa;
+            font-weight: normal;
+        }
+        
+        /* Light yellow background for required fields */
+        input:required,
+        select:required,
+        textarea:required {
+            background-color: #fffef0 !important; /* Very light yellow */
+            border-color: #ced4da !important; /* Default border color */
+            box-shadow: none !important;
+        }
+        
+        input:required:focus,
+        select:required:focus,
+        textarea:required:focus {
+            background-color: #fffef0 !important; /* Keep light yellow on focus */
+            border-color: #80bdff !important; /* Default Bootstrap focus color */
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25) !important; /* Default Bootstrap focus shadow */
+        }
+        
+        /* Notification popup styles */
+        .booking-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 350px;
+            max-width: 450px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 20px;
+            z-index: 10000;
+            animation: slideIn 0.4s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+            border-left: 5px solid #28a745;
+        }
+        
+        .booking-notification.update {
+            border-left-color: #17a2b8;
+        }
+        
+        .booking-notification.create {
+            border-left-color: #28a745;
+        }
+        
+        .booking-notification.delete {
+            border-left-color: #dc3545;
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+        
+        .notification-icon.create {
+            background: #d4edda;
+            color: #28a745;
+        }
+        
+        .notification-icon.update {
+            background: #d1ecf1;
+            color: #17a2b8;
+        }
+        
+        .notification-icon.delete {
+            background: #f8d7da;
+            color: #dc3545;
+        }
+        
+        .notification-body {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .notification-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .notification-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+        
+        /* Custom Menu Tooltips */
+        .menu-tooltip .tooltip-inner {
+            background-color: #fffacd; /* Light yellow */
+            color: #333333; /* Dark gray for contrast */
+            font-weight: 500;
+            border: 1px solid #f0e68c;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .menu-tooltip .tooltip-arrow::before {
+            border-top-color: #fffacd !important;
+            border-bottom-color: #fffacd !important;
+            border-left-color: #fffacd !important;
+            border-right-color: #fffacd !important;
+        }
+        
+        /* Ensure blue text in tooltip remains blue */
+        .menu-tooltip .tooltip-inner strong[style*="color: #4285f4"] {
+            color: #4285f4 !important;
+        }
+        
+        /* Override styles for Modify Schedule Modal to match COMPREHENSIVE SCHEDULE EDITOR */
+        #modifyScheduleModal .modify-modal {
+            width: 70% !important;
+            max-width: 1000px !important;
+            height: auto !important;
+            max-height: 90vh !important;
+            margin: 5vh auto !important;
+            background: #fff !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        
+        #modifyScheduleModal .modify-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            padding: 12px 25px !important;
+            border-radius: 15px 15px 0 0 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            border-bottom: none !important;
+        }
+        
+        #modifyScheduleModal .modify-modal-header h3 {
+            margin: 0 !important;
+            font-size: 1.3rem !important;
+            font-weight: 600 !important;
+            color: white !important;
+            padding: 0 !important;
+        }
+        
+        #modifyScheduleModal .modify-modal-body {
+            flex: 1 !important;
+            padding: 10px !important;
+            padding-bottom: 10px !important;
+            background-color: #f8f9fa !important;
+            overflow-y: auto !important;
+            height: auto !important;
+            max-height: calc(90vh - 120px) !important;
+        }
+        
+        #modifyScheduleModal .individual-edit-section {
+            background: white !important;
+            padding: 20px !important;
+            padding-bottom: 2px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+            margin-bottom: 20px !important;
+        }
+        
+        #modifyScheduleModal .individual-edit-section:last-child {
+            margin-bottom: 0 !important;
+        }
+        
+        #modifyScheduleModal .individual-edit-section h4 {
+            font-size: 16px !important;
+            margin-bottom: 3px !important;
+            color: #333 !important;
+            font-weight: 600 !important;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 10px !important;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table th,
+        #modifyScheduleModal .schedule-editor-table td {
+            border: 1px solid #dee2e6 !important;
+            padding: 8px 6px !important;
+            text-align: center !important;
+            font-size: 11px !important;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table th {
+            background-color: #f8f9fa !important;
+            font-weight: 600 !important;
+        }
+        
+        
+        /* Style separator columns */
+        #modifyScheduleModal .schedule-editor-table .separator-col {
+            width: 12px !important;
+            padding: 0 !important;
+            background-color: transparent !important;
+            border: none !important;
+            border-left: none !important;
+            border-right: none !important;
+        }
+        
+        #modifyScheduleModal .schedule-editor-table th.separator-col {
+            background-color: transparent !important;
+        }
+        
+        /* Remove all styling from schedule-editor-table-container */
+        #modifyScheduleModal .schedule-editor-table-container {
+            border: 0 !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+        
+        #modifyScheduleModal .time-inputs {
+            display: flex !important;
+            gap: 2px !important;
+            align-items: center !important;
+        }
+        
+        #modifyScheduleModal .time-inputs input[type="time"],
+        #modifyScheduleModal input[type="time"] {
+            width: 70px !important;
+            padding: 3px 0px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 3px !important;
+            font-size: 12px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+        }
+        
+        #modifyScheduleModal .btn-clear-shift {
+            background: #dc3545 !important;
+            color: white !important;
+            border: none !important;
+            padding: 3px 6px !important;
+            border-radius: 3px !important;
+            font-size: 9px !important;
+            cursor: pointer !important;
+        }
+        
+        #modifyScheduleModal .btn-clear-shift:hover {
+            background: #c82333 !important;
+        }
+        
+        #modifyScheduleModal .quick-options-compact {
+            background: #f8f9fa !important;
+            padding: 10px !important;
+            border-radius: 5px !important;
+            margin-bottom: 0 !important;
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        #modifyScheduleModal .quick-options-row {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            flex-shrink: 0 !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group label {
+            font-size: 12px !important;
+            margin: 0 !important;
+            margin-right: 2px !important;
+            text-align: right !important;
+            min-width: 40px !important;
+            max-width: 40px !important;
+            white-space: nowrap !important;
+            padding-right: 3px !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group select {
+            width: 100px !important;
+            padding: 3px 6px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 3px !important;
+            font-size: 12px !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group button {
+            background: #007bff !important;
+            color: white !important;
+            border: none !important;
+            padding: 1px 5px !important;
+            border-radius: 3px !important;
+            font-size: 12px !important;
+            cursor: pointer !important;
+            min-width: auto !important;
+            max-width: none !important;
+        }
+        
+        #modifyScheduleModal .quick-option-group button:hover {
+            background: #0056b3 !important;
+        }
+        
+        #modifyScheduleModal .modify-modal-buttons {
+            text-align: center !important;
+            margin-top: 10px !important;
+            padding-top: 10px !important;
+            padding-bottom: 15px !important;
+            border-top: 1px solid #dee2e6 !important;
+            background: white !important;
+            display: block !important;
+            flex-shrink: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            justify-content: center !important;
+            position: sticky !important;
+            bottom: 0 !important;
+            z-index: 10 !important;
+        }
+        
+        /* Shift coloring - match specialist schedule display colors */
+        #modifyScheduleModal input[type="time"].shift1-start-time,
+        #modifyScheduleModal input[type="time"].shift1-end-time {
+            background-color: #ffebee !important;
+            color: #d32f2f !important;
+            border-color: #ffcdd2 !important;
+        }
+        
+        #modifyScheduleModal input[type="time"].shift2-start-time,
+        #modifyScheduleModal input[type="time"].shift2-end-time {
+            background-color: #e3f2fd !important;
+            color: #1976d2 !important;
+            border-color: #bbdefb !important;
+        }
+        
+        #modifyScheduleModal input[type="time"].shift3-start-time,
+        #modifyScheduleModal input[type="time"].shift3-end-time {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            border-color: #c8e6c9 !important;
+        }
+        
+        /* Apply background colors to shift cells in tbody only */
+        /* Shift 1 cells - light red */
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(2),
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(3),
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(4) {
+            background-color: #ffebee !important;
+        }
+        
+        /* Shift 2 cells - light blue */
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(6),
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(7),
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(8) {
+            background-color: #e3f2fd !important;
+        }
+        
+        /* Shift 3 cells - light green */
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(10),
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(11),
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(12) {
+            background-color: #e8f5e8 !important;
+        }
+        
+        /* Remove internal borders within shifts */
+        /* Shift 1 internal borders */
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(2) {
+            border-right: 1px solid #ffebee !important;
+            text-align: right !important;
+        }
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(3) {
+            border-left: 1px solid #ffebee !important;
+            border-right: 1px solid #ffebee !important;
+        }
+        
+        /* Shift 2 internal borders */
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(6) {
+            border-right: 1px solid #e3f2fd !important;
+            text-align: right !important;
+        }
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(7) {
+            border-left: 1px solid #e3f2fd !important;
+            border-right: 1px solid #e3f2fd !important;
+        }
+        
+        /* Shift 3 internal borders */
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(10) {
+            border-right: 1px solid #e8f5e8 !important;
+            text-align: right !important;
+        }
+        #modifyScheduleModal .schedule-editor-table tbody td:nth-child(11) {
+            border-left: 1px solid #e8f5e8 !important;
+            border-right: 1px solid #e8f5e8 !important;
+        }
+        
+        /* Style the day column with lighter background */
+        #modifyScheduleModal .schedule-editor-table .day-name {
+            font-weight: 600 !important;
+            background-color: #f8f9fa !important;
+            padding: 4px 6px !important; /* Reduced top/bottom padding by 50% */
+        }
+        
+        /* Make the second header row entirely white */
+        #modifyScheduleModal .schedule-editor-table thead tr:nth-child(2) th {
+            background-color: white !important;
+        }
+        
+        /* Make the first cell of first row same background as day cells */
+        #modifyScheduleModal .schedule-editor-table thead tr:nth-child(1) th:first-child {
+            background-color: #f8f9fa !important;
+        }
+        
+        /* Override btn-delete style for square shape in modify schedule modal */
+        #modifyScheduleModal .btn-delete {
+            border-radius: 0 !important;
+            padding: 5px 12px !important;
+            font-size: 11px !important;
+            min-width: auto !important;
+        }
+        
+        /* Time Off Modal Styles */
+        #timeOffModal .modify-modal {
+            max-height: 90vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        
+        #timeOffModal .modify-modal-body {
+            flex: 1 !important;
+            overflow-y: auto !important;
+        }
+        
+        /* Modify Specialist Modal - Variable Height */
+        #modifySpecialistModal .modify-modal {
+            height: auto !important;
+            max-height: 90vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            margin: 5vh auto auto auto !important;
+            position: relative !important;
+            top: 0 !important;
+            transform: none !important;
+        }
+        
+        #modifySpecialistModal .modify-modal-body {
+            flex: 0 1 auto !important;
+            overflow-y: auto !important;
+            height: auto !important;
+            max-height: calc(90vh - 180px) !important;
+            min-height: unset !important;
+            padding-bottom: 20px !important;
+        }
+        
+        #modifySpecialistModal .modify-modal-buttons {
+            flex-shrink: 0 !important;
+            margin-top: 0 !important;
+            padding: 15px 20px !important;
+            border-top: 1px solid #dee2e6 !important;
+            background: #f8f9fa !important;
+        }
+        
+        /* Ensure colors work on focus too */
+        #modifyScheduleModal input[type="time"].shift1-start-time:focus,
+        #modifyScheduleModal input[type="time"].shift1-end-time:focus {
+            background-color: #ffebee !important;
+            color: #d32f2f !important;
+            border-color: #d32f2f !important;
+            box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.25) !important;
+        }
+        
+        #modifyScheduleModal input[type="time"].shift2-start-time:focus,
+        #modifyScheduleModal input[type="time"].shift2-end-time:focus {
+            background-color: #e3f2fd !important;
+            color: #1976d2 !important;
+            border-color: #1976d2 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25) !important;
+        }
+        
+        #modifyScheduleModal input[type="time"].shift3-start-time:focus,
+        #modifyScheduleModal input[type="time"].shift3-end-time:focus {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            border-color: #2e7d32 !important;
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25) !important;
+        }
+        
+        #modifyScheduleModal .form-control {
+            display: block !important;
+            width: 100% !important;
+            padding: 0.375rem 0.75rem !important;
+            font-size: 1rem !important;
+            font-weight: 400 !important;
+            line-height: 1.5 !important;
+            color: #495057 !important;
+            background-color: #fff !important;
+            background-clip: padding-box !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out !important;
+        }
+        
+        #modifyScheduleModal input[type="time"].form-control {
+            width: 70px !important;
+            padding: 3px 6px !important;
+            font-size: 12px !important;
+        }
+        
+        #modifyScheduleModal .org-name-row {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            margin-bottom: 10px !important;
+        }
+        
+        #modifyScheduleModal .modify-icon-inline {
+            font-size: 24px !important;
+        }
+        
+        #modifyScheduleModal .org-name-large {
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+        }
+        
+        /* Disabled button styles */
+        .btn:disabled,
+        .btn[disabled],
+        button:disabled,
+        button[disabled] {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+        }
+        
+        /* Add Specialist Modal username/password fields light blue background */
+        #addSpecialistModal #specialistUser,
+        #addSpecialistModal #specialistPassword,
+        #addSpecialistModal #specialistUser:focus,
+        #addSpecialistModal #specialistPassword:focus {
+            background-color: #e3f2fd !important;
+        }
+        
+        /* Schedule editor table time inputs */
+        .schedule-editor-table input[type="time"] {
+            width: 75% !important;
+            padding: 2px 0px !important;
+            border: 1px solid #ccc;
+            border-radius: 3px !important;
+            font-size: 11px !important;
+            min-width: 30px !important;
+        }
+        
+        /* Schedule editor table padding */
+        .schedule-editor-table th,
+        .schedule-editor-table td {
+            padding: 6px 6px !important;
+        }
+        
+        /* Add Specialist Modal - Apply shift colors to inputs */
+        #addSpecialistModal .shift1-start-time,
+        #addSpecialistModal .shift1-end-time {
+            background-color: #ffebee !important;
+            color: #d32f2f !important;
+            border-color: #ffcdd2 !important;
+        }
+        
+        #addSpecialistModal .shift2-start-time,
+        #addSpecialistModal .shift2-end-time {
+            background-color: #e3f2fd !important;
+            color: #1976d2 !important;
+            border-color: #bbdefb !important;
+        }
+        
+        #addSpecialistModal .shift3-start-time,
+        #addSpecialistModal .shift3-end-time {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            border-color: #c8e6c9 !important;
+        }
+        
+        /* Ensure colors work on focus too */
+        #addSpecialistModal .shift1-start-time:focus,
+        #addSpecialistModal .shift1-end-time:focus {
+            background-color: #ffebee !important;
+            color: #d32f2f !important;
+            border-color: #d32f2f !important;
+            box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.25) !important;
+        }
+        
+        #addSpecialistModal .shift2-start-time:focus,
+        #addSpecialistModal .shift2-end-time:focus {
+            background-color: #e3f2fd !important;
+            color: #1976d2 !important;
+            border-color: #1976d2 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25) !important;
+        }
+        
+        #addSpecialistModal .shift3-start-time:focus,
+        #addSpecialistModal .shift3-end-time:focus {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            border-color: #2e7d32 !important;
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25) !important;
+        }
+    </style>
+        /* Force override for Modify Schedule Modal - placed right before modal HTML */
+        #modifyScheduleModal .modify-modal {
+            width: 70% !important;
+            max-width: 1000px !important;
+            height: auto !important;
+            max-height: 90vh !important;
+            margin: 5vh auto !important;
+        }
+        
+        #modifyScheduleModal .modify-modal-body {
+            padding: 25px !important;
+            background-color: #f8f9fa !important;
+            height: auto !important;
+            overflow-y: auto !important;
+        }
+        
+        /* Force shift colors right before modal - match specialist schedule display */
+        #modifyScheduleModal .shift1-start-time,
+        #modifyScheduleModal .shift1-end-time {
+            background-color: #ffebee !important;
+            color: #d32f2f !important;
+        }
+        
+        #modifyScheduleModal .shift2-start-time,
+        #modifyScheduleModal .shift2-end-time {
+            background-color: #e3f2fd !important;
+            color: #1976d2 !important;
+        }
+        
+        #modifyScheduleModal .shift3-start-time,
+        #modifyScheduleModal .shift3-end-time {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+        }
