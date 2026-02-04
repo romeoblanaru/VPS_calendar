@@ -147,68 +147,44 @@ window.onSelectUnassignedSpecialist = function(specialistId) {
 };
 
 window.handleSpecialistSelectionReal = function() {
-    console.log('=== handleSpecialistSelectionReal START ===');
-
     const specialistSelect = document.getElementById('specialistSelection');
     if (!specialistSelect) {
-        console.error('specialistSelection element not found!');
         return;
     }
 
     const selectedValue = specialistSelect.value;
-    console.log('Selected value:', selectedValue);
-    console.log('Selected text:', specialistSelect.options[specialistSelect.selectedIndex]?.text);
 
     if (selectedValue === 'new') {
-        console.log('New specialist mode selected');
         // New specialist mode - enable all fields
         window.enableFormFields();
         window.clearFormFields();
     } else if (selectedValue && selectedValue !== '') {
-        console.log('Existing specialist selected, loading data for ID:', selectedValue);
         // Existing specialist mode - load data THEN make fields read-only
-        // Note: Moving disableFormFields inside loadSpecialistData callback
         window.loadSpecialistData(selectedValue, true); // Pass flag to disable fields after loading
-    } else {
-        console.log('No selection or empty value');
     }
-
-    console.log('=== handleSpecialistSelectionReal END ===');
 };
 
 // Also set the wrapper to use the real function
 window.handleSpecialistSelection = window.handleSpecialistSelectionReal;
 
 window.enableFormFields = function() {
-    console.log('enableFormFields called');
     const fields = ['specialistName', 'specialistSpeciality', 'specialistEmail', 'specialistPhone', 'specialistUser', 'specialistPassword', 'emailScheduleHour', 'emailScheduleMinute'];
     fields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
             field.readOnly = false;
-            // field.disabled = false; // Not using disabled
             field.style.backgroundColor = '#fff';
-            console.log(`Field ${fieldId} enabled`);
-        } else {
-            console.warn('Field not found when enabling:', fieldId);
         }
     });
 };
 
 window.disableFormFields = function() {
-    console.log('disableFormFields called');
     const fields = ['specialistName', 'specialistSpeciality', 'specialistEmail', 'specialistPhone', 'specialistUser', 'specialistPassword', 'emailScheduleHour', 'emailScheduleMinute'];
     fields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
-            // Use readOnly instead of disabled to allow value changes
             field.readOnly = true;
-            // Don't use disabled as it prevents value changes
-            // field.disabled = true;
             field.style.backgroundColor = '#f8f9fa';
-            console.log(`Field ${fieldId} set to readOnly`);
-        } else {
-            console.warn('Field not found when disabling:', fieldId);
         }
     });
 };
@@ -227,29 +203,6 @@ window.clearFormFields = function() {
 };
 
 window.loadSpecialistData = function(specialistId, disableFieldsAfter = false) {
-    console.log('=== loadSpecialistData START ===');
-    console.log('Loading specialist data for ID:', specialistId);
-    console.log('Disable fields after loading:', disableFieldsAfter);
-
-    // First check if the form fields exist
-    const testFields = {
-        name: document.getElementById('specialistName'),
-        speciality: document.getElementById('specialistSpeciality'),
-        email: document.getElementById('specialistEmail'),
-        phone: document.getElementById('specialistPhone'),
-        user: document.getElementById('specialistUser'),
-        password: document.getElementById('specialistPassword')
-    };
-
-    console.log('Form fields check before API call:', {
-        name: !!testFields.name,
-        speciality: !!testFields.speciality,
-        email: !!testFields.email,
-        phone: !!testFields.phone,
-        user: !!testFields.user,
-        password: !!testFields.password
-    });
-
     const formData = new FormData();
     formData.append('specialist_id', specialistId);
 
@@ -259,100 +212,46 @@ window.loadSpecialistData = function(specialistId, disableFieldsAfter = false) {
         credentials: 'same-origin'
     })
         .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers.get('content-type'));
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
-            return response.text(); // First get as text to debug
+            return response.json();
         })
-        .then(text => {
-            console.log('Raw response:', text);
+        .then(data => {
+            if (data.success) {
+                const specialist = data.specialist;
 
-            try {
-                const data = JSON.parse(text);
-                console.log('Parsed data:', data);
+                // Populate form fields
+                const nameField = document.getElementById('specialistName');
+                const specialityField = document.getElementById('specialistSpeciality');
+                const emailField = document.getElementById('specialistEmail');
+                const phoneField = document.getElementById('specialistPhone');
+                const userField = document.getElementById('specialistUser');
+                const passwordField = document.getElementById('specialistPassword');
+                const hourField = document.getElementById('emailScheduleHour');
+                const minuteField = document.getElementById('emailScheduleMinute');
 
-                if (data.success) {
-                    const specialist = data.specialist;
-                    console.log('Specialist data:', specialist);
+                if (nameField) nameField.value = specialist.name || '';
+                if (specialityField) specialityField.value = specialist.speciality || '';
+                if (emailField) emailField.value = specialist.email || '';
+                if (phoneField) phoneField.value = specialist.phone_nr || '';
+                if (userField) userField.value = specialist.user || '';
+                if (passwordField) passwordField.value = ''; // Don't populate password
+                if (hourField) hourField.value = specialist.h_of_email_schedule || '9';
+                if (minuteField) minuteField.value = specialist.m_of_email_schedule || '0';
 
-                    // Populate form fields
-                    const nameField = document.getElementById('specialistName');
-                    const specialityField = document.getElementById('specialistSpeciality');
-                    const emailField = document.getElementById('specialistEmail');
-                    const phoneField = document.getElementById('specialistPhone');
-                    const userField = document.getElementById('specialistUser');
-                    const passwordField = document.getElementById('specialistPassword');
-                    const hourField = document.getElementById('emailScheduleHour');
-                    const minuteField = document.getElementById('emailScheduleMinute');
-
-                    console.log('Form fields found after API response:', {
-                        name: !!nameField,
-                        speciality: !!specialityField,
-                        email: !!emailField,
-                        phone: !!phoneField,
-                        user: !!userField,
-                        password: !!passwordField,
-                        hour: !!hourField,
-                        minute: !!minuteField
-                    });
-
-                    if (nameField) {
-                        console.log('Setting name from:', nameField.value, 'to:', specialist.name);
-                        nameField.value = specialist.name || '';
-                        console.log('Name field after setting:', nameField.value);
-                    }
-                    if (specialityField) {
-                        console.log('Setting speciality from:', specialityField.value, 'to:', specialist.speciality);
-                        specialityField.value = specialist.speciality || '';
-                        console.log('Speciality field after setting:', specialityField.value);
-                    }
-                    if (emailField) {
-                        console.log('Setting email from:', emailField.value, 'to:', specialist.email);
-                        emailField.value = specialist.email || '';
-                        console.log('Email field after setting:', emailField.value);
-                    }
-                    if (phoneField) {
-                        phoneField.value = specialist.phone_nr || '';
-                        console.log('Phone field set to:', phoneField.value);
-                    }
-                    if (userField) {
-                        userField.value = specialist.user || '';
-                        console.log('User field set to:', userField.value);
-                    }
-                    if (passwordField) {
-                        passwordField.value = ''; // Don't populate password
-                        console.log('Password field cleared');
-                    }
-                    if (hourField) hourField.value = specialist.h_of_email_schedule || '9';
-                    if (minuteField) minuteField.value = specialist.m_of_email_schedule || '0';
-
-                    console.log('=== All fields populated successfully ===');
-
-                    // Disable fields after loading if requested
-                    if (disableFieldsAfter) {
-                        console.log('Disabling form fields after loading data...');
-                        window.disableFormFields();
-                    }
-                } else {
-                    console.error('API returned success:false -', data.message);
-                    alert('Failed to load specialist data: ' + (data.message || 'Unknown error'));
+                // Disable fields after loading if requested
+                if (disableFieldsAfter) {
+                    window.disableFormFields();
                 }
-            } catch (parseError) {
-                console.error('Failed to parse JSON:', parseError);
-                console.error('Raw response was:', text);
-                alert('Error parsing server response. Check console for details.');
+            } else {
+                alert('Failed to load specialist data: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
-            console.error('Fetch error:', error);
-            alert('Failed to load specialist data. Check console for details.');
+            console.error('Error loading specialist data:', error);
+            alert('Failed to load specialist data. Please try again.');
         });
-
-    console.log('=== loadSpecialistData END (async fetch initiated) ===');
 };
 
 window.clearShift = function(button, shiftNum) {
@@ -540,6 +439,3 @@ window.submitToReactivateSpecialist = function(formData) {
 
 // Replace the lazy loading wrapper with the real function after loading
 window.openAddSpecialistModal = window.openAddSpecialistModalReal;
-
-// Initialize on load
-console.log('Add Specialist Modal loaded successfully');

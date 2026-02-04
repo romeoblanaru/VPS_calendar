@@ -2999,16 +2999,16 @@ if (isset($workpoint_id)) {
 
         
         // Add Specialist Modal - Lazy Loading
-        let addSpecialistModalLoaded = false;
+        window.addSpecialistModalLoaded = false;
 
         // Lazy loading wrapper for Add Specialist Modal
-        function openAddSpecialistModal(workpointId, organisationId) {
-            if (!addSpecialistModalLoaded) {
+        window.openAddSpecialistModal = function(workpointId, organisationId) {
+            if (!window.addSpecialistModalLoaded) {
                 // Load the Add Specialist script
                 const script = document.createElement('script');
                 script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
                 script.onload = function() {
-                    addSpecialistModalLoaded = true;
+                    window.addSpecialistModalLoaded = true;
                     // Now call the real function
                     if (typeof window.openAddSpecialistModal === 'function') {
                         window.openAddSpecialistModal(workpointId, organisationId);
@@ -3040,11 +3040,11 @@ if (isset($workpoint_id)) {
 
         // Stub functions for Add Specialist form - these load the module if needed
         function submitAddSpecialist() {
-            if (!addSpecialistModalLoaded) {
+            if (!window.addSpecialistModalLoaded) {
                 const script = document.createElement('script');
                 script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
                 script.onload = function() {
-                    addSpecialistModalLoaded = true;
+                    window.addSpecialistModalLoaded = true;
                     if (typeof window.submitAddSpecialist === 'function') {
                         window.submitAddSpecialist();
                     }
@@ -3057,16 +3057,19 @@ if (isset($workpoint_id)) {
             }
         }
 
-        function handleSpecialistSelection() {
-            if (!addSpecialistModalLoaded) {
+        window.handleSpecialistSelection = function() {
+            if (!window.addSpecialistModalLoaded) {
                 const script = document.createElement('script');
                 script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
                 script.onload = function() {
-                    addSpecialistModalLoaded = true;
+                    window.addSpecialistModalLoaded = true;
                     // Call the real function that was just loaded
                     if (typeof window.handleSpecialistSelectionReal === 'function') {
                         window.handleSpecialistSelectionReal();
                     }
+                };
+                script.onerror = function() {
+                    console.error('Failed to load add-specialist.js module');
                 };
                 document.head.appendChild(script);
             } else {
@@ -3078,11 +3081,11 @@ if (isset($workpoint_id)) {
         }
 
         function clearShift(button, shiftNum) {
-            if (!addSpecialistModalLoaded) {
+            if (!window.addSpecialistModalLoaded) {
                 const script = document.createElement('script');
                 script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
                 script.onload = function() {
-                    addSpecialistModalLoaded = true;
+                    window.addSpecialistModalLoaded = true;
                     if (typeof window.clearShift === 'function') {
                         window.clearShift(button, shiftNum);
                     }
@@ -3096,11 +3099,11 @@ if (isset($workpoint_id)) {
         }
 
         function applyAllShifts() {
-            if (!addSpecialistModalLoaded) {
+            if (!window.addSpecialistModalLoaded) {
                 const script = document.createElement('script');
                 script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
                 script.onload = function() {
-                    addSpecialistModalLoaded = true;
+                    window.addSpecialistModalLoaded = true;
                     if (typeof window.applyAllShifts === 'function') {
                         window.applyAllShifts();
                     }
@@ -3114,7 +3117,7 @@ if (isset($workpoint_id)) {
         }
 
         function closeAddSpecialistModal() {
-            if (!addSpecialistModalLoaded) {
+            if (!window.addSpecialistModalLoaded) {
                 // If module not loaded, just hide the modal directly
                 const modal = document.getElementById('addSpecialistModal');
                 if (modal) modal.style.display = 'none';
@@ -3187,6 +3190,86 @@ if (isset($workpoint_id)) {
             } else {
                 if (typeof window.updateSpecialistDetails === 'function') {
                     window.updateSpecialistDetails();
+                }
+            }
+        }
+
+        // Communication Setup Modal - Lazy Loading
+        window.communicationSetupModalLoaded = false;
+        window.communicationSetupModalHtmlLoaded = false;
+
+        // Lazy loading wrapper for Communication Setup Modal
+        window.openCommunicationSetup = function() {
+            // First check if HTML is loaded
+            if (!window.communicationSetupModalHtmlLoaded) {
+                // Load the modal HTML from assets directory (more accessible)
+                fetch('assets/modals/communication-setup-modal.php')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Create a temporary container
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+
+                        // Append all child elements to body
+                        while (temp.firstElementChild) {
+                            document.body.appendChild(temp.firstElementChild);
+                        }
+
+                        window.communicationSetupModalHtmlLoaded = true;
+
+                        // Now load the JavaScript if not already loaded
+                        if (!window.communicationSetupModalLoaded) {
+                            const script = document.createElement('script');
+                            script.src = 'assets/js/modals/communication-setup.js?v=' + Date.now();
+                            script.onload = function() {
+                                window.communicationSetupModalLoaded = true;
+                                // Call the real function
+                                if (typeof window.openCommunicationSetupModalReal === 'function') {
+                                    window.openCommunicationSetupModalReal();
+                                }
+                            };
+                            script.onerror = function() {
+                                console.error('Failed to load communication-setup.js module');
+                                alert('Failed to load Communication Setup module. Please try again.');
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            // JavaScript already loaded, just open the modal
+                            if (typeof window.openCommunicationSetupModalReal === 'function') {
+                                window.openCommunicationSetupModalReal();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to load Communication Setup modal HTML:', error);
+                        alert('Failed to load Communication Setup. Please try again.');
+                    });
+            } else {
+                // HTML already loaded, check if JavaScript is loaded
+                if (!window.communicationSetupModalLoaded) {
+                    const script = document.createElement('script');
+                    script.src = 'assets/js/modals/communication-setup.js?v=' + Date.now();
+                    script.onload = function() {
+                        window.communicationSetupModalLoaded = true;
+                        if (typeof window.openCommunicationSetupModalReal === 'function') {
+                            window.openCommunicationSetupModalReal();
+                        }
+                    };
+                    script.onerror = function() {
+                        console.error('Failed to load communication-setup.js module');
+                        alert('Failed to load Communication Setup module. Please try again.');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Everything already loaded, just open the modal
+                    if (typeof window.openCommunicationSetupModalReal === 'function') {
+                        window.openCommunicationSetupModalReal();
+                    }
                 }
             }
         }
@@ -4166,7 +4249,7 @@ if (isset($workpoint_id)) {
                             ?>
                         </select>
                     </div>
-                    
+
                     <!-- Specialist Details -->
                     <div class="form-row">
                         <div class="form-group">
@@ -5943,6 +6026,5 @@ if (isset($workpoint_id)) {
     }
     
     </script>
-    <script src="assets/js/add_specialist_modal.js"></script>
 </body>
 </html>
