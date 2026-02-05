@@ -1138,11 +1138,9 @@ if (isset($workpoint_id)) {
                                                          onmouseover="this.style.backgroundColor='rgba(0, 123, 255, 0.05)'"
                                                          onmouseout="this.style.backgroundColor='transparent'"
                                                          title="Click to modify schedule">
-                                                        <div class="working-program">
+                                                        <div class="working-program" style="font-size: 0.7em; padding-top: 8px;">
                                                             <?php
                                                             if (!empty($spec_program)) {
-                                                                echo "<strong>Working Schedule:</strong><br>";
-                                                                
                                                                 // Define day order
                                                                 $day_order = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                                                                 $day_names = [
