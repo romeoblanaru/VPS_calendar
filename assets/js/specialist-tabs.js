@@ -37,20 +37,24 @@
         tabNav.style.marginBottom = '6px';
         tabNav.innerHTML = `
             <button data-tab="schedule" data-specialist="${specialistId}"
-                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid #007bff; color: #007bff; font-weight: 500; cursor: pointer; transition: all 0.3s; font-size: 0.65rem;">
-                <i class="fas fa-calendar-alt" style="margin-right: 2px; font-size: 0.6rem;"></i>Schedule
+                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid #007bff; color: #007bff; font-weight: 500; cursor: pointer; transition: all 0.3s; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <i class="fas fa-calendar-alt" style="font-size: 0.75rem;"></i>
+                <span>Schedule</span>
             </button>
             <button data-tab="services" data-specialist="${specialistId}"
-                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.65rem;">
-                <i class="fas fa-list" style="margin-right: 2px; font-size: 0.6rem;"></i>Services
+                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <i class="fas fa-list" style="font-size: 0.75rem;"></i>
+                <span>Services</span>
             </button>
             <button data-tab="permissions" data-specialist="${specialistId}"
-                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.65rem;">
-                <i class="fas fa-lock" style="margin-right: 2px; font-size: 0.6rem;"></i>Permissions
+                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <i class="fas fa-lock" style="font-size: 0.75rem;"></i>
+                <span>Permissions</span>
             </button>
             <button data-tab="details" data-specialist="${specialistId}"
-                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.65rem;">
-                <i class="fas fa-info-circle" style="margin-right: 2px; font-size: 0.6rem;"></i>Details
+                    style="flex: 1; padding: 3px 5px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <i class="fas fa-info-circle" style="font-size: 0.75rem;"></i>
+                <span>Details</span>
             </button>
         `;
 
@@ -59,7 +63,7 @@
         tabContent.className = 'tab-content';
         tabContent.innerHTML = `
             <!-- Schedule Tab -->
-            <div class="tab-pane active" data-tab-content="schedule" data-specialist="${specialistId}">
+            <div class="tab-pane active" data-tab-content="schedule" data-specialist="${specialistId}" style="text-align: center;">
                 ${scheduleContent.innerHTML}
             </div>
 
@@ -203,8 +207,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.services && data.services.length > 0) {
-                    let servicesHTML = '<div style="padding: 8px;">';
-                    servicesHTML += '<div style="max-height: 150px; overflow-y: auto;">';
+                    let servicesHTML = '<div style="padding: 1px;">';
+                    servicesHTML += '<div style="max-height: 150px; overflow-y: auto; scrollbar-width: thin;">';
 
                     data.services.forEach(service => {
                         const priceWithVat = service.price_of_service * (1 + service.procent_vat / 100);
