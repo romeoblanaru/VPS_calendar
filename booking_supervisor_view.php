@@ -2047,276 +2047,11 @@ if (isset($workpoint_id)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/specialists_cards_bootstrap.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/realtime-bookings.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/modal-loader.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/modal-wrappers.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/modal-debug.js?v=<?php echo time(); ?>"></script> <!-- Temporary debug helper -->
     <script>
-    // Ensure Google Calendar functions are always available
-    function postJSON(url, data) {
-        return fetch(url, {
-            method: 'POST',
-            headers: { 'Accept': 'application/json' },
-            body: new URLSearchParams(data),
-            credentials: 'same-origin' // Include cookies for session
-        }).then(r => {
-            // First check if response is ok
-            if (!r.ok) {
-                throw new Error(`HTTP error! status: ${r.status}`);
-            }
-            // Try to get text first to debug
-            return r.text().then(text => {
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    // console.error('Response text:', text);
-                    // console.error('JSON parse error:', e);
-                    throw new Error('Invalid JSON response: ' + text.substring(0, 200));
-                }
-            });
-        });
-    }
-
-    // Google Calendar connect function removed (not needed in supervisor mode)
-
-    // Google Calendar disconnect function removed (not needed in supervisor mode)
-
-    // Google Calendar sync function removed (not needed in supervisor mode)
-
-    // Confirm Google Calendar import after preview
-    window.confirmGcalImport = function() {
-
-        
-        // Get stored import data
-        if (!window.gcalImportData) {
-            alert('No import data found. Please start over.');
-            return;
-        }
-        
-        // Create a copy of the data and remove preview_only flag
-        const importData = {};
-        for (const key in window.gcalImportData) {
-            if (key !== 'preview_only') {
-                importData[key] = window.gcalImportData[key];
-            }
-        }
-        
-        // Show loading state
-        const resultsModal = document.querySelector('div[style*="position: fixed"]');
-        if (resultsModal) {
-            const content = resultsModal.querySelector('div[style*="background: white"]');
-            if (content) {
-                content.innerHTML = `
-                    <div style="text-align: center; padding: 50px;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </div>
-                        <h4>Importing events...</h4>
-                        <p style="color: #666;">Please wait while we import your Google Calendar events.</p>
-                    </div>
-                `;
-            }
-        }
-        
-        // Make actual import call
-        postJSON('admin/gcal_import_from_google.php', importData).then(resp => {
-
-            
-            if (resp.success) {
-                // Re-enable auto-refresh
-                window.gcalImportInProgress = false;
-                
-                // Show success message
-                const content = resultsModal.querySelector('div[style*="background: white"]');
-                if (content) {
-                    content.innerHTML = `
-                        <button onclick="window.gcalImportInProgress = false; this.parentElement.parentElement.remove(); window.location.reload();" 
-                                style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #999; cursor: pointer;">
-                            ×
-                        </button>
-                        <div style="text-align: center; padding: 30px;">
-                            <div style="font-size: 48px; color: #28a745; margin-bottom: 20px;">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <h4 style="margin-bottom: 20px;">${resp.message}</h4>
-                            ${resp.errors && resp.errors.length > 0 ? 
-                                `<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px; margin: 20px 0;">
-                                    <strong>Some errors occurred:</strong>
-                                    <ul style="text-align: left; margin: 10px 0;">
-                                        ${resp.errors.map(err => `<li>${err}</li>`).join('')}
-                                    </ul>
-                                </div>` : ''
-                            }
-                            <button onclick="window.gcalImportInProgress = false; this.parentElement.parentElement.parentElement.remove(); window.location.reload();" 
-                                    style="margin-top: 20px; padding: 10px 30px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                Close & Reload
-                            </button>
-                        </div>
-                    `;
-                }
-            } else {
-                alert('Import failed: ' + (resp.message || 'Unknown error'));
-                window.gcalImportInProgress = false;
-            }
-            
-            // Clear stored data
-            delete window.gcalImportData;
-            
-        }).catch(err => {
-            // console.error('Confirm import error:', err);
-            alert('Error during import: ' + err.message);
-            window.gcalImportInProgress = false;
-            delete window.gcalImportData;
-        });
-    };
-
-    function showSyncResults(data) {
-
-        // Remove any existing sync modals first
-        const existingModals = document.querySelectorAll('.gcal-sync-modal');
-        existingModals.forEach(modal => modal.remove());
-        
-        const modal = document.createElement('div');
-        modal.className = 'gcal-sync-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 50000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        `;
-        
-        let eventsHtml = '';
-        if (data.events && data.events.length > 0) {
-            data.events.forEach(event => {
-                const statusIcon = event.status === 'success' ? 
-                    '<i class="fas fa-check-circle text-success"></i>' : 
-                    '<i class="fas fa-times-circle text-danger"></i>';
-                
-                const statusBadge = event.status === 'success' ? 
-                    '<span class="badge bg-success">Synced</span>' : 
-                    '<span class="badge bg-danger">Failed</span>';
-                
-                eventsHtml += `
-                    <div class="card mb-2">
-                        <div class="card-body p-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${statusIcon} ${event.client_name || 'Unknown'}</strong><br>
-                                    <small class="text-muted">${event.service || 'Unknown'} | ${event.start_time} ${event.google_event_link ? `<a href="${event.google_event_link}" target="_blank" title="View in Google Calendar" style="text-decoration: none; margin-left: 8px; display: inline-flex; align-items: center; vertical-align: middle;"><span style="width: 20px; height: 20px; background: linear-gradient(45deg, #4285f4 25%, #34a853 25%, #34a853 50%, #fbbc05 50%, #fbbc05 75%, #ea4335 75%); border-radius: 4px; display: inline-flex; flex-shrink: 0; transform: scale(1);"></span></a>` : ''}</small>
-                                </div>
-                                <div>
-                                    ${statusBadge}
-                                </div>
-                            </div>
-                            ${event.error ? `<div class="text-danger small mt-1"><strong>⚠️ Error:</strong> ${event.error}</div>` : ''}
-                            <details class="mt-2">
-                                <summary class="small text-muted" style="cursor: pointer;">🔍 Debug: Event Data Sent to Google</summary>
-                                <pre class="small mt-1 bg-light p-2" style="font-size: 10px; max-height: 200px; overflow-y: auto; border-radius: 4px;">${JSON.stringify(event.google_event_data, null, 2)}</pre>
-                            </details>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-        
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 8px; max-width: 800px; width: 90%; max-height: 80vh; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <div style="padding: 20px; border-bottom: 1px solid #ddd; background: #f8f9fa;">
-                    <h5 style="margin: 0; color: #333;">
-                        <i class="fab fa-google" style="color: #4285f4;"></i> Google Calendar Sync Results
-                    </h5>
-                </div>
-                <div style="padding: 20px; overflow-y: auto; max-height: 60vh;">
-                    <div class="alert alert-${data.summary.errors > 0 ? 'warning' : 'success'} mb-3">
-                        <strong>📊 Summary:</strong> ${data.summary.success} events synchronized successfully
-                        ${data.summary.errors > 0 ? `, ${data.summary.errors} failed` : ''}
-                        (Total: ${data.summary.total})
-                    </div>
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        ${eventsHtml || '<p class="text-muted">No events to display.</p>'}
-                    </div>
-                </div>
-                <div style="padding: 15px 20px; border-top: 1px solid #ddd; text-align: right;">
-                    <button type="button" class="btn btn-secondary me-2" onclick="this.closest('.gcal-sync-modal').remove()">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="window.location.reload()">Refresh Page</button>
-                </div>
-            </div>
-        `;
-        
-        // Add click-outside-to-close functionality
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        
-        // Prevent modal from interfering with page events
-        modal.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-        
-        document.body.appendChild(modal);
-
-    }
-
-    function showSyncError(message) {
-
-        // Remove any existing sync modals first
-        const existingModals = document.querySelectorAll('.gcal-sync-modal');
-        existingModals.forEach(modal => modal.remove());
-        
-        const modal = document.createElement('div');
-        modal.className = 'gcal-sync-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 50000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        `;
-        
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <div style="padding: 20px; border-bottom: 1px solid #ddd; background: #f8f9fa;">
-                    <h5 style="margin: 0; color: #dc3545;">
-                        <i class="fas fa-exclamation-triangle"></i> Sync Error
-                    </h5>
-                </div>
-                <div style="padding: 20px;">
-                    <div class="alert alert-danger">
-                        ${message}
-                    </div>
-                </div>
-                <div style="padding: 15px 20px; border-top: 1px solid #ddd; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="this.closest('.gcal-sync-modal').remove()">Close</button>
-                </div>
-            </div>
-        `;
-        
-        // Add click-outside-to-close functionality
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        
-        // Prevent modal from interfering with page events
-        modal.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-        
-        document.body.appendChild(modal);
-
-    }
+    // Google Calendar integration completely removed from supervisor mode
     </script>
     <script>
         // Timezone for JavaScript (working point if available, otherwise organization)
@@ -2377,191 +2112,6 @@ if (isset($workpoint_id)) {
 
             window.location.href = url.toString();
         }
-        
-        // Google Calendar Import Function
-        // Google Calendar import function removed (not needed in supervisor mode)
-        
-        // Separate function to show the import modal
-        // Google Calendar import modal function removed (not needed in supervisor mode)
-        
-        // Add service mapping row function
-        window.addServiceMappingRow = function() {
-            // Get the services HTML from the existing select in the modal
-            const existingSelect = document.querySelector('#service-mappings select');
-            let servicesHTML = '';
-            if (existingSelect) {
-                // Copy options from existing select
-                Array.from(existingSelect.options).forEach(option => {
-                    if (option.value) { // Skip the "Select Service" option
-                        servicesHTML += `<option value="${option.value}">${option.text}</option>`;
-                    }
-                });
-            }
-            const mappingDiv = document.getElementById('service-mappings');
-            const newRow = document.createElement('div');
-            newRow.className = 'service-mapping-row';
-            newRow.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
-            newRow.innerHTML = `
-                <input type="text" placeholder="Keyword (e.g. hair cut)" 
-                       style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
-                <select style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
-                    <option value="">Select Service</option>
-                    ${servicesHTML}
-                </select>
-                <button type="button" onclick="this.parentElement.remove()" 
-                        style="padding: 8px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                    ×
-                </button>
-            `;
-            mappingDiv.appendChild(newRow);
-        };
-        
-        // Execute import function
-        window.executeGcalImport = function(specialistId) {
-            const fromDate = document.getElementById('gcal-import-from').value;
-            const toDate = document.getElementById('gcal-import-to').value;
-            
-            if (!fromDate || !toDate) {
-                alert('Please select both dates');
-                return;
-            }
-            
-            if (fromDate > toDate) {
-                alert('From date must be before To date');
-                return;
-            }
-            
-            // Disable real-time reload during import
-            window.gcalImportInProgress = true;
-            
-            // Collect service mappings
-            const mappings = [];
-            document.querySelectorAll('.service-mapping-row').forEach(row => {
-                const keyword = row.querySelector('input[type="text"]').value.trim();
-                const serviceId = row.querySelector('select').value;
-                if (keyword && serviceId) {
-                    mappings.push({ keywords: keyword.toLowerCase(), service_id: serviceId });
-                }
-            });
-            
-            // Show loading
-            document.getElementById('import-btn-text').style.display = 'none';
-            document.getElementById('import-spinner').style.display = 'inline-block';
-            
-            // Prepare data for POST
-            const postData = {
-                specialist_id: specialistId,
-                from_date: fromDate,
-                to_date: toDate,
-                preview_only: 'true' // First call is preview only
-            };
-            
-            // Add service mappings as array elements
-            mappings.forEach((mapping, index) => {
-                postData[`service_mappings[${index}][keywords]`] = mapping.keywords;
-                postData[`service_mappings[${index}][service_id]`] = mapping.service_id;
-            });
-            
-            // Store data for actual import
-            window.gcalImportData = postData;
-            
-            // Preview call
-
-            postJSON('admin/gcal_import_from_google.php', postData).then(resp => {
-
-                
-                if (resp.success) {
-                    document.querySelector('.gcal-import-modal').remove();
-                    
-                    // Show detailed results modal
-                    const resultsModal = document.createElement('div');
-                    resultsModal.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background-color: rgba(0,0,0,0.5);
-                        z-index: 50000;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    `;
-                    
-                    let eventsHtml = '';
-                    if (resp.debug_info && resp.debug_info.events) {
-                        eventsHtml = '<div style="max-height: 400px; overflow-y: auto;">';
-                        eventsHtml += '<h5>Found ' + resp.debug_info.total_events_found + ' events in Google Calendar</h5>';
-                        eventsHtml += '<p>Date range: ' + resp.debug_info.date_range.from + ' to ' + resp.debug_info.date_range.to + '</p>';
-                        eventsHtml += '<p>Calendar ID: ' + (resp.debug_info.calendar_id || 'primary').substring(0, 20) + '...</p>';
-                        eventsHtml += '<hr>';
-                        
-                        if (resp.debug_info.events.length === 0) {
-                            eventsHtml += '<p style="color: orange;">No events found in the selected date range. Try selecting different dates or check if you have events in your Google Calendar.</p>';
-                        } else {
-                            resp.debug_info.events.forEach((event, idx) => {
-                                const statusColor = event.status === 'imported' ? 'green' : 
-                                                  event.status === 'will_import' ? 'blue' :
-                                                  event.status === 'skipped' ? 'orange' : 'red';
-                                const statusText = event.status === 'will_import' ? 'Will Import' : event.status;
-                                eventsHtml += `
-                                    <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; line-height: 1.3;">
-                                        <strong>${idx + 1}. ${event.summary}</strong> <span style="font-weight: normal; font-size: 0.9em;">(${event.start})</span><br style="margin-bottom: 2px;">
-                                        <small>Status: <span style="color: ${statusColor}">${statusText}</span> 
-                                        ${event.reason ? '(' + event.reason + ')' : ''}</small><br style="margin-bottom: 2px;">
-                                        ${event.client_name ? '<small><span style="text-decoration: underline;">Client:</span> ' + event.client_name + '</small><br style="margin-bottom: 2px;">' : ''}
-                                        ${event.phone_extracted ? '<small><span style="text-decoration: underline;">Phone:</span> ' + event.phone_extracted + '</small><br style="margin-bottom: 2px;">' : ''}
-                                        ${event.service_matched ? '<small><span style="text-decoration: underline;">Service:</span> ' + event.service_matched + '</small><br style="margin-bottom: 2px;">' : ''}
-                                        ${event.error ? '<small style="color: red">Error: ' + event.error + '</small>' : ''}
-                                    </div>
-                                `;
-                            });
-                        }
-                        eventsHtml += '</div>';
-                    }
-                    
-                    const buttonHtml = resp.preview_mode ? 
-                        `<button onclick="window.gcalImportInProgress = false; this.parentElement.parentElement.remove();" 
-                                style="margin-top: 20px; margin-right: 10px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            Cancel
-                        </button>
-                        <button onclick="window.confirmGcalImport()" 
-                                style="margin-top: 20px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            Confirm Import (${resp.imported} events)
-                        </button>` :
-                        `<button onclick="window.gcalImportInProgress = false; this.parentElement.parentElement.remove(); ${resp.imported > 0 ? 'window.location.reload();' : ''}" 
-                                style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            ${resp.imported > 0 ? 'Close & Reload' : 'Close'}
-                        </button>`;
-                    
-                    resultsModal.innerHTML = `
-                        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
-                            <button onclick="window.gcalImportInProgress = false; this.parentElement.parentElement.remove();" 
-                                    style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #999; cursor: pointer;">
-                                ×
-                            </button>
-                            <h4>${resp.message}</h4>
-                            ${eventsHtml}
-                            <div style="text-align: center;">
-                                ${buttonHtml}
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(resultsModal);
-                } else {
-                    // console.error('Import failed response:', resp);
-                    alert('Import failed: ' + (resp.message || 'Unknown error'));
-                    document.getElementById('import-btn-text').style.display = 'inline';
-                    document.getElementById('import-spinner').style.display = 'none';
-                }
-            }).catch(err => {
-                // console.error('Import error:', err);
-                alert('Error: ' + err.message);
-                document.getElementById('import-btn-text').style.display = 'inline';
-                document.getElementById('import-spinner').style.display = 'none';
-            });
-        };
         
         // Update current time
         function updateTime() {
@@ -2657,184 +2207,43 @@ if (isset($workpoint_id)) {
         let lastReloadTime = parseInt(sessionStorage.getItem('lastReloadTime') || '0');
         const RELOAD_COOLDOWN = 10000; // 10 seconds minimum between reloads
         
+        // Real-time booking updates - Lazy loaded
+        let realtimeBookingsInitialized = false;
         function initializeRealtimeBookings() {
-            realtimeBookings = new RealtimeBookings({
-                specialistId: null,
-                workpointId: <?= $working_point_user_id ?? 'null' ?>,
-                supervisorMode: true,
-                onUpdate: function(data) {
-
-                    // Create a unique event ID
-                    const eventId = data.timestamp + '_' + data.type + '_' + (data.data.booking_id || '');
-                    
-                    // Check if we've already processed this event
-                    const processedEvents = JSON.parse(sessionStorage.getItem('processedBookingEvents') || '{}');
-                    const now = Math.floor(Date.now() / 1000);
-                    
-                    // Clean up old entries (older than 60 seconds)
-                    for (const key in processedEvents) {
-                        if (now - processedEvents[key] > 60) {
-                            delete processedEvents[key];
-                        }
-                    }
-                    
-                    // Check if this event was already processed
-                    if (processedEvents[eventId]) {
-
-                        return;
-                    }
-                    
-                    // Only reload for recent events (within last 30 seconds)
-                    const eventTime = data.timestamp || 0;
-                    const age = now - eventTime;
-                    
-                    if (age < 30) {
-                        // Mark this event as processed
-                        processedEvents[eventId] = now;
-                        sessionStorage.setItem('processedBookingEvents', JSON.stringify(processedEvents));
-                        
-                        // Store event details for showing after reload
-                        const eventDetails = {
-                            type: data.type,
-                            clientName: data.data.client_full_name || 'Unknown',
-                            bookingId: data.data.booking_id,
-                            specialistId: data.data.specialist_id,
-                            timestamp: now
-                        };
-                        sessionStorage.setItem('lastBookingUpdate', JSON.stringify(eventDetails));
-
-                        // Clear any existing reload timeout
-                        if (reloadTimeout) {
-                            clearTimeout(reloadTimeout);
-                        }
-                        
-                        // Check if we recently reloaded
-                        const currentTime = Date.now();
-                        const timeSinceLastReload = currentTime - lastReloadTime;
-                        
-                        if (timeSinceLastReload < RELOAD_COOLDOWN) {
-
-                            return;
-                        }
-                        
-                        // Check if Google Calendar import is in progress
-                        if (window.gcalImportInProgress) {
-
-                            return;
-                        }
-                        
-                        // Schedule reload with a small delay to batch multiple updates
-                        reloadTimeout = setTimeout(() => {
-                            lastReloadTime = Date.now();
-                            sessionStorage.setItem('lastReloadTime', lastReloadTime.toString());
-
-                            window.location.reload();
-                        }, 1000); // Wait 1 second to batch multiple updates
-                    } else {
-
-                    }
-                },
-                onStatusChange: function(status, message, mode) {
-                    updateRealtimeStatus(status, message, mode);
-                },
-                debug: true  // Keep enabled for testing
-            });
-            
-            realtimeBookings.start();
-        }
-        
-        function updateRealtimeStatus(status, message, mode) {
-            const statusBtn = document.getElementById('realtime-status-btn');
-            if (!statusBtn) return;
-
-            const statusIcon = statusBtn.querySelector('.status-icon');
-
-            // Detailed tooltip descriptions
-            let tooltip = '';
-
-            // Update icon and color based on status
-            switch(status) {
-                case 'connected':
-                    statusIcon.style.color = '#28a745'; // Green
-                    tooltip = `Real-time booking updates: ACTIVE\nMode: ${message}\nClick to disable automatic updates`;
-                    break;
-                case 'reconnecting':
-                    statusIcon.style.color = '#ffc107'; // Yellow/Orange
-                    tooltip = `Real-time booking updates: RECONNECTING\nStatus: ${message}\nClick to disable`;
-                    break;
-                case 'error':
-                    statusIcon.style.color = '#dc3545'; // Red
-                    tooltip = `Real-time booking updates: ERROR\nStatus: ${message}\nClick to retry`;
-                    break;
-                case 'stopped':
-                    statusIcon.style.color = '#dc3545'; // Red
-                    tooltip = `Real-time booking updates: DISABLED\nClick to enable automatic updates`;
-                    break;
+            if (!realtimeBookingsInitialized) {
+                // Load utilities first, then realtime handler
+                const script = document.createElement('script');
+                script.src = 'assets/js/utilities.js?v=' + Date.now();
+                script.onload = function() {
+                    // Now load realtime handler
+                    const realtimeScript = document.createElement('script');
+                    realtimeScript.src = 'assets/js/realtime-booking-handler.js?v=' + Date.now();
+                    realtimeScript.onload = function() {
+                        realtimeBookingsInitialized = true;
+                        // Initialize with configuration
+                        window.RealtimeBookingHandler.initialize({
+                            specialistId: null,
+                            workpointId: <?= $working_point_user_id ?? 'null' ?>,
+                            supervisorMode: true,
+                            debug: true
+                        });
+                    };
+                    document.head.appendChild(realtimeScript);
+                };
+                document.head.appendChild(script);
             }
-
-            statusBtn.title = tooltip;
         }
-        
+
+        // Stub functions until real module loads
         function toggleRealtimeUpdates() {
-            if (realtimeBookings) {
-                const isEnabled = realtimeBookings.toggle();
-                const statusBtn = document.getElementById('realtime-status-btn');
-                
-                if (!isEnabled) {
-                    updateRealtimeStatus('stopped', 'Disabled', 'none');
-                }
+            if (window.RealtimeBookingHandler) {
+                window.RealtimeBookingHandler.toggle();
             }
         }
 
-        // Show booking update notification if page was reloaded due to update
         function showBookingNotification() {
-            const lastUpdate = sessionStorage.getItem('lastBookingUpdate');
-            if (lastUpdate) {
-                sessionStorage.removeItem('lastBookingUpdate');
-                const update = JSON.parse(lastUpdate);
-                
-                // Create notification element
-                const notification = document.createElement('div');
-                notification.className = `booking-notification ${update.type}`;
-                
-                const icons = {
-                    create: 'fa-plus-circle',
-                    update: 'fa-edit',
-                    delete: 'fa-trash'
-                };
-                
-                const titles = {
-                    create: 'New Booking Added',
-                    update: 'Booking Updated',
-                    delete: 'Booking Cancelled'
-                };
-                
-                notification.innerHTML = `
-                    <button class="notification-close" onclick="this.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="notification-header">
-                        <div class="notification-icon ${update.type}">
-                            <i class="fas ${icons[update.type] || 'fa-info-circle'}"></i>
-                        </div>
-                        <div>
-                            <div>${titles[update.type] || 'Booking Changed'}</div>
-                            <small style="color: #999; font-weight: normal;">Just now</small>
-                        </div>
-                    </div>
-                    <div class="notification-body">
-                        <strong>Client:</strong> ${update.clientName}<br>
-                        <strong>Booking ID:</strong> #${update.bookingId}<br>
-                        ${update.type === 'update' ? '<em>The page has been refreshed to show the latest changes.</em>' : ''}
-                    </div>
-                `;
-                
-                document.getElementById('notification-container').appendChild(notification);
-                
-                // Remove notification after animation completes
-                setTimeout(() => {
-                    notification.remove();
-                }, 5000);
+            if (window.RealtimeBookingHandler) {
+                window.RealtimeBookingHandler.showNotification();
             }
         }
 
@@ -2997,34 +2406,13 @@ if (isset($workpoint_id)) {
         }
         
 
-        
-        // Add Specialist Modal - Lazy Loading
-        window.addSpecialistModalLoaded = false;
 
-        // Lazy loading wrapper for Add Specialist Modal
+        // Add Specialist Modal - Using centralized modal loader
         window.openAddSpecialistModal = function(workpointId, organisationId) {
-            if (!window.addSpecialistModalLoaded) {
-                // Load the Add Specialist script
-                const script = document.createElement('script');
-                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
-                script.onload = function() {
-                    window.addSpecialistModalLoaded = true;
-                    // Now call the real function
-                    if (typeof window.openAddSpecialistModal === 'function') {
-                        window.openAddSpecialistModal(workpointId, organisationId);
-                    }
-                };
-                script.onerror = function() {
-                    console.error('Failed to load Add Specialist modal script');
-                    alert('Failed to load Add Specialist functionality. Please try again.');
-                };
-                document.head.appendChild(script);
-            } else {
-                // Already loaded, call the real function
-                if (typeof window.openAddSpecialistModalReal === 'function') {
-                    window.openAddSpecialistModalReal(workpointId, organisationId);
-                }
-            }
+            ModalLoader.open('add-specialist', workpointId, organisationId).catch(error => {
+                console.error('Failed to open Add Specialist modal:', error);
+                alert('Failed to load Add Specialist functionality. Please try again.');
+            });
         }
 
         // Function stub for onSelectUnassignedSpecialist (needed for orphan specialists dropdown)
@@ -3038,81 +2426,60 @@ if (isset($workpoint_id)) {
             if (sel) sel.value = '';
         }
 
-        // Stub functions for Add Specialist form - these load the module if needed
+        // Stub functions for Add Specialist form - these use the modal loader
         function submitAddSpecialist() {
-            if (!window.addSpecialistModalLoaded) {
-                const script = document.createElement('script');
-                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
-                script.onload = function() {
-                    window.addSpecialistModalLoaded = true;
-                    if (typeof window.submitAddSpecialist === 'function') {
-                        window.submitAddSpecialist();
-                    }
-                };
-                document.head.appendChild(script);
-            } else {
+            if (ModalLoader.isLoaded('add-specialist')) {
                 if (typeof window.submitAddSpecialist === 'function') {
                     window.submitAddSpecialist();
                 }
+            } else {
+                ModalLoader.load('add-specialist').then(() => {
+                    if (typeof window.submitAddSpecialist === 'function') {
+                        window.submitAddSpecialist();
+                    }
+                });
             }
         }
 
         window.handleSpecialistSelection = function() {
-            if (!window.addSpecialistModalLoaded) {
-                const script = document.createElement('script');
-                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
-                script.onload = function() {
-                    window.addSpecialistModalLoaded = true;
-                    // Call the real function that was just loaded
-                    if (typeof window.handleSpecialistSelectionReal === 'function') {
-                        window.handleSpecialistSelectionReal();
-                    }
-                };
-                script.onerror = function() {
-                    console.error('Failed to load add-specialist.js module');
-                };
-                document.head.appendChild(script);
-            } else {
-                // Already loaded, call the real function
+            if (ModalLoader.isLoaded('add-specialist')) {
                 if (typeof window.handleSpecialistSelectionReal === 'function') {
                     window.handleSpecialistSelectionReal();
                 }
+            } else {
+                ModalLoader.load('add-specialist').then(() => {
+                    if (typeof window.handleSpecialistSelectionReal === 'function') {
+                        window.handleSpecialistSelectionReal();
+                    }
+                });
             }
         }
 
         function clearShift(button, shiftNum) {
-            if (!window.addSpecialistModalLoaded) {
-                const script = document.createElement('script');
-                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
-                script.onload = function() {
-                    window.addSpecialistModalLoaded = true;
-                    if (typeof window.clearShift === 'function') {
-                        window.clearShift(button, shiftNum);
-                    }
-                };
-                document.head.appendChild(script);
-            } else {
+            if (ModalLoader.isLoaded('add-specialist')) {
                 if (typeof window.clearShift === 'function') {
                     window.clearShift(button, shiftNum);
                 }
+            } else {
+                ModalLoader.load('add-specialist').then(() => {
+                    if (typeof window.clearShift === 'function') {
+                        window.clearShift(button, shiftNum);
+                    }
+                });
             }
         }
 
         function applyAllShifts() {
-            if (!window.addSpecialistModalLoaded) {
-                const script = document.createElement('script');
-                script.src = 'assets/js/modals/add-specialist.js?v=' + Date.now();
-                script.onload = function() {
-                    window.addSpecialistModalLoaded = true;
-                    if (typeof window.applyAllShifts === 'function') {
-                        window.applyAllShifts();
-                    }
-                };
-                document.head.appendChild(script);
-            } else {
+            if (ModalLoader.isLoaded('add-specialist')) {
                 if (typeof window.applyAllShifts === 'function') {
                     window.applyAllShifts();
                 }
+            } else {
+                ModalLoader.load('add-specialist').then(() => {
+                    if (typeof window.applyAllShifts === 'function') {
+                        window.applyAllShifts();
+                    }
+                });
             }
         }
 

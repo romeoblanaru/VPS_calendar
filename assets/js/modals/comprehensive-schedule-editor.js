@@ -3,42 +3,86 @@
 
 // Store the real implementation
 window.openModifyScheduleModalReal = function(specialistId, workpointId) {
-    const modal = document.getElementById('modifyScheduleModal');
-    if (!modal) {
-        console.error('Modify schedule modal not found!');
-        return;
-    }
-
-    console.log('Opening modal with params:', { specialistId, workpointId });
-
-    // Store parameters globally for other functions to access
-    window.currentScheduleSpecialistId = specialistId;
-    window.currentScheduleWorkpointId = workpointId;
-
-    // Set modal IDs
-    document.getElementById('modifyScheduleSpecialistId').value = specialistId;
-    document.getElementById('modifyScheduleWorkpointId').value = workpointId;
-
-    // Clear previous error messages
-    const errorElement = document.getElementById('modifyScheduleError');
-    if (errorElement) errorElement.style.display = 'none';
-
-    // Always reinitialize the table to ensure clean state
-    loadModifyScheduleEditor();
-
-    // Load schedule data after a small delay to ensure table is ready
+    // Use a small delay to ensure the modal HTML is fully in the DOM
     setTimeout(() => {
-        loadScheduleDataForModal(specialistId, workpointId);
-    }, 100);
+        const modal = document.getElementById('modifyScheduleModal');
+        if (!modal) {
+            console.error('Modify schedule modal not found! Retrying...');
+            // Retry once after another delay
+            setTimeout(() => {
+                const retryModal = document.getElementById('modifyScheduleModal');
+                if (retryModal) {
+                    window.openModifyScheduleModalReal(specialistId, workpointId);
+                } else {
+                    console.error('Modify schedule modal still not found after retry!');
+                    alert('Error: Unable to open schedule editor. Please refresh the page and try again.');
+                }
+            }, 200);
+            return;
+        }
 
-    // Show modal
-    modal.style.display = 'flex';
+        console.log('Opening modal with params:', { specialistId, workpointId });
+
+        // Store parameters globally for other functions to access
+        window.currentScheduleSpecialistId = specialistId;
+        window.currentScheduleWorkpointId = workpointId;
+
+        // Set modal IDs
+        const specialistInput = document.getElementById('modifyScheduleSpecialistId');
+        const workpointInput = document.getElementById('modifyScheduleWorkpointId');
+
+        if (specialistInput) specialistInput.value = specialistId;
+        if (workpointInput) workpointInput.value = workpointId;
+
+        // Clear previous error messages
+        const errorElement = document.getElementById('modifyScheduleError');
+        if (errorElement) errorElement.style.display = 'none';
+
+        // Always reinitialize the table to ensure clean state
+        loadModifyScheduleEditor();
+
+        // Load schedule data after a small delay to ensure table is ready
+        setTimeout(() => {
+            loadScheduleDataForModal(specialistId, workpointId);
+        }, 100);
+
+        try {
+            // Check if modal already has a Bootstrap instance
+            let bsModal = bootstrap.Modal.getInstance(modal);
+            if (!bsModal) {
+                // Create new Bootstrap modal instance
+                bsModal = new bootstrap.Modal(modal, {
+                    backdrop: true,
+                    keyboard: true,
+                    focus: true
+                });
+            }
+            bsModal.show();
+        } catch (error) {
+            console.error('Error showing modal:', error);
+            // Fallback: try showing with a new instance
+            try {
+                const newModal = new bootstrap.Modal(modal);
+                newModal.show();
+            } catch (fallbackError) {
+                console.error('Fallback also failed:', fallbackError);
+                alert('Error opening the schedule editor. Please refresh the page and try again.');
+            }
+        }
+    }, 10); // Small initial delay
 };
 
 // Close modal function
 window.closeModifyScheduleModal = function() {
-    document.getElementById('modifyScheduleModal').style.display = 'none';
-    document.getElementById('modifyScheduleForm').reset();
+    const modal = document.getElementById('modifyScheduleModal');
+    if (modal) {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    }
+    const form = document.getElementById('modifyScheduleForm');
+    if (form) form.reset();
     const errorElement = document.getElementById('modifyScheduleError');
     if (errorElement) errorElement.style.display = 'none';
 };
@@ -476,13 +520,7 @@ window.loadModifyScheduleEditor = function() {
     });
 };
 
-// Handle modal close on background click
-document.addEventListener('click', function(event) {
-    const modifyScheduleModal = document.getElementById('modifyScheduleModal');
-    if (event.target === modifyScheduleModal) {
-        closeModifyScheduleModal();
-    }
-});
+// Bootstrap handles modal backdrop clicks automatically
 
 // Replace the lazy loading wrapper with the real function after loading
 window.openModifyScheduleModal = window.openModifyScheduleModalReal;
