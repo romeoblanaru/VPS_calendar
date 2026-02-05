@@ -1,11 +1,12 @@
 <?php
 
-//error_reporting(E_ALL);
-//ini_set('display_errors', 1);
+// Enable error reporting for debugging
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 
-//session_start();
-require_once __DIR__ . '/includes/db.php';
+// Include lang_loader first as it handles session management
 require_once __DIR__ . '/includes/lang_loader.php';
+require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/config/version.php';
 
 $error = '';
@@ -19,7 +20,8 @@ if (isset($_SESSION['user'])) {
     } elseif ($_SESSION['role'] == 'organisation_user') {
         header("Location: organisation_dashboard.php");
     } elseif ($_SESSION['role'] == 'workpoint_user') {
-        header("Location: workpoint_supervisor_dashboard.php");
+        // Redirect supervisors directly to booking supervisor view with their workpoint ID
+        header("Location: booking_supervisor_view.php?working_point_user_id=" . $_SESSION['workpoint_id']);
     } else {
         header("Location: booking_specialist_view.php");
     }
@@ -36,7 +38,8 @@ if (isset($_SESSION['user'])) {
 //             header("Location: organisation_dashboard.php");
 //             break;
 //         case 'workpoint_user':
-//             header("Location: workpoint_supervisor_dashboard.php");
+//             // Redirect supervisors directly to booking supervisor view with their workpoint ID
+//             header("Location: booking_supervisor_view.php?working_point_user_id=" . $user['unic_id']);
 //             break;
 //         case 'specialist_user':
 //             header("Location: specialist_dashboard.php");
@@ -119,7 +122,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         $_SESSION['organisation_id'] = $user['organisation_id'];
         $_SESSION['login_attempts'] = 0;
         
-        header("Location: workpoint_supervisor_dashboard.php");
+        // Redirect supervisors directly to booking supervisor view with their workpoint ID
+        header("Location: booking_supervisor_view.php?working_point_user_id=" . $user['unic_id']);
         exit;
     }
 

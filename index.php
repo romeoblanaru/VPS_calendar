@@ -11,7 +11,8 @@ if (isset($_SESSION['user'])) {
     } elseif ($_SESSION['role'] == 'organisation_user') {
         header("Location: organisation_dashboard.php");
     } elseif ($_SESSION['role'] == 'workpoint_user') {
-        header("Location: workpoint_supervisor_dashboard.php");
+        // Redirect supervisors directly to booking supervisor view with their workpoint ID
+        header("Location: booking_supervisor_view.php?working_point_user_id=" . $_SESSION['workpoint_id']);
     } else {
         header("Location: booking_specialist_view.php");
     }

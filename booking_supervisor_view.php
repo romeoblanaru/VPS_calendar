@@ -3274,6 +3274,168 @@ if (isset($workpoint_id)) {
             }
         }
 
+        // Lazy loading flags for Manage Services Modal
+        let manageServicesModalHtmlLoaded = false;
+        let manageServicesModalLoaded = false;
+
+        // Lazy loading flags for Statistics Modal
+        let statisticsModalHtmlLoaded = false;
+        let statisticsModalLoaded = false;
+
+        // Lazy loading wrapper for Manage Services Modal
+        function openManageServices() {
+            // First check if HTML is loaded
+            if (!manageServicesModalHtmlLoaded) {
+                // Load the modal HTML from assets directory
+                fetch('assets/modals/manage-services-modal.php')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Create a temporary container
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+
+                        // Append all child elements to body
+                        while (temp.firstElementChild) {
+                            document.body.appendChild(temp.firstElementChild);
+                        }
+
+                        manageServicesModalHtmlLoaded = true;
+
+                        // Now load the JavaScript if not already loaded
+                        if (!manageServicesModalLoaded) {
+                            const script = document.createElement('script');
+                            script.src = 'assets/js/modals/manage-services.js?v=' + Date.now();
+                            script.onload = function() {
+                                manageServicesModalLoaded = true;
+                                // Call the real function
+                                if (typeof window.openServicesManagementModalReal === 'function') {
+                                    window.openServicesManagementModalReal();
+                                }
+                            };
+                            script.onerror = function() {
+                                console.error('Failed to load manage-services.js module');
+                                alert('Failed to load Manage Services module. Please try again.');
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            // JavaScript already loaded, just open the modal
+                            if (typeof window.openServicesManagementModalReal === 'function') {
+                                window.openServicesManagementModalReal();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to load Manage Services modal HTML:', error);
+                        alert('Failed to load Manage Services. Please try again.');
+                    });
+            } else {
+                // HTML already loaded, check JavaScript
+                if (!manageServicesModalLoaded) {
+                    const script = document.createElement('script');
+                    script.src = 'assets/js/modals/manage-services.js?v=' + Date.now();
+                    script.onload = function() {
+                        manageServicesModalLoaded = true;
+                        // Call the real function
+                        if (typeof window.openServicesManagementModalReal === 'function') {
+                            window.openServicesManagementModalReal();
+                        }
+                    };
+                    script.onerror = function() {
+                        console.error('Failed to load manage-services.js module');
+                        alert('Failed to load Manage Services module. Please try again.');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Everything already loaded, just open the modal
+                    if (typeof window.openServicesManagementModalReal === 'function') {
+                        window.openServicesManagementModalReal();
+                    }
+                }
+            }
+        }
+
+        // Lazy loading wrapper for Statistics Modal
+        function openStatistics() {
+            // First check if HTML is loaded
+            if (!statisticsModalHtmlLoaded) {
+                // Load the modal HTML from assets directory
+                fetch('assets/modals/statistics-modal.php')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Create a temporary container
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+
+                        // Append all child elements to body
+                        while (temp.firstElementChild) {
+                            document.body.appendChild(temp.firstElementChild);
+                        }
+
+                        statisticsModalHtmlLoaded = true;
+
+                        // Now load the JavaScript if not already loaded
+                        if (!statisticsModalLoaded) {
+                            const script = document.createElement('script');
+                            script.src = 'assets/js/modals/statistics.js?v=' + Date.now();
+                            script.onload = function() {
+                                statisticsModalLoaded = true;
+                                // Call the real function
+                                if (typeof window.openStatisticsModalReal === 'function') {
+                                    window.openStatisticsModalReal();
+                                }
+                            };
+                            script.onerror = function() {
+                                console.error('Failed to load statistics.js module');
+                                alert('Failed to load Statistics module. Please try again.');
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            // JavaScript already loaded, just open the modal
+                            if (typeof window.openStatisticsModalReal === 'function') {
+                                window.openStatisticsModalReal();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to load Statistics modal HTML:', error);
+                        alert('Failed to load Statistics. Please try again.');
+                    });
+            } else {
+                // HTML already loaded, check JavaScript
+                if (!statisticsModalLoaded) {
+                    const script = document.createElement('script');
+                    script.src = 'assets/js/modals/statistics.js?v=' + Date.now();
+                    script.onload = function() {
+                        statisticsModalLoaded = true;
+                        // Call the real function
+                        if (typeof window.openStatisticsModalReal === 'function') {
+                            window.openStatisticsModalReal();
+                        }
+                    };
+                    script.onerror = function() {
+                        console.error('Failed to load statistics.js module');
+                        alert('Failed to load Statistics module. Please try again.');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Everything already loaded, just open the modal
+                    if (typeof window.openStatisticsModalReal === 'function') {
+                        window.openStatisticsModalReal();
+                    }
+                }
+            }
+        }
+
         function deleteSpecialistFromModal() {
             if (!modifySpecialistModalLoaded) {
                 const script = document.createElement('script');
