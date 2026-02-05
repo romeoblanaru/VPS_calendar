@@ -1050,14 +1050,33 @@ if (isset($workpoint_id)) {
                                                      onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'; this.style.transform='translateY(-2px)';"
                                                      onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)';">
                                                     <div class="working-point-header specialist-header" style="cursor: pointer; font-weight: normal; display: block; position: relative; min-height: 24px; padding-top: 8px; margin-bottom: 0;" onclick="(function(event) {
+                                                        const specialistId = '<?= $spec['unic_id'] ?>';
                                                         const specialistSection = event.currentTarget.closest('.specialist-collapsible');
-                                                        const scheduleContent = specialistSection.querySelector('.schedule-content');
-                                                        
+                                                        let tabsContainer = specialistSection.querySelector('.specialist-tabs-container');
+
+                                                        if (!tabsContainer) {
+                                                            // Initialize tabs for the first time
+                                                            SpecialistTabs.initialize(specialistId);
+                                                            tabsContainer = specialistSection.querySelector('.specialist-tabs-container');
+                                                        }
+
                                                         // Toggle visibility
-                                                        if (scheduleContent.style.display === 'none' || scheduleContent.style.display === '') {
-                                                            scheduleContent.style.display = 'block';
+                                                        if (tabsContainer) {
+                                                            if (tabsContainer.style.display === 'none' || tabsContainer.style.display === '') {
+                                                                tabsContainer.style.display = 'block';
+                                                            } else {
+                                                                tabsContainer.style.display = 'none';
+                                                            }
                                                         } else {
-                                                            scheduleContent.style.display = 'none';
+                                                            // Fallback to old behavior
+                                                            const scheduleContent = specialistSection.querySelector('.schedule-content');
+                                                            if (scheduleContent) {
+                                                                if (scheduleContent.style.display === 'none' || scheduleContent.style.display === '') {
+                                                                    scheduleContent.style.display = 'block';
+                                                                } else {
+                                                                    scheduleContent.style.display = 'none';
+                                                                }
+                                                            }
                                                         }
                                                     })(event)">
                                                         <div style="display: flex; align-items: center; width: 100%;">
@@ -2050,6 +2069,7 @@ if (isset($workpoint_id)) {
     <script src="assets/js/modal-loader.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/modal-wrappers.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/calendar-navigation.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/specialist-tabs.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/modal-debug.js?v=<?php echo time(); ?>"></script> <!-- Temporary debug helper -->
     <script>
     // Google Calendar integration completely removed from supervisor mode
