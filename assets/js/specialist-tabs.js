@@ -88,11 +88,7 @@
 
             <!-- Details Tab -->
             <div class="tab-pane" data-tab-content="details" data-specialist="${specialistId}" style="display: none;">
-                <div style="padding: 8px;">
-                    <div class="details-info" id="details-${specialistId}">
-                        <!-- Details will load here -->
-                    </div>
-                </div>
+                <!-- Details will load here directly -->
             </div>
         `;
 
@@ -371,95 +367,84 @@
     }
 
     /**
-     * Load details for a specialist
+     * Load details for a specialist - fetch from database
      * @param {string} specialistId - The specialist ID
      */
     function loadDetails(specialistId) {
         const container = document.querySelector(`[data-tab-content="details"][data-specialist="${specialistId}"]`);
         if (!container) return;
 
-        // Get specialist info from the card - CORRECT selectors based on actual HTML structure
-        const card = document.querySelector(`[data-specialist-id="${specialistId}"]`);
-        const headerDiv = card.querySelector('.specialist-header');
+        // Show loading
+        container.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 8px;"><i class="fas fa-spinner fa-spin"></i> Loading details...</div>';
 
-        // Get name from the span with data-bs-toggle="tooltip"
-        const nameElement = headerDiv?.querySelector('span[data-bs-toggle="tooltip"]');
-        const name = nameElement?.textContent?.trim() || 'Unknown';
+        // Fetch specialist details from database
+        const timestamp = new Date().getTime();
+        fetch(`admin/get_specialist_details.php?specialist_id=${specialistId}&t=${timestamp}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.specialist) {
+                    const spec = data.specialist;
 
-        // Get specialty from the first text node before the bullet
-        const specialtyDiv = headerDiv?.querySelector('div[style*="color: #6c757d"]');
-        const specialty = specialtyDiv?.textContent?.split('•')[0]?.trim() || 'Unknown';
+                    let html = `
+                        <div style="display: grid; gap: 2px; padding: 6px; max-width: 400px; margin: 0 auto;">
+                            <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px; text-align: center;">
+                                <span style="color: #666; font-size: 0.7rem;">ID:</span> <strong style="color: #333; font-size: 0.7rem; font-family: monospace;">#${spec.unic_id}</strong>
+                                <span style="color: #666; font-size: 0.7rem; margin-left: 15px;">Name:</span> <strong style="color: #333; font-size: 0.7rem;">${spec.name || 'N/A'}</strong>
+                            </div>
 
-        // Get phone number from the phone icon parent span
-        const phoneSpan = specialtyDiv?.querySelector('.fa-phone')?.parentElement;
-        const phone = phoneSpan?.textContent?.trim() || 'N/A';
+                            <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px; text-align: center;">
+                                <span style="color: #666; font-size: 0.7rem;">Speciality:</span> <strong style="color: #333; font-size: 0.7rem;">${spec.speciality || 'N/A'}</strong>
+                            </div>
 
-        // Get email from the envelope icon tooltip
-        const emailSpan = specialtyDiv?.querySelector('.fa-envelope')?.parentElement;
-        const emailTooltip = emailSpan?.getAttribute('title') || '';
-        const email = emailTooltip.match(/Email:<\/strong>\s*([^<]+)/)?.[1]?.trim() || 'N/A';
+                            <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px; text-align: center;">
+                                <span style="color: #666; font-size: 0.7rem;">
+                                    <i class="fas fa-phone" style="margin-right: 2px; font-size: 0.6rem;"></i>Phone:
+                                </span>
+                                <strong style="color: #333; font-size: 0.7rem;">${spec.phone_nr || 'N/A'}</strong>
+                            </div>
 
-        // Username would need to be fetched from database - for now show N/A
-        const username = 'N/A';
+                            <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px; text-align: center;">
+                                <span style="color: #666; font-size: 0.7rem;">
+                                    <i class="fas fa-envelope" style="margin-right: 2px; font-size: 0.6rem;"></i>Email:
+                                </span>
+                                <strong style="color: #333; font-size: 0.7rem;">${spec.email || 'N/A'}</strong>
+                            </div>
 
-        let html = '<div style="padding: 6px;">';
+                            <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px; text-align: center;">
+                                <span style="color: #666; font-size: 0.7rem;">
+                                    <i class="fas fa-user" style="margin-right: 2px; font-size: 0.6rem;"></i>Username:
+                                </span>
+                                <strong style="color: #333; font-size: 0.7rem;">${spec.user || 'N/A'}</strong>
+                            </div>
 
-        html += `
-            <div style="display: grid; gap: 2px;">
-                <!-- ID First -->
-                <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
-                    <span style="color: #666; font-size: 0.7rem;">ID:</span> <strong style="color: #333; font-size: 0.7rem; font-family: monospace;">#${specialistId}</strong>
-                </div>
+                            <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px; text-align: center;">
+                                <span style="color: #666; font-size: 0.7rem;">
+                                    <i class="fas fa-key" style="margin-right: 2px; font-size: 0.6rem;"></i>Password:
+                                </span>
+                                <strong style="color: #333; font-size: 0.7rem;">${spec.password || 'N/A'}</strong>
+                            </div>
+                        </div>
 
-                <!-- Name -->
-                <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
-                    <span style="color: #666; font-size: 0.7rem;">Name:</span> <strong style="color: #333; font-size: 0.7rem;">${name}</strong>
-                </div>
+                        <div style="text-align: center; margin-top: 6px;">
+                            <button type="button" onclick="openModifySpecialistModal('${specialistId}')"
+                                    style="font-size: 0.65rem; padding: 3px 6px; background-color: white; color: #333; border: 1px solid #ddd; transition: all 0.2s ease; cursor: pointer; border-radius: 3px;"
+                                    onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'; this.style.transform='translateY(-1px)';"
+                                    onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)';">
+                                <i class="fas fa-edit" style="font-size: 0.6rem;"></i> Edit Details
+                            </button>
+                        </div>
+                    `;
 
-                <!-- Speciality -->
-                <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
-                    <span style="color: #666; font-size: 0.7rem;">Speciality:</span> <strong style="color: #333; font-size: 0.7rem;">${specialty}</strong>
-                </div>
-
-                <!-- Phone -->
-                <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
-                    <span style="color: #666; font-size: 0.7rem;">
-                        <i class="fas fa-phone" style="margin-right: 2px; font-size: 0.6rem;"></i>Phone:
-                    </span>
-                    <strong style="color: #333; font-size: 0.7rem;">${phone}</strong>
-                </div>
-
-                <!-- Email -->
-                <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
-                    <span style="color: #666; font-size: 0.7rem;">
-                        <i class="fas fa-envelope" style="margin-right: 2px; font-size: 0.6rem;"></i>Email:
-                    </span>
-                    <strong style="color: #333; font-size: 0.7rem;">${email}</strong>
-                </div>
-
-                <!-- Username/Password -->
-                <div style="padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
-                    <span style="color: #666; font-size: 0.7rem;">
-                        <i class="fas fa-user" style="margin-right: 2px; font-size: 0.6rem;"></i>Username:
-                    </span>
-                    <strong style="color: #333; font-size: 0.7rem;">${username} / ****</strong>
-                </div>
-            </div>
-
-            <!-- Single Edit Details button in the middle -->
-            <div style="display: flex; justify-content: center; margin-top: 6px;">
-                <button onclick="openModifySpecialistModal('${specialistId}')"
-                        style="font-size: 0.65rem; padding: 3px 10px; background: white; color: #007bff; border: 1px solid #007bff; border-radius: 3px; cursor: pointer;"
-                        onmouseover="this.style.background='#007bff'; this.style.color='white';"
-                        onmouseout="this.style.background='white'; this.style.color='#007bff';">
-                    <i class="fas fa-edit" style="font-size: 0.6rem;"></i> Edit Details
-                </button>
-            </div>
-        `;
-
-        html += '</div>';
-        container.innerHTML = html;
-        container.dataset.loaded = 'true';
+                    container.innerHTML = html;
+                    container.dataset.loaded = 'true';
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #dc3545; padding: 15px; font-size: 0.75rem;">Failed to load details</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading details:', error);
+                container.innerHTML = '<div style="text-align: center; color: #dc3545; padding: 15px; font-size: 0.75rem;">Error loading details</div>';
+            });
     }
 
     /**

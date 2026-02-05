@@ -1052,6 +1052,7 @@ if (isset($workpoint_id)) {
                                                     <div class="working-point-header specialist-header" style="cursor: pointer; font-weight: normal; display: block; position: relative; min-height: 24px; padding-top: 8px; margin-bottom: 0;" onclick="(function(event) {
                                                         const specialistId = '<?= $spec['unic_id'] ?>';
                                                         const specialistSection = event.currentTarget.closest('.specialist-collapsible');
+                                                        const infoLine = specialistSection.querySelector('.specialist-info-line');
                                                         let tabsContainer = specialistSection.querySelector('.specialist-tabs-container');
 
                                                         if (!tabsContainer) {
@@ -1064,8 +1065,10 @@ if (isset($workpoint_id)) {
                                                         if (tabsContainer) {
                                                             if (tabsContainer.style.display === 'none' || tabsContainer.style.display === '') {
                                                                 tabsContainer.style.display = 'block';
+                                                                if (infoLine) infoLine.style.display = 'none';
                                                             } else {
                                                                 tabsContainer.style.display = 'none';
+                                                                if (infoLine) infoLine.style.display = 'block';
                                                             }
                                                         } else {
                                                             // Fallback to old behavior
@@ -1073,8 +1076,10 @@ if (isset($workpoint_id)) {
                                                             if (scheduleContent) {
                                                                 if (scheduleContent.style.display === 'none' || scheduleContent.style.display === '') {
                                                                     scheduleContent.style.display = 'block';
+                                                                    if (infoLine) infoLine.style.display = 'none';
                                                                 } else {
                                                                     scheduleContent.style.display = 'none';
+                                                                    if (infoLine) infoLine.style.display = 'block';
                                                                 }
                                                             }
                                                         }
@@ -1090,9 +1095,9 @@ if (isset($workpoint_id)) {
                                                                 $stmt->execute([$spec['unic_id']]);
                                                                 $spec_visibility = $stmt->fetch();
                                                                 ?>
-                                                                <span style="color: #333; font-weight: 600; display: inline-block;" 
-                                                                      data-bs-toggle="tooltip" 
-                                                                      data-bs-placement="top" 
+                                                                <span style="color: #333; font-weight: 600; display: inline-block;"
+                                                                      data-bs-toggle="tooltip"
+                                                                      data-bs-placement="top"
                                                                       data-bs-html="true"
                                                                       data-bs-trigger="hover"
                                                                       title="<strong>Speciality:</strong> <?= htmlspecialchars($spec['speciality']) ?><br><em>Click to view schedule</em>">
@@ -1100,29 +1105,15 @@ if (isset($workpoint_id)) {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div style="color: #6c757d; font-size: 0.9em; margin-top: -5px;">
-                                                            <?= ucfirst(strtolower(htmlspecialchars($spec['speciality']))) ?>  •  <span style="cursor: help;" 
-                                                                  data-bs-toggle="tooltip" 
-                                                                  data-bs-placement="top" 
+                                                        <div class="specialist-info-line" style="color: #6c757d; font-size: 0.9em; margin-top: -3px; text-align: center;">
+                                                            <?= ucfirst(strtolower(htmlspecialchars($spec['speciality']))) ?> • <span style="cursor: help;"
+                                                                  data-bs-toggle="tooltip"
+                                                                  data-bs-placement="top"
                                                                   data-bs-html="true"
                                                                   title="Phone visible to clients: <?= ($spec_visibility['specialist_nr_visible_to_client'] ?? 0) ? '<span style=\'color: green;\'>✓ On</span>' : '<span style=\'color: red;\'>✗ Off</span>' ?>">
                                                                 <i class="fas fa-phone" style="font-size: 0.8em;"></i> <?= htmlspecialchars($spec['phone_nr']) ?>
-                                                            </span>  •  <span style="cursor: help;" 
-                                                                  data-bs-toggle="tooltip" 
-                                                                  data-bs-placement="top" 
-                                                                  data-bs-html="true"
-                                                                  title="<strong>Email:</strong> <?= htmlspecialchars($spec['email']) ?><br>Email visible to clients: <?= ($spec_visibility['specialist_email_visible_to_client'] ?? 0) ? '<span style=\'color: green;\'>✓ On</span>' : '<span style=\'color: red;\'>✗ Off</span>' ?>">
-                                                                <i class="fas fa-envelope" style="font-size: 0.8em;"></i>
                                                             </span>
                                                         </div>
-                                                        <button type="button"
-                                                                style="position: absolute; right: 8px; top: 50%; transform: translateY(calc(-50% - 8px)); z-index: 10; font-size: 11px; padding: 2px 8px; background-color: white; color: #333; border: 1px solid #ddd; transition: box-shadow 0.2s ease; cursor: pointer;"
-                                                                onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';"
-                                                                onmouseout="this.style.boxShadow='none';"
-                                                                onclick="event.stopPropagation(); openModifySpecialistModal('<?= $spec['unic_id'] ?>', '<?= htmlspecialchars($spec['name']) ?>', '<?= $workpoint['unic_id'] ?>')" 
-                                                                title="Edit details">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
                                                     </div>
                                                     <div class="working-point-item schedule-content" style="display: none; width: 100%; text-align: center; cursor: pointer; transition: background-color 0.3s ease;" 
                                                          onclick="event.stopPropagation(); openModifyScheduleModal('<?= $spec['unic_id'] ?>', '<?= $workpoint['unic_id'] ?>')"
