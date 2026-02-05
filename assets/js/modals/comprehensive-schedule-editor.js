@@ -21,7 +21,6 @@ window.openModifyScheduleModalReal = function(specialistId, workpointId) {
             return;
         }
 
-        console.log('Opening modal with params:', { specialistId, workpointId });
 
         // Store parameters globally for other functions to access
         window.currentScheduleSpecialistId = specialistId;
@@ -228,7 +227,6 @@ window.deleteScheduleFromModal = function() {
 
 // Load schedule data for modal
 window.loadScheduleDataForModal = function(specialistId, workpointId) {
-    console.log('Loading schedule data for:', { specialistId, workpointId });
 
     const formData = new FormData();
     formData.append('action', 'get_schedule');
@@ -248,8 +246,6 @@ window.loadScheduleDataForModal = function(specialistId, workpointId) {
         return response.json();
     })
     .then(data => {
-        console.log('Schedule data received:', data);
-
         if (data.success) {
             const details = data.details;
             const schedule = data.schedule || [];
@@ -277,8 +273,6 @@ window.loadScheduleDataForModal = function(specialistId, workpointId) {
                 };
             });
 
-            console.log('Schedule lookup:', scheduleLookup);
-
             // Populate form fields
             days.forEach(day => {
                 const dayData = scheduleLookup[day] || {};
@@ -297,7 +291,6 @@ window.loadScheduleDataForModal = function(specialistId, workpointId) {
                 const shift1End = document.querySelector(`input[name="modify_shift1_end_${day}"]`);
                 if (shift1Start) {
                     shift1Start.value = formatTime(dayData.shift1_start);
-                    console.log(`Set ${day} shift1 start to: ${shift1Start.value}`);
                 }
                 if (shift1End) {
                     shift1End.value = formatTime(dayData.shift1_end);

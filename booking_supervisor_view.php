@@ -2917,6 +2917,12 @@ if (isset($workpoint_id)) {
         let comprehensiveScheduleModalHtmlLoaded = false;
 
         function openModifyScheduleModal(specialistId, workpointId) {
+            // If the real function exists (already loaded), call it directly
+            if (typeof window.openModifyScheduleModalReal === 'function') {
+                window.openModifyScheduleModalReal(specialistId, workpointId);
+                return;
+            }
+
             // First, load the modal HTML if not already loaded
             if (!comprehensiveScheduleModalHtmlLoaded) {
                 fetch('assets/modals/comprehensive-schedule-editor-modal.php')
@@ -2931,10 +2937,11 @@ if (isset($workpoint_id)) {
                             script.src = 'assets/js/modals/comprehensive-schedule-editor.js?v=' + Date.now();
                             script.onload = function() {
                                 comprehensiveScheduleModalLoaded = true;
-                                // The script replaces openModifyScheduleModal with the real function
-                                // Now call it
-                                if (typeof window.openModifyScheduleModal === 'function') {
-                                    window.openModifyScheduleModal(specialistId, workpointId);
+                                // The script should have set window.openModifyScheduleModalReal
+                                if (typeof window.openModifyScheduleModalReal === 'function') {
+                                    window.openModifyScheduleModalReal(specialistId, workpointId);
+                                } else {
+                                    console.error('openModifyScheduleModalReal not found after script load');
                                 }
                             };
                             script.onerror = function() {
@@ -2946,6 +2953,8 @@ if (isset($workpoint_id)) {
                             // JavaScript already loaded, call the real function
                             if (typeof window.openModifyScheduleModalReal === 'function') {
                                 window.openModifyScheduleModalReal(specialistId, workpointId);
+                            } else {
+                                console.error('openModifyScheduleModalReal not found');
                             }
                         }
                     })
@@ -2961,8 +2970,10 @@ if (isset($workpoint_id)) {
                     script.src = 'assets/js/modals/comprehensive-schedule-editor.js?v=' + Date.now();
                     script.onload = function() {
                         comprehensiveScheduleModalLoaded = true;
-                        if (typeof window.openModifyScheduleModal === 'function') {
-                            window.openModifyScheduleModal(specialistId, workpointId);
+                        if (typeof window.openModifyScheduleModalReal === 'function') {
+                            window.openModifyScheduleModalReal(specialistId, workpointId);
+                        } else {
+                            console.error('openModifyScheduleModalReal not found after script load');
                         }
                     };
                     script.onerror = function() {
@@ -2974,6 +2985,8 @@ if (isset($workpoint_id)) {
                     // Both loaded, call the real function
                     if (typeof window.openModifyScheduleModalReal === 'function') {
                         window.openModifyScheduleModalReal(specialistId, workpointId);
+                    } else {
+                        console.error('openModifyScheduleModalReal not found even though JS is marked as loaded');
                     }
                 }
             }

@@ -97,9 +97,15 @@
         schedulePane.style.cursor = 'pointer';
         schedulePane.onclick = function(event) {
             event.stopPropagation();
-            const workpointId = window.currentWorkpointId || document.querySelector('[data-workpoint-id]')?.dataset.workpointId;
+            // Get workpoint ID from multiple sources
+            const workpointId = window.currentWorkpointId ||
+                               document.querySelector('[data-workpoint-id]')?.dataset.workpointId ||
+                               document.querySelector('.working-point-section')?.dataset.workpointId;
+
             if (window.openModifyScheduleModal) {
                 window.openModifyScheduleModal(specialistId, workpointId);
+            } else {
+                console.error('openModifyScheduleModal function not found');
             }
         };
 
