@@ -3515,159 +3515,111 @@ if (isset($workpoint_id)) {
         }
 
         // Schedule Modification Modal Functions
+        // Comprehensive Schedule Editor - Lazy Loading
+        let comprehensiveScheduleModalLoaded = false;
+        let comprehensiveScheduleModalHtmlLoaded = false;
+
         function openModifyScheduleModal(specialistId, workpointId) {
-            const modal = document.getElementById('modifyScheduleModal');
-            if (!modal) {
-                console.error('Modify schedule modal not found!');
-                return;
+            // First, load the modal HTML if not already loaded
+            if (!comprehensiveScheduleModalHtmlLoaded) {
+                fetch('assets/modals/comprehensive-schedule-editor-modal.php')
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('comprehensiveScheduleModalPlaceholder').innerHTML = html;
+                        comprehensiveScheduleModalHtmlLoaded = true;
+
+                        // Now load the JavaScript if not already loaded
+                        if (!comprehensiveScheduleModalLoaded) {
+                            const script = document.createElement('script');
+                            script.src = 'assets/js/modals/comprehensive-schedule-editor.js?v=' + Date.now();
+                            script.onload = function() {
+                                comprehensiveScheduleModalLoaded = true;
+                                // The script replaces openModifyScheduleModal with the real function
+                                // Now call it
+                                if (typeof window.openModifyScheduleModal === 'function') {
+                                    window.openModifyScheduleModal(specialistId, workpointId);
+                                }
+                            };
+                            script.onerror = function() {
+                                console.error('Failed to load Comprehensive Schedule Editor script');
+                                alert('Failed to load Schedule Editor functionality. Please try again.');
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            // JavaScript already loaded, call the real function
+                            if (typeof window.openModifyScheduleModalReal === 'function') {
+                                window.openModifyScheduleModalReal(specialistId, workpointId);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to load Comprehensive Schedule Editor modal HTML:', error);
+                        alert('Failed to load Schedule Editor. Please try again.');
+                    });
+            } else {
+                // HTML already loaded
+                if (!comprehensiveScheduleModalLoaded) {
+                    // Load JavaScript
+                    const script = document.createElement('script');
+                    script.src = 'assets/js/modals/comprehensive-schedule-editor.js?v=' + Date.now();
+                    script.onload = function() {
+                        comprehensiveScheduleModalLoaded = true;
+                        if (typeof window.openModifyScheduleModal === 'function') {
+                            window.openModifyScheduleModal(specialistId, workpointId);
+                        }
+                    };
+                    script.onerror = function() {
+                        console.error('Failed to load Comprehensive Schedule Editor script');
+                        alert('Failed to load Schedule Editor functionality. Please try again.');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Both loaded, call the real function
+                    if (typeof window.openModifyScheduleModalReal === 'function') {
+                        window.openModifyScheduleModalReal(specialistId, workpointId);
+                    }
+                }
             }
-            
-            // Set modal IDs
-            document.getElementById('modifyScheduleSpecialistId').value = specialistId;
-            document.getElementById('modifyScheduleWorkpointId').value = workpointId;
-            
-            // Clear previous error messages
-            const errorElement = document.getElementById('modifyScheduleError');
-            if (errorElement) errorElement.style.display = 'none';
-            
-            
-            // Load schedule data
-            loadScheduleDataForModal(specialistId, workpointId);
-            
-            // Show modal
-            modal.style.display = 'flex';
         }
-        
+
+        // Stub function for close - will be replaced when the actual script loads
         function closeModifyScheduleModal() {
-            document.getElementById('modifyScheduleModal').style.display = 'none';
-            document.getElementById('modifyScheduleForm').reset();
-            document.getElementById('modifyScheduleError').style.display = 'none';
+            const modal = document.getElementById('modifyScheduleModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
         }
 
+        // Stub functions that will be replaced when the script loads
         function toggleShiftVisibility(shiftNumber, isVisible) {
-            const table = document.querySelector('#modifyScheduleModal .schedule-editor-table');
-            if (!table) return;
-
-            const display = isVisible ? '' : 'none';
-            const flexDisplay = isVisible ? 'flex' : 'none';
-
-            // Toggle Quick Options section shifts
-            if (shiftNumber === 1) {
-                const quickOptionsShift1 = document.getElementById('quickOptionsShift1');
-                if (quickOptionsShift1) quickOptionsShift1.style.display = flexDisplay;
-            } else if (shiftNumber === 2) {
-                const quickOptionsShift2 = document.getElementById('quickOptionsShift2');
-                if (quickOptionsShift2) quickOptionsShift2.style.display = flexDisplay;
-            } else if (shiftNumber === 3) {
-                const quickOptionsShift3 = document.getElementById('quickOptionsShift3');
-                if (quickOptionsShift3) quickOptionsShift3.style.display = flexDisplay;
-            }
-
-            // Toggle header columns
-            const headerRows = table.querySelectorAll('thead tr');
-            if (shiftNumber === 1) {
-                // First header row - Shift 1 title (columns 2-4)
-                if (headerRows[0]) {
-                    const shift1Header = headerRows[0].cells[1]; // "Shift 1" header
-                    if (shift1Header) shift1Header.style.display = display;
-                }
-                // Second header row - Start/End/checkbox columns (2-4)
-                if (headerRows[1]) {
-                    for (let i = 1; i <= 3; i++) {
-                        if (headerRows[1].cells[i]) headerRows[1].cells[i].style.display = display;
-                    }
-                }
-                // Separator column after shift 1
-                if (headerRows[0].cells[2]) headerRows[0].cells[2].style.display = display;
-                if (headerRows[1].cells[4]) headerRows[1].cells[4].style.display = display;
-            } else if (shiftNumber === 2) {
-                // First header row - Shift 2 title (columns 6-8)
-                if (headerRows[0]) {
-                    const shift2Header = headerRows[0].cells[3]; // "Shift 2" header
-                    if (shift2Header) shift2Header.style.display = display;
-                }
-                // Second header row - Start/End/checkbox columns (6-8)
-                if (headerRows[1]) {
-                    for (let i = 5; i <= 7; i++) {
-                        if (headerRows[1].cells[i]) headerRows[1].cells[i].style.display = display;
-                    }
-                }
-                // Separator column after shift 2
-                if (headerRows[0].cells[4]) headerRows[0].cells[4].style.display = display;
-                if (headerRows[1].cells[8]) headerRows[1].cells[8].style.display = display;
-            } else if (shiftNumber === 3) {
-                // First header row - Shift 3 title (columns 10-12)
-                if (headerRows[0]) {
-                    const shift3Header = headerRows[0].cells[5]; // "Shift 3" header
-                    if (shift3Header) shift3Header.style.display = display;
-                }
-                // Second header row - Start/End/checkbox columns (10-12)
-                if (headerRows[1]) {
-                    for (let i = 9; i <= 11; i++) {
-                        if (headerRows[1].cells[i]) headerRows[1].cells[i].style.display = display;
-                    }
-                }
-            }
-
-            // Toggle body columns for all days
-            const bodyRows = table.querySelectorAll('tbody tr');
-            bodyRows.forEach(row => {
-                if (shiftNumber === 1) {
-                    // Shift 1 columns (2-4: start, end, clear)
-                    for (let i = 1; i <= 3; i++) {
-                        if (row.cells[i]) row.cells[i].style.display = display;
-                    }
-                    // Separator column after shift 1
-                    if (row.cells[4]) row.cells[4].style.display = display;
-                } else if (shiftNumber === 2) {
-                    // Shift 2 columns (6-8: start, end, clear)
-                    for (let i = 5; i <= 7; i++) {
-                        if (row.cells[i]) row.cells[i].style.display = display;
-                    }
-                    // Separator column after shift 2
-                    if (row.cells[8]) row.cells[8].style.display = display;
-                } else if (shiftNumber === 3) {
-                    // Shift 3 columns (10-12: start, end, clear)
-                    for (let i = 9; i <= 11; i++) {
-                        if (row.cells[i]) row.cells[i].style.display = display;
-                    }
-                }
-            });
+            // This will be replaced by the real function when the script loads
         }
 
         function deleteScheduleFromModal() {
-            const specialistName = document.getElementById('modifyScheduleTitle').textContent.match(/Schedule: (.+?) at/)?.[1] || 'this specialist';
-            const workpointName = document.getElementById('modifyScheduleTitle').textContent.match(/at (.+)$/)?.[1] || 'this location';
-            
-            if (confirm(`Are you sure you want to delete the schedule for ${specialistName} at ${workpointName}? This action cannot be undone.`)) {
-                const formData = new FormData();
-                formData.append('action', 'delete_schedule');
-                formData.append('specialist_id', document.getElementById('modifyScheduleSpecialistId').value);
-                formData.append('workpoint_id', document.getElementById('modifyScheduleWorkpointId').value);
-                formData.append('supervisor_mode', 'true');
-                
-                fetch('admin/modify_schedule_ajax.php', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Schedule deleted successfully!');
-                        closeModifyScheduleModal();
-                        location.reload();
-                    } else {
-                        document.getElementById('modifyScheduleError').textContent = data.message || 'Failed to delete schedule.';
-                        document.getElementById('modifyScheduleError').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting schedule:', error);
-                    document.getElementById('modifyScheduleError').textContent = 'An error occurred while deleting the schedule.';
-                    document.getElementById('modifyScheduleError').style.display = 'block';
-                });
-            }
+            // This will be replaced by the real function when the script loads
+            alert('Please wait for the Schedule Editor to fully load before performing this action.');
+        }
+
+        function updateScheduleFromModal() {
+            // This will be replaced by the real function when the script loads
+            alert('Please wait for the Schedule Editor to fully load before performing this action.');
+        }
+
+        function applyModifyAllShifts() {
+            // This will be replaced by the real function when the script loads
+            alert('Please wait for the Schedule Editor to fully load before performing this action.');
+        }
+
+        function clearModifyShift(button, shiftNum) {
+            // This will be replaced by the real function when the script loads
+        }
+
+        function loadScheduleDataForModal(specialistId, workpointId) {
+            // This will be replaced by the real function when the script loads
+        }
+
+        function loadModifyScheduleEditor() {
+            // This will be replaced by the real function when the script loads
         }
         
         // Time Off Modal Functions - Lazy Loading
@@ -3908,275 +3860,13 @@ if (isset($workpoint_id)) {
             .catch(error => console.error('Auto-save error:', error));
         };
 
-                function loadScheduleDataForModal(specialistId, workpointId) {
-            const formData = new FormData();
-            formData.append('action', 'get_schedule');
-            formData.append('specialist_id', specialistId);
-            formData.append('workpoint_id', workpointId);
-            
-            // Add supervisor mode flag if in supervisor mode
-            <?php if ($supervisor_mode): ?>
-            formData.append('supervisor_mode', 'true');
-            <?php endif; ?>
-            
-            fetch('admin/modify_schedule_ajax.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const details = data.details;
-                    const schedule = data.schedule;
-                    
-                    // Update modal title with specialist and workpoint info
-                    const titleElement = document.getElementById('modifyScheduleTitle');
-                    if (titleElement) {
-                        titleElement.innerHTML = `<i class="fas fa-calendar-alt" style="margin-right: 10px;"></i>Comprehensive Schedule Editor<br><span style="font-size: 0.9rem; font-weight: 400; opacity: 0.9;">Editing: ${details.specialist_name} at ${details.workpoint_name}</span>`;
-                    }
-                    
-                    // Populate schedule form with current data
-                    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                    
-                    // Create a lookup for existing schedule data
-                    const scheduleLookup = {};
-                    schedule.forEach(item => {
-                        const day = item.day_of_week.toLowerCase();
-                        scheduleLookup[day] = {
-                            shift1_start: item.shift1_start,
-                            shift1_end: item.shift1_end,
-                            shift2_start: item.shift2_start,
-                            shift2_end: item.shift2_end,
-                            shift3_start: item.shift3_start,
-                            shift3_end: item.shift3_end
-                        };
-                    });
-                    
-                    // Populate form fields
-                    days.forEach(day => {
-                        const dayData = scheduleLookup[day] || {};
-                        
-                        // Set shift 1 times
-                        const shift1Start = document.querySelector(`input[name="modify_shift1_start_${day}"]`);
-                        const shift1End = document.querySelector(`input[name="modify_shift1_end_${day}"]`);
-                        if (shift1Start) shift1Start.value = dayData.shift1_start || '';
-                        if (shift1End) shift1End.value = dayData.shift1_end || '';
-                        
-                        // Set shift 2 times
-                        const shift2Start = document.querySelector(`input[name="modify_shift2_start_${day}"]`);
-                        const shift2End = document.querySelector(`input[name="modify_shift2_end_${day}"]`);
-                        if (shift2Start) shift2Start.value = dayData.shift2_start || '';
-                        if (shift2End) shift2End.value = dayData.shift2_end || '';
-                        
-                        // Set shift 3 times
-                        const shift3Start = document.querySelector(`input[name="modify_shift3_start_${day}"]`);
-                        const shift3End = document.querySelector(`input[name="modify_shift3_end_${day}"]`);
-                        if (shift3Start) shift3Start.value = dayData.shift3_start || '';
-                        if (shift3End) shift3End.value = dayData.shift3_end || '';
-                    });
-                } else {
-                    console.error('Failed to load schedule data:', data.message);
-                    document.getElementById('modifyScheduleError').textContent = 'Failed to load schedule data: ' + data.message;
-                    document.getElementById('modifyScheduleError').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading schedule data:', error);
-                document.getElementById('modifyScheduleError').textContent = 'An error occurred while loading schedule data.';
-                document.getElementById('modifyScheduleError').style.display = 'block';
-            });
-        }
-        
-        function updateScheduleFromModal() {
-            const formData = new FormData();
-            formData.append('action', 'update_schedule');
-            formData.append('specialist_id', document.getElementById('modifyScheduleSpecialistId').value);
-            formData.append('workpoint_id', document.getElementById('modifyScheduleWorkpointId').value);
-            
-            // Build schedule data structure
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            const scheduleData = {};
-            
-            days.forEach(day => {
-                scheduleData[day] = {
-                    shift1_start: document.querySelector(`input[name="modify_shift1_start_${day}"]`)?.value || '',
-                    shift1_end: document.querySelector(`input[name="modify_shift1_end_${day}"]`)?.value || '',
-                    shift2_start: document.querySelector(`input[name="modify_shift2_start_${day}"]`)?.value || '',
-                    shift2_end: document.querySelector(`input[name="modify_shift2_end_${day}"]`)?.value || '',
-                    shift3_start: document.querySelector(`input[name="modify_shift3_start_${day}"]`)?.value || '',
-                    shift3_end: document.querySelector(`input[name="modify_shift3_end_${day}"]`)?.value || ''
-                };
-            });
-            
-            // Add schedule data as JSON string
-            formData.append('schedule', JSON.stringify(scheduleData));
-            
-            // Disable submit button
-            const submitBtn = event.target;
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = 'Updating...';
-            submitBtn.disabled = true;
-            
-            fetch('admin/modify_schedule_ajax.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Schedule updated successfully!');
-                    closeModifyScheduleModal();
-                    // Reload the page to show updated data
-                    location.reload();
-                } else {
-                    document.getElementById('modifyScheduleError').textContent = data.message || 'Failed to update schedule.';
-                    document.getElementById('modifyScheduleError').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error updating schedule:', error);
-                document.getElementById('modifyScheduleError').textContent = 'An error occurred while updating the schedule.';
-                document.getElementById('modifyScheduleError').style.display = 'block';
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
-        }
-        
-        function clearModifyShift(button, shiftNum) {
-            const row = button.closest('tr');
-            const startInput = row.querySelector(`.modify-shift${shiftNum}-start-time`);
-            const endInput = row.querySelector(`.modify-shift${shiftNum}-end-time`);
-            startInput.value = '';
-            endInput.value = '';
-        }
-        
-        function applyModifyAllShifts() {
-            const dayRange = document.getElementById('modifyQuickOptionsDaySelect').value;
-            let days;
-            
-            switch(dayRange) {
-                case 'mondayToFriday':
-                    days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-                    break;
-                case 'saturday':
-                    days = ['saturday'];
-                    break;
-                case 'sunday':
-                    days = ['sunday'];
-                    break;
-                default:
-                    return;
-            }
-            
-            // Get shift times
-            const shift1Start = document.getElementById('modifyShift1Start').value;
-            const shift1End = document.getElementById('modifyShift1End').value;
-            const shift2Start = document.getElementById('modifyShift2Start').value;
-            const shift2End = document.getElementById('modifyShift2End').value;
-            const shift3Start = document.getElementById('modifyShift3Start').value;
-            const shift3End = document.getElementById('modifyShift3End').value;
-            
-            // Check if at least one shift has values
-            const hasShift1 = shift1Start && shift1End;
-            const hasShift2 = shift2Start && shift2End;
-            const hasShift3 = shift3Start && shift3End;
-            
-            if (!hasShift1 && !hasShift2 && !hasShift3) {
-                return;
-            }
-            
-            // Apply shifts to all selected days
-            days.forEach(day => {
-                const row = document.querySelector(`tr:has(input[name="modify_shift1_start_${day}"])`);
-                if (row) {
-                    // Apply Shift 1 only if values are provided
-                    if (hasShift1) {
-                        const startInput = row.querySelector('.modify-shift1-start-time');
-                        const endInput = row.querySelector('.modify-shift1-end-time');
-                        if (startInput && endInput) {
-                            startInput.value = shift1Start;
-                            endInput.value = shift1End;
-                        }
-                    }
-                    
-                    // Apply Shift 2 only if values are provided
-                    if (hasShift2) {
-                        const startInput = row.querySelector('.modify-shift2-start-time');
-                        const endInput = row.querySelector('.modify-shift2-end-time');
-                        if (startInput && endInput) {
-                            startInput.value = shift2Start;
-                            endInput.value = shift2End;
-                        }
-                    }
-                    
-                    // Apply Shift 3 only if values are provided
-                    if (hasShift3) {
-                        const startInput = row.querySelector('.modify-shift3-start-time');
-                        const endInput = row.querySelector('.modify-shift3-end-time');
-                        if (startInput && endInput) {
-                            startInput.value = shift3Start;
-                            endInput.value = shift3End;
-                        }
-                    }
-                }
-            });
-        }
-        
-        function loadModifyScheduleEditor() {
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            const tableBody = document.getElementById('modifyScheduleEditorTableBody');
-            tableBody.innerHTML = '';
-            
-            days.forEach(day => {
-                const dayLower = day.toLowerCase();
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="day-name">${day}</td>
-                    <td>
-                        <input type="time" class="form-control shift1-start-time modify-shift1-start-time" name="modify_shift1_start_${dayLower}" value="" placeholder="--:--" data-day="${day}" data-shift="1">
-                    </td>
-                    <td>
-                        <input type="time" class="form-control shift1-end-time modify-shift1-end-time" name="modify_shift1_end_${dayLower}" value="" placeholder="--:--" data-day="${day}" data-shift="1">
-                    </td>
-                    <td>
-                        <button type="button" class="btn-clear-shift" onclick="clearModifyShift(this, 1)">Clear</button>
-                    </td>
-                    <td class="separator-col"></td>
-                    <td>
-                        <input type="time" class="form-control shift2-start-time modify-shift2-start-time" name="modify_shift2_start_${dayLower}" value="" placeholder="--:--" data-day="${day}" data-shift="2">
-                    </td>
-                    <td>
-                        <input type="time" class="form-control shift2-end-time modify-shift2-end-time" name="modify_shift2_end_${dayLower}" value="" placeholder="--:--" data-day="${day}" data-shift="2">
-                    </td>
-                    <td>
-                        <button type="button" class="btn-clear-shift" onclick="clearModifyShift(this, 2)">Clear</button>
-                    </td>
-                    <td class="separator-col"></td>
-                    <td>
-                        <input type="time" class="form-control shift3-start-time modify-shift3-start-time" name="modify_shift3_start_${dayLower}" value="" placeholder="--:--" data-day="${day}" data-shift="3">
-                    </td>
-                    <td>
-                        <input type="time" class="form-control shift3-end-time modify-shift3-end-time" name="modify_shift3_end_${dayLower}" value="" placeholder="--:--" data-day="${day}" data-shift="3">
-                    </td>
-                    <td>
-                        <button type="button" class="btn-clear-shift" onclick="clearModifyShift(this, 3)">Clear</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
         
         // Close modals when clicking outside
         window.onclick = function(event) {
             const modifyModal = document.getElementById('modifySpecialistModal');
             const deleteModal = document.getElementById('deleteSpecialistConfirmModal');
             const addModal = document.getElementById('addSpecialistModal');
-            const modifyScheduleModal = document.getElementById('modifyScheduleModal');
-            
+
             if (event.target === modifyModal) {
                 closeModifySpecialistModal();
             }
@@ -4186,7 +3876,10 @@ if (isset($workpoint_id)) {
             if (event.target === addModal) {
                 closeAddSpecialistModal();
             }
-            if (event.target === modifyScheduleModal) {
+
+            // Handle modifyScheduleModal if it's loaded
+            const modifyScheduleModal = document.getElementById('modifyScheduleModal');
+            if (modifyScheduleModal && event.target === modifyScheduleModal) {
                 closeModifyScheduleModal();
             }
         };
@@ -4581,146 +4274,8 @@ if (isset($workpoint_id)) {
         }
     </style>
 
-    <!-- Modify Schedule Modal -->
-    <div id="modifyScheduleModal" class="modify-modal-overlay">
-        <div class="modify-modal">
-            <div class="modify-modal-header">
-                <h3 id="modifyScheduleTitle">
-                    📅 Comprehensive Schedule Editor
-                </h3>
-                <span class="modify-modal-close" onclick="closeModifyScheduleModal()">&times;</span>
-            </div>
-            <div class="modify-modal-body">
-                <form id="modifyScheduleForm">
-                    <input type="hidden" id="modifyScheduleSpecialistId" name="specialist_id">
-                    <input type="hidden" id="modifyScheduleWorkpointId" name="workpoint_id">
-                    
-                    <!-- Quick Options Section -->
-                    <div class="individual-edit-section">
-                        <h4 style="font-size: 14px; margin-bottom: 15px;">⚡ Quick Options</h4>
-                        <div class="schedule-editor-table-container">
-                            <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #e9ecef;">
-                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap;">
-                                    <!-- Day Selector -->
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <label style="font-size: 12px; font-weight: 600; color: #333;">Day:</label>
-                                        <select id="modifyQuickOptionsDaySelect" style="font-size: 11px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 3px; width: 80px;">
-                                            <option value="mondayToFriday">Mon-Fri</option>
-                                            <option value="saturday">Saturday</option>
-                                            <option value="sunday">Sunday</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Shift 1 -->
-                                    <div id="quickOptionsShift1" style="display: flex; align-items: center; gap: 8px;">
-                                        <label style="font-size: 12px; font-weight: 600; color: #333; min-width: 50px;">Shift 1:</label>
-                                        <input type="time" id="modifyShift1Start" class="form-control shift1-start-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="Start">
-                                        <input type="time" id="modifyShift1End" class="form-control shift1-end-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="End">
-                                    </div>
-
-                                    <!-- Shift 2 -->
-                                    <div id="quickOptionsShift2" style="display: flex; align-items: center; gap: 8px;">
-                                        <label style="font-size: 12px; font-weight: 600; color: #333; min-width: 50px;">Shift 2:</label>
-                                        <input type="time" id="modifyShift2Start" class="form-control shift2-start-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="Start">
-                                        <input type="time" id="modifyShift2End" class="form-control shift2-end-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="End">
-                                    </div>
-
-                                    <!-- Shift 3 -->
-                                    <div id="quickOptionsShift3" style="display: flex; align-items: center; gap: 8px;">
-                                        <label style="font-size: 12px; font-weight: 600; color: #333; min-width: 50px;">Shift 3:</label>
-                                        <input type="time" id="modifyShift3Start" class="form-control shift3-start-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="Start">
-                                        <input type="time" id="modifyShift3End" class="form-control shift3-end-time" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; width: 70px;" placeholder="End">
-                                    </div>
-                                    
-                                    <!-- Apply Button -->
-                                    <button type="button" onclick="applyModifyAllShifts()" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Apply</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Individual Day Editor -->
-                    <div class="individual-edit-section">
-                        <h4 style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>📋 Individual Day Editor</span>
-                            <div style="font-size: 12px; font-weight: normal;">
-                                <label style="margin-right: 15px; cursor: pointer;">
-                                    <input type="checkbox" id="toggleShift1" checked onchange="toggleShiftVisibility(1, this.checked)" style="margin-right: 5px;">
-                                    Shift 1
-                                </label>
-                                <label style="margin-right: 15px; cursor: pointer;">
-                                    <input type="checkbox" id="toggleShift2" checked onchange="toggleShiftVisibility(2, this.checked)" style="margin-right: 5px;">
-                                    Shift 2
-                                </label>
-                                <label style="cursor: pointer;">
-                                    <input type="checkbox" id="toggleShift3" checked onchange="toggleShiftVisibility(3, this.checked)" style="margin-right: 5px;">
-                                    Shift 3
-                                </label>
-                            </div>
-                        </h4>
-                        <div class="schedule-editor-table-container">
-                            <table class="schedule-editor-table">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th colspan="3">Shift 1</th>
-                                        <th class="separator-col"></th>
-                                        <th colspan="3">Shift 2</th>
-                                        <th class="separator-col"></th>
-                                        <th colspan="3">Shift 3</th>
-                                    </tr>
-                                    <tr>
-                                        <th></th>
-                                        <th>Start</th>
-                                        <th>End</th>
-                                        <th></th>
-                                        <th class="separator-col"></th>
-                                        <th>Start</th>
-                                        <th>End</th>
-                                        <th></th>
-                                        <th class="separator-col"></th>
-                                        <th>Start</th>
-                                        <th>End</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="modifyScheduleEditorTableBody">
-                                    <!-- Days will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- All Buttons inside Individual Day Editor -->
-                        <div style="margin-top: 10px; padding-bottom: 10px; overflow: hidden;">
-                            <a href="#" onclick="openTimeOffModal(); return false;" style="float: left; font-size: 14px; color: #007bff; text-decoration: none; font-weight: 600; line-height: 27px;" title="Manage holidays and days off">
-                                <i class="fas fa-calendar-times"></i> Holidays and Days off
-                            </a>
-                            <div style="float: right;">
-                                <button type="button" class="btn-delete" onclick="deleteScheduleFromModal()" style="padding: 5px 12px !important; border-radius: 0 !important; font-size: 11px !important; margin-left: 5px;" title="Delete all schedules for this specialist at this location">
-                                    <i class="fas fa-times" style="font-size: 10px;"></i> Delete
-                                </button>
-                            <button type="button" style="background: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-left: 5px;" 
-                                    onmouseover="this.style.background='#5a6268';"
-                                    onmouseout="this.style.background='#6c757d';"
-                                    onclick="closeModifyScheduleModal()"
-                                    title="Close without saving changes">
-                                <i class="fas fa-times" style="margin-right: 3px; font-size: 10px;"></i>Cancel
-                            </button>
-                            <button type="button" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 5px 12px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2); transition: all 0.3s ease; margin-left: 5px;"
-                                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(0, 123, 255, 0.3)';"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0, 123, 255, 0.2)';"
-                                    onclick="updateScheduleFromModal()"
-                                    title="Save schedule changes">
-                                <i class="fas fa-save" style="margin-right: 3px; font-size: 10px;"></i>Update
-                            </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="modifyScheduleError" class="modify-error" style="display: none; margin: 15px 0; padding: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px;"></div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Comprehensive Schedule Editor Modal - Will be loaded on demand -->
+    <div id="comprehensiveScheduleModalPlaceholder"></div>
     
     <!-- Time Off Modal -->
     <div id="timeOffModal" class="modify-modal-overlay" style="display: none; z-index: 10000; background-color: rgba(0, 0, 0, 0.9);">
