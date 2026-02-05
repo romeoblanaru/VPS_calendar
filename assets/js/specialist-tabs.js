@@ -267,17 +267,40 @@
     }
 
     /**
-     * Load permissions for a specialist
+     * Load permissions for a specialist with lazy loading
      * @param {string} specialistId - The specialist ID
      */
     function loadPermissions(specialistId) {
         const container = document.querySelector(`[data-tab-content="permissions"][data-specialist="${specialistId}"]`);
         if (!container) return;
 
-        container.innerHTML = '<div style="padding: 15px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading permissions...</div>';
+        container.innerHTML = '<div style="padding: 8px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading permissions...</div>';
 
-        // Make AJAX call to get permissions
-        fetch('admin/get_specialist_permissions.php', {
+        // Lazy load the permissions script
+        if (!window.togglePermission) {
+            const script = document.createElement('script');
+            script.src = 'assets/js/specialist-permissions.js?v=' + Date.now();
+            script.onload = () => fetchAndDisplayPermissions(specialistId, container);
+            script.onerror = () => {
+                console.error('Failed to load permissions script');
+                container.innerHTML = '<div style="padding: 8px; text-align: center; color: #dc3545; font-size: 0.75rem;">Failed to load permissions</div>';
+            };
+            document.head.appendChild(script);
+        } else {
+            fetchAndDisplayPermissions(specialistId, container);
+        }
+    }
+
+    /**
+     * Fetch and display permissions
+     * @param {string} specialistId - The specialist ID
+     * @param {HTMLElement} container - The container element
+     */
+    function fetchAndDisplayPermissions(specialistId, container) {
+
+        // Fetch permissions from database
+        const timestamp = new Date().getTime();
+        fetch(`admin/get_specialist_permissions.php?specialist_id=${specialistId}&t=${timestamp}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -287,40 +310,138 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                let html = '<div style="padding: 8px;">';
+                const perms = data.permissions;
 
-                // Display permissions as toggles
-                const permissions = [
-                    { key: 'can_modify_schedule', label: 'Modify Schedule', icon: 'fa-calendar-alt' },
-                    { key: 'can_view_clients', label: 'View Clients', icon: 'fa-users' },
-                    { key: 'can_manage_bookings', label: 'Manage Bookings', icon: 'fa-book' },
-                    { key: 'phone_visible', label: 'Phone Visible', icon: 'fa-phone' },
-                    { key: 'email_visible', label: 'Email Visible', icon: 'fa-envelope' }
-                ];
+                let html = '<div style="padding: 6px;">';
+                html += '<div class="permissions-grid" style="display: grid; gap: 1.4px;">';
 
-                html += '<div class="permissions-grid" style="display: grid; gap: 6px;">';
-                permissions.forEach(perm => {
-                    const isEnabled = data.permissions[perm.key] || false;
-                    html += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; background: #f8f9fa; border-radius: 3px; font-size: 0.75rem;">
-                            <span style="color: #333;">
-                                <i class="fas ${perm.icon}" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
-                                ${perm.label}
-                            </span>
-                            <span style="color: ${isEnabled ? '#28a745' : '#dc3545'}; font-weight: 500; font-size: 0.7rem;">
-                                ${isEnabled ? '✓ Yes' : '✗ No'}
-                            </span>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-
+                // User can delete booking
                 html += `
-                    <button class="btn btn-sm btn-outline-primary" onclick="openModifySpecialistModal('${specialistId}')" style="margin-top: 8px; width: 100%; font-size: 0.7rem; padding: 4px;">
-                        <i class="fas fa-edit" style="font-size: 0.65rem;"></i> Edit Permissions
-                    </button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-trash-alt" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            User can delete booking
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="can_delete_booking_${specialistId}"
+                                   ${perms.can_delete_booking ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_can_delete_booking', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
                 `;
-                html += '</div>';
+
+                // User can modify booking
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-edit" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            User can modify booking
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="can_modify_booking_${specialistId}"
+                                   ${perms.can_modify_booking ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_can_modify_booking', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                // User can add services
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-plus-circle" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            User can add services
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="can_add_services_${specialistId}"
+                                   ${perms.can_add_services ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_can_add_services', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                // User can modify services
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-pen" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            User can modify services
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="can_modify_services_${specialistId}"
+                                   ${perms.can_modify_services ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_can_modify_services', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                // User can delete services
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-minus-circle" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            User can delete services
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="can_delete_services_${specialistId}"
+                                   ${perms.can_delete_services ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_can_delete_services', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                // Phone visible to clients
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-phone" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            Phone visible to clients
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="nr_visible_${specialistId}"
+                                   ${perms.phone_visible ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_nr_visible_to_client', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                // Email visible to clients
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px;">
+                        <label style="color: #333; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-envelope" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            Email visible to clients
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" id="email_visible_${specialistId}"
+                                   ${perms.email_visible ? 'checked' : ''}
+                                   onchange="togglePermission('${specialistId}', 'specialist_email_visible_to_client', this.checked)"
+                                   style="cursor: pointer;">
+                        </div>
+                    </div>
+                `;
+
+                // Schedule Notification (disabled)
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; background: #f8f9fa; border-radius: 2px; opacity: 0.6;">
+                        <label style="color: #333; font-size: 0.7rem; display: flex; align-items: center;">
+                            <i class="fas fa-bell" style="margin-right: 5px; font-size: 0.65rem; width: 12px;"></i>
+                            Schedule Notification
+                        </label>
+                        <div class="form-check form-switch" style="margin: 0; transform: scale(0.6);">
+                            <input class="form-check-input" type="checkbox" disabled
+                                   style="cursor: not-allowed;">
+                        </div>
+                    </div>
+                `;
+
+                html += '</div></div>';
 
                 container.innerHTML = html;
                 container.dataset.loaded = 'true';
@@ -330,39 +451,7 @@
         })
         .catch(error => {
             console.error('Error loading permissions:', error);
-            // Show mock data for now
-            let html = '<div style="padding: 8px;">';
-            html += `
-                <div class="permissions-grid" style="display: grid; gap: 6px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; background: #f8f9fa; border-radius: 3px; font-size: 0.75rem;">
-                        <span style="color: #333;">
-                            <i class="fas fa-calendar-alt" style="margin-right: 5px; font-size: 0.65rem;"></i>
-                            Modify Schedule
-                        </span>
-                        <span style="color: #28a745; font-weight: 500; font-size: 0.7rem;">✓ Yes</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; background: #f8f9fa; border-radius: 3px; font-size: 0.75rem;">
-                        <span style="color: #333;">
-                            <i class="fas fa-users" style="margin-right: 5px; font-size: 0.65rem;"></i>
-                            View Clients
-                        </span>
-                        <span style="color: #28a745; font-weight: 500; font-size: 0.7rem;">✓ Yes</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; background: #f8f9fa; border-radius: 3px; font-size: 0.75rem;">
-                        <span style="color: #333;">
-                            <i class="fas fa-phone" style="margin-right: 5px; font-size: 0.65rem;"></i>
-                            Phone Visible
-                        </span>
-                        <span style="color: #dc3545; font-weight: 500; font-size: 0.7rem;">✗ No</span>
-                    </div>
-                </div>
-                <button class="btn btn-sm btn-outline-primary" onclick="openModifySpecialistModal('${specialistId}')" style="margin-top: 8px; width: 100%; font-size: 0.7rem; padding: 4px;">
-                    <i class="fas fa-edit" style="font-size: 0.65rem;"></i> Edit Permissions
-                </button>
-            `;
-            html += '</div>';
-            container.innerHTML = html;
-            container.dataset.loaded = 'true';
+            container.innerHTML = '<div style="padding: 8px; text-align: center; color: #dc3545; font-size: 0.75rem;">Error loading permissions</div>';
         });
     }
 
