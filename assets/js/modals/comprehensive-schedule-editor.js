@@ -9,6 +9,8 @@ window.openModifyScheduleModalReal = function(specialistId, workpointId) {
         return;
     }
 
+    console.log('Opening modal with params:', { specialistId, workpointId });
+
     // Store parameters globally for other functions to access
     window.currentScheduleSpecialistId = specialistId;
     window.currentScheduleWorkpointId = workpointId;
@@ -21,13 +23,13 @@ window.openModifyScheduleModalReal = function(specialistId, workpointId) {
     const errorElement = document.getElementById('modifyScheduleError');
     if (errorElement) errorElement.style.display = 'none';
 
-    // Initialize the table structure if not already done
-    if (!document.getElementById('modifyScheduleEditorTableBody').innerHTML.trim()) {
-        loadModifyScheduleEditor();
-    }
+    // Always reinitialize the table to ensure clean state
+    loadModifyScheduleEditor();
 
-    // Load schedule data
-    loadScheduleDataForModal(specialistId, workpointId);
+    // Load schedule data after a small delay to ensure table is ready
+    setTimeout(() => {
+        loadScheduleDataForModal(specialistId, workpointId);
+    }, 100);
 
     // Show modal
     modal.style.display = 'flex';
@@ -182,6 +184,8 @@ window.deleteScheduleFromModal = function() {
 
 // Load schedule data for modal
 window.loadScheduleDataForModal = function(specialistId, workpointId) {
+    console.log('Loading schedule data for:', { specialistId, workpointId });
+
     const formData = new FormData();
     formData.append('action', 'get_schedule');
     formData.append('specialist_id', specialistId);
@@ -193,11 +197,18 @@ window.loadScheduleDataForModal = function(specialistId, workpointId) {
         body: formData,
         credentials: 'same-origin'
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Schedule data received:', data);
+
         if (data.success) {
             const details = data.details;
-            const schedule = data.schedule;
+            const schedule = data.schedule || [];
 
             // Update modal title with specialist and workpoint info
             const titleElement = document.getElementById('modifyScheduleTitle');
@@ -222,27 +233,51 @@ window.loadScheduleDataForModal = function(specialistId, workpointId) {
                 };
             });
 
+            console.log('Schedule lookup:', scheduleLookup);
+
             // Populate form fields
             days.forEach(day => {
                 const dayData = scheduleLookup[day] || {};
 
+                // Format time values - convert from HH:MM:SS to HH:MM if needed
+                const formatTime = (time) => {
+                    if (!time || time === '00:00:00') return '';
+                    // If it's already in HH:MM format, return as is
+                    if (time.length === 5) return time;
+                    // Convert HH:MM:SS to HH:MM
+                    return time.substring(0, 5);
+                };
+
                 // Set shift 1 times
                 const shift1Start = document.querySelector(`input[name="modify_shift1_start_${day}"]`);
                 const shift1End = document.querySelector(`input[name="modify_shift1_end_${day}"]`);
-                if (shift1Start) shift1Start.value = dayData.shift1_start || '';
-                if (shift1End) shift1End.value = dayData.shift1_end || '';
+                if (shift1Start) {
+                    shift1Start.value = formatTime(dayData.shift1_start);
+                    console.log(`Set ${day} shift1 start to: ${shift1Start.value}`);
+                }
+                if (shift1End) {
+                    shift1End.value = formatTime(dayData.shift1_end);
+                }
 
                 // Set shift 2 times
                 const shift2Start = document.querySelector(`input[name="modify_shift2_start_${day}"]`);
                 const shift2End = document.querySelector(`input[name="modify_shift2_end_${day}"]`);
-                if (shift2Start) shift2Start.value = dayData.shift2_start || '';
-                if (shift2End) shift2End.value = dayData.shift2_end || '';
+                if (shift2Start) {
+                    shift2Start.value = formatTime(dayData.shift2_start);
+                }
+                if (shift2End) {
+                    shift2End.value = formatTime(dayData.shift2_end);
+                }
 
                 // Set shift 3 times
                 const shift3Start = document.querySelector(`input[name="modify_shift3_start_${day}"]`);
                 const shift3End = document.querySelector(`input[name="modify_shift3_end_${day}"]`);
-                if (shift3Start) shift3Start.value = dayData.shift3_start || '';
-                if (shift3End) shift3End.value = dayData.shift3_end || '';
+                if (shift3Start) {
+                    shift3Start.value = formatTime(dayData.shift3_start);
+                }
+                if (shift3End) {
+                    shift3End.value = formatTime(dayData.shift3_end);
+                }
             });
         } else {
             console.error('Failed to load schedule data:', data.message);

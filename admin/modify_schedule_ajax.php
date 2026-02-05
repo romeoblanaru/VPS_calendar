@@ -167,13 +167,13 @@ function updateSchedule() {
             if (isset($schedule_data[$day])) {
                 $day_data = $schedule_data[$day];
                 
-                // Get shift times
-                $shift1_start = trim($day_data['shift1_start'] ?? '00:00:00');
-                $shift1_end = trim($day_data['shift1_end'] ?? '00:00:00');
-                $shift2_start = trim($day_data['shift2_start'] ?? '00:00:00');
-                $shift2_end = trim($day_data['shift2_end'] ?? '00:00:00');
-                $shift3_start = trim($day_data['shift3_start'] ?? '00:00:00');
-                $shift3_end = trim($day_data['shift3_end'] ?? '00:00:00');
+                // Get shift times - handle empty strings and convert format
+                $shift1_start = !empty($day_data['shift1_start']) ? (strlen($day_data['shift1_start']) === 5 ? $day_data['shift1_start'] . ':00' : trim($day_data['shift1_start'])) : '00:00:00';
+                $shift1_end = !empty($day_data['shift1_end']) ? (strlen($day_data['shift1_end']) === 5 ? $day_data['shift1_end'] . ':00' : trim($day_data['shift1_end'])) : '00:00:00';
+                $shift2_start = !empty($day_data['shift2_start']) ? (strlen($day_data['shift2_start']) === 5 ? $day_data['shift2_start'] . ':00' : trim($day_data['shift2_start'])) : '00:00:00';
+                $shift2_end = !empty($day_data['shift2_end']) ? (strlen($day_data['shift2_end']) === 5 ? $day_data['shift2_end'] . ':00' : trim($day_data['shift2_end'])) : '00:00:00';
+                $shift3_start = !empty($day_data['shift3_start']) ? (strlen($day_data['shift3_start']) === 5 ? $day_data['shift3_start'] . ':00' : trim($day_data['shift3_start'])) : '00:00:00';
+                $shift3_end = !empty($day_data['shift3_end']) ? (strlen($day_data['shift3_end']) === 5 ? $day_data['shift3_end'] . ':00' : trim($day_data['shift3_end'])) : '00:00:00';
                 
                 // Only insert if at least one shift has valid times
                 if (($shift1_start !== '00:00:00' && $shift1_end !== '00:00:00') ||
