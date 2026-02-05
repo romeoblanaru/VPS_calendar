@@ -1045,8 +1045,8 @@ if (isset($workpoint_id)) {
                                                 $bg_color = $spec_settings['back_color'] ?? '#667eea';
                                                 $fg_color = $spec_settings['foreground_color'] ?? '#ffffff';
                                                 ?>
-                                                <div class="working-point-section specialist-collapsible" data-specialist-id="<?= $spec['unic_id'] ?>" 
-                                                     style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 10px; background-color: #fafafa; transition: all 0.2s ease;"
+                                                <div class="working-point-section specialist-collapsible" data-specialist-id="<?= $spec['unic_id'] ?>"
+                                                     style="border: none; border-bottom: 1px solid #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 10px; background-color: #fafafa; transition: all 0.2s ease;"
                                                      onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'; this.style.transform='translateY(-2px)';"
                                                      onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)';">
                                                     <div class="working-point-header specialist-header" style="cursor: pointer; font-weight: normal; display: block; position: relative; min-height: 24px; padding-top: 8px; margin-bottom: 0;" onclick="(function(event) {
@@ -1066,9 +1066,18 @@ if (isset($workpoint_id)) {
                                                             if (tabsContainer.style.display === 'none' || tabsContainer.style.display === '') {
                                                                 tabsContainer.style.display = 'block';
                                                                 if (infoLine) infoLine.style.display = 'none';
+                                                                // Show full border and shadow when expanded
+                                                                specialistSection.style.border = '1px solid #e0e0e0';
+                                                                specialistSection.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                                                specialistSection.style.transform = 'translateY(-2px)';
                                                             } else {
                                                                 tabsContainer.style.display = 'none';
                                                                 if (infoLine) infoLine.style.display = 'block';
+                                                                // Show only bottom border and remove shadow when collapsed
+                                                                specialistSection.style.border = 'none';
+                                                                specialistSection.style.borderBottom = '1px solid #e0e0e0';
+                                                                specialistSection.style.boxShadow = 'none';
+                                                                specialistSection.style.transform = 'translateY(0)';
                                                             }
                                                         } else {
                                                             // Fallback to old behavior
@@ -1077,9 +1086,18 @@ if (isset($workpoint_id)) {
                                                                 if (scheduleContent.style.display === 'none' || scheduleContent.style.display === '') {
                                                                     scheduleContent.style.display = 'block';
                                                                     if (infoLine) infoLine.style.display = 'none';
+                                                                    // Show full border and shadow when expanded
+                                                                    specialistSection.style.border = '1px solid #e0e0e0';
+                                                                    specialistSection.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                                                    specialistSection.style.transform = 'translateY(-2px)';
                                                                 } else {
                                                                     scheduleContent.style.display = 'none';
                                                                     if (infoLine) infoLine.style.display = 'block';
+                                                                    // Show only bottom border and remove shadow when collapsed
+                                                                    specialistSection.style.border = 'none';
+                                                                    specialistSection.style.borderBottom = '1px solid #e0e0e0';
+                                                                    specialistSection.style.boxShadow = 'none';
+                                                                    specialistSection.style.transform = 'translateY(0)';
                                                                 }
                                                             }
                                                         }
