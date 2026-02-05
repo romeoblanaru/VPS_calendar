@@ -1048,7 +1048,7 @@ if (isset($workpoint_id)) {
                                                 <div class="working-point-section specialist-collapsible" data-specialist-id="<?= $spec['unic_id'] ?>"
                                                      style="border: none; border-bottom: 1px solid #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 10px; background-color: #fafafa; transition: all 0.2s ease;"
                                                      onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'; this.style.transform='translateY(-2px)';"
-                                                     onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)';">
+                                                     onmouseout="const tabs = this.querySelector('.specialist-tabs-container'); if (!tabs || tabs.style.display === 'none' || tabs.style.display === '') { this.style.boxShadow='none'; this.style.transform='translateY(0)'; }">
                                                     <div class="working-point-header specialist-header" style="cursor: pointer; font-weight: normal; display: block; position: relative; min-height: 24px; padding-top: 8px; margin-bottom: 0;" onclick="(function(event) {
                                                         const specialistId = '<?= $spec['unic_id'] ?>';
                                                         const specialistSection = event.currentTarget.closest('.specialist-collapsible');
