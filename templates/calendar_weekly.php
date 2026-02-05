@@ -1666,10 +1666,17 @@ const timeOffData = <?= json_encode(array_reduce($specialists_for_tabs, function
 
 
 function switchSpecialist(specialistId) {
-    
-    // Update active tab
+
+    // Update active tab and fade out inactive tabs
     document.querySelectorAll('.specialist-tab').forEach(tab => {
         tab.classList.remove('active');
+        if (tab.getAttribute('data-specialist-id') !== specialistId) {
+            // Fade out inactive tabs
+            tab.style.opacity = '0.3';
+        } else {
+            // Full opacity for active tab
+            tab.style.opacity = '1';
+        }
     });
     document.querySelector(`[data-specialist-id="${specialistId}"]`).classList.add('active');
     

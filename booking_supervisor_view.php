@@ -1055,6 +1055,11 @@ if (isset($workpoint_id)) {
                                                         const infoLine = specialistSection.querySelector('.specialist-info-line');
                                                         let tabsContainer = specialistSection.querySelector('.specialist-tabs-container');
 
+                                                        // Switch to this specialist in the weekly view if the function exists
+                                                        if (typeof window.switchSpecialist === 'function') {
+                                                            window.switchSpecialist(specialistId);
+                                                        }
+
                                                         if (!tabsContainer) {
                                                             // Initialize tabs for the first time
                                                             SpecialistTabs.initialize(specialistId);
