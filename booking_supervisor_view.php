@@ -2049,6 +2049,7 @@ if (isset($workpoint_id)) {
     <script src="assets/js/realtime-bookings.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/modal-loader.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/modal-wrappers.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/calendar-navigation.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/modal-debug.js?v=<?php echo time(); ?>"></script> <!-- Temporary debug helper -->
     <script>
     // Google Calendar integration completely removed from supervisor mode
