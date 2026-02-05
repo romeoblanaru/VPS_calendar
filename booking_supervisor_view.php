@@ -864,68 +864,6 @@ if (isset($workpoint_id)) {
         <!-- Title Box -->
         <div class="title-box">
             <div class="title-left">
-                <div style="margin-top: 10px;">
-                    <small><?= htmlspecialchars($_SESSION['user']) ?>
-                    <?php if ($supervisor_mode): ?>
-                    | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
-                    <?php endif; ?>
-                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
-                    </small>
-
-                    <!-- Menu Dropdown -->
-                    <div style="margin-top: 5px;">
-                        <div class="dropdown" style="display: inline-block;">
-                            <button class="btn btn-sm" type="button" id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false"
-                                    style="padding: 4px 8px; font-size: 14px; background-color: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; gap: 5px;">
-                                <i class="fas fa-bars" style="font-size: 14px;"></i>
-                                <span style="font-size: 12px;"><i class="fas fa-ellipsis-h" style="font-size: 10px; margin-right: 4px; vertical-align: baseline; position: relative; top: 3px;"></i>Click for more options</span>
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="menuDropdown" style="z-index: 999999 !important;">
-                                <li><a class="dropdown-item" href="#" onclick="openCommunicationSetup(); return false;" style="font-size: 13px;">
-                                    <i class="fab fa-whatsapp" style="width: 20px; color: #25D366;"></i> Communication Setup</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openSMSConfirmationSetup(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-sms" style="width: 20px; color: #1e88e5;"></i> SMS Confirmation Setup</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openWorkpointHolidays(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays & Closures</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openManageServices(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-chart-bar" style="width: 20px;"></i> Statistics</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="title-center">
-                <h1 class="page-title">
-                    <span class="logo-text">
-                        <span class="logo-letter">B</span>
-                        <span class="logo-letter beauty-eye">
-                            <span class="eye-outer">o</span>
-                            <span class="eye-inner">
-                                <span class="iris"></span>
-                            </span>
-                        </span>
-                        <span class="logo-letter beauty-eye">
-                            <span class="eye-outer">o</span>
-                            <span class="eye-inner">
-                                <span class="iris"></span>
-                            </span>
-                        </span>
-                        <span class="logo-letter">k</span>
-                        <span class="logo-letter">i</span>
-                        <span class="logo-letter">n</span>
-                        <span class="logo-letter">g</span>
-                        <span class="logo-letter space"></span>
-                        <span class="logo-letter">P</span>
-                        <span class="logo-letter">a</span>
-                        <span class="logo-letter">g</span>
-                        <span class="logo-letter">e</span>
-                    </span>
-                </h1>
-
-            </div>
-            <div class="title-right">
                 <div class="current-time" id="currentTime">
                     <small style="color: var(--primary-color); font-weight: 600;"><?= date('l, F j, Y') ?></small>
                     <span class="time-badge" id="currentTimeClock" style="margin-left: 8px; padding: 3px 6px;"><?= date('H:i:s') ?></span>
@@ -963,6 +901,68 @@ if (isset($workpoint_id)) {
                             <i class="status-icon fas fa-circle" style="font-size: 12px; color: #ffc107; transition: color 0.3s ease;"></i>
                         </span>
                     </small>
+                </div>
+            </div>
+            <div class="title-center">
+                <h1 class="page-title">
+                    <span class="logo-text">
+                        <span class="logo-letter">B</span>
+                        <span class="logo-letter beauty-eye">
+                            <span class="eye-outer">o</span>
+                            <span class="eye-inner">
+                                <span class="iris"></span>
+                            </span>
+                        </span>
+                        <span class="logo-letter beauty-eye">
+                            <span class="eye-outer">o</span>
+                            <span class="eye-inner">
+                                <span class="iris"></span>
+                            </span>
+                        </span>
+                        <span class="logo-letter">k</span>
+                        <span class="logo-letter">i</span>
+                        <span class="logo-letter">n</span>
+                        <span class="logo-letter">g</span>
+                        <span class="logo-letter space"></span>
+                        <span class="logo-letter">P</span>
+                        <span class="logo-letter">a</span>
+                        <span class="logo-letter">g</span>
+                        <span class="logo-letter">e</span>
+                    </span>
+                </h1>
+
+            </div>
+            <div class="title-right">
+                <div style="margin-top: 10px;">
+                    <small>Usr: <?= htmlspecialchars($_SESSION['user']) ?>
+                    <?php if ($supervisor_mode): ?>
+                    | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
+                    <?php endif; ?>
+                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
+                    </small>
+
+                    <!-- Menu Dropdown -->
+                    <div style="margin-top: 5px;">
+                        <div class="dropdown" style="display: inline-block;">
+                            <button class="btn btn-sm" type="button" id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                    style="padding: 4px 8px; font-size: 14px; background-color: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-bars" style="font-size: 14px;"></i>
+                                <span style="font-size: 12px;">Working Point Config.Settings</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="menuDropdown" style="z-index: 999999 !important;">
+                                <li><a class="dropdown-item" href="#" onclick="openCommunicationSetup(); return false;" style="font-size: 13px;">
+                                    <i class="fab fa-whatsapp" style="width: 20px; color: #25D366;"></i> Communication Setup</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openSMSConfirmationSetup(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-sms" style="width: 20px; color: #1e88e5;"></i> SMS Confirmation Setup</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openWorkpointHolidays(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays & Closures</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openManageServices(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
+                                    <i class="fas fa-chart-bar" style="width: 20px;"></i> Statistics</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

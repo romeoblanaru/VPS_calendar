@@ -16,7 +16,7 @@
             border-radius: 15px;
             box-shadow: var(--shadow);
             padding: 15.6px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -38,12 +38,14 @@
         .title-right {
             text-align: right;
             flex: 1;
+            line-height: 2;
         }
 
         .current-time {
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--primary-color);
+            line-height: 2;
         }
 
         .time-badge {
