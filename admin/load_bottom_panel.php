@@ -445,7 +445,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'list_all_org') {
 <?php
 if ($_GET['action'] === 'admin_logs') { include 'admin_logs.php'; } 
 elseif ($_GET['action']=== 'webhook_dashboard') { include 'webhook_dashboard.php';} 
-elseif ($_GET['action'] === 'csv_files' || $_GET['action'] === 'csv') {  include 'csv_files.php'; }
+elseif ($_GET['action'] === 'csv_files' || $_GET['action'] === 'csv') {  include 'import_organisation_csv.php'; }
 elseif ($_GET['action'] === 'google_calendar') { include 'google_calendar_management.php'; }
 elseif ($_GET['action'] === 'php_workers') { include 'php_workers_simple.php'; }
 elseif ($_GET['action'] === 'server_tools') { include 'server_tools.php'; }

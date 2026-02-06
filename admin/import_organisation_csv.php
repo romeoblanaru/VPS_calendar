@@ -141,19 +141,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $wp_map = [];
                     if (!empty($sections['# WORKING POINTS'])) {
-                        foreach (array_slice($sections['# WORKING POINTS'], 1) as $row) {
-                            if (count($row) < 9) continue;
-                            $wp_ident = $row[0];
-                            // Default country and language if not provided in CSV (can be updated later)
-                            $country = count($row) > 9 ? strtoupper(trim($row[9])) : 'GB';
-                            $language = count($row) > 10 ? strtoupper(trim($row[10])) : 'EN';
-                            
-                            $sql = "INSERT INTO working_points (name_of_the_place, address, user, password, lead_person_name, lead_person_phone_nr, workplace_phone_nr, booking_phone_nr, email, organisation_id, country, language) VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?)";
-                            $params = [$row[1], $row[2], $row[3], $row[4], $row[5], $row[6], $row[7], $row[8], $org_id, $country, $language];
-                            $stmt = $pdo->prepare($sql);
-                            $stmt->execute($params);
-                            $wp_id = $pdo->lastInsertId();
-                            $wp_map[$wp_ident] = $wp_id;
+                        foreach (array_slice($sections['# WORKING POINTS'], 1) as $i => $row) {
+                            if (count($row) < 13) continue;
+
+                            $wp_ident = trim($row[0]);
+
+                            // Extract all fields from CSV (18 columns total)
+                            $name_of_the_place = trim($row[0] ?? '');
+                            $description = trim($row[1] ?? '');
+                            $address = trim($row[2] ?? '');
+                            $landmark = trim($row[3] ?? '');
+                            $directions = trim($row[4] ?? '');
+                            $user = trim($row[5] ?? '');
+                            $password = trim($row[6] ?? '');
+                            $lead_person_name = trim($row[7] ?? '');
+                            $lead_person_phone_nr = trim($row[8] ?? '');
+                            $workplace_phone_nr = trim($row[9] ?? '');
+                            $booking_phone_nr = trim($row[10] ?? '');
+                            $booking_sms_number = trim($row[11] ?? '');
+                            $email = trim($row[12] ?? '');
+                            $country = strtoupper(trim($row[13] ?? 'GB'));
+                            $language = strtoupper(trim($row[14] ?? 'EN'));
+                            $currency = strtoupper(trim($row[15] ?? 'EUR'));
+                            $we_handling = trim($row[16] ?? 'specialisti');
+                            $specialist_relevance = strtolower(trim($row[17] ?? 'medium'));
+
+                            // Validate specialist_relevance
+                            if (!in_array($specialist_relevance, ['strong', 'medium', 'low', ''])) {
+                                $specialist_relevance = 'medium';
+                            }
+
+                            try {
+                                $sql = "INSERT INTO working_points
+                                    (name_of_the_place, description_of_the_place, address, landmark, directions,
+                                     user, password, lead_person_name, lead_person_phone_nr, workplace_phone_nr,
+                                     booking_phone_nr, booking_sms_number, email, organisation_id,
+                                     country, language, curency, we_handling, specialist_relevance)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                $params = [
+                                    $name_of_the_place, $description, $address, $landmark, $directions,
+                                    $user, $password, $lead_person_name, $lead_person_phone_nr, $workplace_phone_nr,
+                                    $booking_phone_nr, $booking_sms_number, $email, $org_id,
+                                    $country, $language, $currency, $we_handling, $specialist_relevance
+                                ];
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute($params);
+                                $wp_id = $pdo->lastInsertId();
+                                $wp_map[$wp_ident] = $wp_id;
+                            } catch (PDOException $e) {
+                                $debug_info = "SQL Error for Working Point Row " . ($i + 2) . ": " . $e->getMessage() . "\n";
+                                $debug_info .= "Values: name='" . htmlspecialchars($name_of_the_place) . "', ";
+                                $debug_info .= "description='" . htmlspecialchars($description) . "', ";
+                                $debug_info .= "address='" . htmlspecialchars($address) . "', ";
+                                $debug_info .= "landmark='" . htmlspecialchars($landmark) . "' (len:" . strlen($landmark) . "), ";
+                                $debug_info .= "directions='" . htmlspecialchars($directions) . "'";
+                                throw new Exception($debug_info);
+                            }
                             $has_working_program = false;
                             if (!empty($sections['# WORKING_PROGRAM'])) {
                                 foreach ($sections['# WORKING_PROGRAM'] as $prog_row) {
@@ -205,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Do not include navbar/footer when embedded in the admin bottom panel or on AJAX
-if (basename($_SERVER['SCRIPT_NAME']) === 'csv_files.php' && !$is_ajax) {
+if (basename($_SERVER['SCRIPT_NAME']) === 'import_organisation_csv.php' && !$is_ajax) {
     include '../templates/navbar.php';
 }
 ?>
@@ -225,7 +268,7 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'csv_files.php' && !$is_ajax) {
 <div class="csv-import-center">
     <div class="csv-left">
         <h2 style="margin-bottom:14px;">Import Organisation from CSV</h2>
-        <form method="POST" enctype="multipart/form-data" action="csv_files.php" class="csv-import-form" id="csvImportForm">
+        <form method="POST" enctype="multipart/form-data" action="import_organisation_csv.php" class="csv-import-form" id="csvImportForm">
             <label for="csv_file" class="form-label" style="margin-bottom:8px;"><strong>Upload CSV file</strong></label>
             <input type="file" name="csv_file" id="csv_file" accept=".csv" required class="form-control" style="margin-bottom:0; width:60%;" onchange="if(this.files.length){document.getElementById('csvImportForm').submit();}">
             <div class="csv-import-actions" style="margin-top: 14px;">
@@ -256,7 +299,7 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'csv_files.php' && !$is_ajax) {
     <div style="background:#fff;padding:22px 22px;border-radius:10px;max-width:560px;width:92%;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             <div style="font-size:22px;">⚠️</div>
-            <h4 style="color:#b71c1c;margin:0;font-size:18px;">Import blocked due to duplicate credentials</h4>
+            <h4 style="color:#b71c1c;margin:0;font-size:18px;">CSV Import Failed</h4>
         </div>
         <div style="color:#7a1f1f;font-size:0.95em;margin:8px 0 14px 0;line-height:1.45;background:#fff5f5;border:1px solid #f1c0c0;border-radius:6px;padding:10px 12px;max-height:40vh;overflow:auto;">
             <?php $lines = preg_split("/\r\n|\r|\n/", $import_error);
@@ -289,7 +332,7 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'csv_files.php' && !$is_ajax) {
         form.addEventListener('submit', function(e){
             e.preventDefault();
             var fd = new FormData(form);
-            fetch('csv_files.php', { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd })
+            fetch('import_organisation_csv.php', { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: fd })
                 .then(function(res){
                     var ct = res.headers.get('content-type') || '';
                     if (ct.indexOf('application/json') !== -1) return res.json();
@@ -313,7 +356,7 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'csv_files.php' && !$is_ajax) {
     }
 })();
 </script>
-<?php if (basename($_SERVER['SCRIPT_NAME']) === 'csv_files.php' && !$is_ajax) { include '../templates/footer.php'; } ?>
+<?php if (basename($_SERVER['SCRIPT_NAME']) === 'import_organisation_csv.php' && !$is_ajax) { include '../templates/footer.php'; } ?>
 
 
 

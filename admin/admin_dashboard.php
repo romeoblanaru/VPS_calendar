@@ -224,7 +224,7 @@ function loadBottomPanel(action) {
                     fileInput.onchange = function(ev){
                         if (!this.files || !this.files.length) return;
                         var fd = new FormData(form);
-                        fetch('csv_files.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
+                        fetch('import_organisation_csv.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
                             .then(function(res){
                                 var ct = res.headers.get('content-type') || '';
                                 if (ct.indexOf('application/json') !== -1) return res.json();
@@ -253,7 +253,7 @@ function loadBottomPanel(action) {
                 form.addEventListener('submit', function(e){
                     e.preventDefault();
                     var fd = new FormData(form);
-                    fetch('csv_files.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
+                    fetch('import_organisation_csv.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
                         .then(function(res){
                             var ct = res.headers.get('content-type') || '';
                             if (ct.indexOf('application/json') !== -1) return res.json();
