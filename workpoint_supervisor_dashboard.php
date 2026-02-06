@@ -4,28 +4,58 @@ require_once 'includes/db.php';
 require_once 'includes/session.php';
 require_once 'includes/lang_loader.php';
 
-// If arriving with a specific workpoint, set it in session
-if (isset($_GET['workpoint_id'])) {
-	$_SESSION['workpoint_id'] = (int)$_GET['workpoint_id'];
+// Store original admin role if admin is accessing
+$is_admin_impersonating = false;
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin_user' && isset($_GET['workpoint_id'])) {
+	$is_admin_impersonating = true;
+	// Store original admin session data
+	if (!isset($_SESSION['admin_original_role'])) {
+		$_SESSION['admin_original_role'] = $_SESSION['role'];
+		$_SESSION['admin_original_organisation_id'] = $_SESSION['organisation_id'] ?? null;
+		$_SESSION['admin_original_workpoint_id'] = $_SESSION['workpoint_id'] ?? null;
+	}
 }
 
-// Allow both workpoint and organisation users to access supervisor dashboard
-if (!isset($_SESSION['user']) || !in_array($_SESSION['role'], ['workpoint_user', 'organisation_user'])) {
+// If arriving with a specific workpoint, set it in session
+if (isset($_GET['workpoint_id'])) {
+	$workpoint_id = (int)$_GET['workpoint_id'];
+	$_SESSION['workpoint_id'] = $workpoint_id;
+
+	// If admin is accessing, set up temporary session variables
+	if ($is_admin_impersonating) {
+		// Get workpoint data to find organisation
+		$stmt = $pdo->prepare("SELECT organisation_id FROM working_points WHERE unic_id = ?");
+		$stmt->execute([$workpoint_id]);
+		$wp_data = $stmt->fetch();
+		if ($wp_data) {
+			$_SESSION['organisation_id'] = $wp_data['organisation_id'];
+		}
+	}
+}
+
+// Allow workpoint users, organisation users, and admin users to access supervisor dashboard
+if (!isset($_SESSION['user']) || !in_array($_SESSION['role'], ['workpoint_user', 'organisation_user', 'admin_user'])) {
 	header('Location: login.php');
     exit;
 }
 
 // Load organisation
-$stmt = $pdo->prepare("SELECT * FROM organisations WHERE unic_id = ?");
-$stmt->execute([$_SESSION['organisation_id']]);
-$organisation = $stmt->fetch();
+$organisation = null;
+if (isset($_SESSION['organisation_id'])) {
+	$stmt = $pdo->prepare("SELECT * FROM organisations WHERE unic_id = ?");
+	$stmt->execute([$_SESSION['organisation_id']]);
+	$organisation = $stmt->fetch();
+}
+if (!$organisation) {
+	$organisation = ['alias_name' => 'Unknown Organisation', 'oficial_company_name' => ''];
+}
 
 // Load current workpoint
 $workpoint = null;
 if (!empty($_SESSION['workpoint_id'])) {
-$stmt = $pdo->prepare("SELECT * FROM working_points WHERE unic_id = ?");
-$stmt->execute([$_SESSION['workpoint_id']]);
-$workpoint = $stmt->fetch();
+	$stmt = $pdo->prepare("SELECT * FROM working_points WHERE unic_id = ?");
+	$stmt->execute([$_SESSION['workpoint_id']]);
+	$workpoint = $stmt->fetch();
 }
 if (!$workpoint) {
 	$workpoint = ['name_of_the_place' => 'Unknown Workpoint', 'address' => ''];
@@ -199,7 +229,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'workpoint_stats') {
     
 </head>
 <body>
+    <!-- DEPRECATION NOTICE -->
+    <div style="background: #dc3545; color: white; padding: 8px 20px; text-align: center; font-weight: 600; font-size: 13px; border-bottom: 3px solid #c82333;">
+        ⚠️ DEPRECATED PAGE - This page is no longer maintained. Please use <a href="booking_supervisor_view.php<?php echo isset($_GET['workpoint_id']) ? '?working_point_user_id='.$_GET['workpoint_id'] : ''; ?>" style="color: #fff3cd; text-decoration: underline;">booking_supervisor_view.php</a> instead.
+    </div>
+
     <div class="dashboard-container">
+        <?php if ($is_admin_impersonating): ?>
+        <div class="alert alert-info d-flex justify-content-between align-items-center" style="margin-bottom: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+            <div>
+                <i class="fas fa-user-shield"></i> <strong>Admin Mode:</strong> You are viewing this workpoint as a supervisor
+            </div>
+            <a href="admin/admin_dashboard.php" class="btn btn-sm" style="background: #007bff; color: white; text-decoration: none; padding: 6px 16px; border-radius: 4px; font-weight: 600;">
+                <i class="fas fa-arrow-left"></i> Return to Admin Dashboard
+            </a>
+        </div>
+        <?php endif; ?>
         <div class="dashboard-card">
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div class="flex-grow-1">

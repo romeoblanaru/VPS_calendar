@@ -620,8 +620,8 @@ function calculateSpecialistLoadPercentage($pdo, $specialist_id, $workpoint_id, 
 
 <div class="supervisor-monthly-calendar">
 
-    <!-- Specialist Color Legend - Individual Entity Above Calendar -->
-    <div class="specialist-legend" style="margin: 8px 0 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; text-align: center;">
+    <!-- Specialist Color Legend - Individual Entity Above Calendar (Hidden by default) -->
+    <div class="specialist-legend" id="specialistLegend" style="display: none; position: relative; margin: 0 auto 15px auto; padding: 12px; background: #ffffff; border-radius: 8px; border: 2px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; transition: all 0.3s ease; max-width: 90%;">
         <div class="legend-items" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center;">
             <?php foreach ($specialists as $spec): ?>
                 <?php 
@@ -1087,5 +1087,23 @@ document.addEventListener('DOMContentLoaded', function() {
             hideDropdown();
         });
     });
+});
+
+// Function to toggle specialist legend visibility (called from parent page)
+function toggleSpecialistLegend() {
+    const legend = document.getElementById('specialistLegend');
+    if (legend) {
+        if (legend.style.display === 'none') {
+            legend.style.display = 'block';
+        } else {
+            legend.style.display = 'none';
+        }
+    }
+}
+
+// Notify parent page that monthly supervisor view has loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Dispatch event to notify parent that monthly supervisor view is ready
+    window.dispatchEvent(new CustomEvent('monthlySupervisorLoaded'));
 });
 </script> 

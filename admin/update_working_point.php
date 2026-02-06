@@ -53,12 +53,13 @@ if ($action === 'update_booking_phone') {
         }
         
         // Get additional fields for Telnyx update
+        $booking_sms_number = $_POST['booking_sms_number'] ?? null;
         $we_handling = $_POST['we_handling'] ?? null;
         $specialist_relevance = $_POST['specialist_relevance'] ?? null;
-        
+
         // Update booking phone number and new fields
-        $stmt = $pdo->prepare("UPDATE working_points SET booking_phone_nr = ?, we_handling = ?, specialist_relevance = ? WHERE unic_id = ?");
-        $result = $stmt->execute([$booking_phone_nr, $we_handling, $specialist_relevance, $workpoint_id]);
+        $stmt = $pdo->prepare("UPDATE working_points SET booking_phone_nr = ?, booking_sms_number = ?, we_handling = ?, specialist_relevance = ? WHERE unic_id = ?");
+        $result = $stmt->execute([$booking_phone_nr, $booking_sms_number, $we_handling, $specialist_relevance, $workpoint_id]);
         
         if ($result) {
             echo json_encode([
@@ -128,11 +129,15 @@ if ($action === 'update_supervisor') {
 // Get required fields for full workpoint update
 $workpoint_id = $_POST['workpoint_id'] ?? '';
 $name_of_the_place = $_POST['name_of_the_place'] ?? '';
+$description_of_the_place = $_POST['description_of_the_place'] ?? '';
 $address = $_POST['address'] ?? '';
+$landmark = $_POST['landmark'] ?? '';
+$directions = $_POST['directions'] ?? '';
 $lead_person_name = $_POST['lead_person_name'] ?? '';
 $lead_person_phone_nr = $_POST['lead_person_phone_nr'] ?? '';
 $workplace_phone_nr = $_POST['workplace_phone_nr'] ?? '';
 $booking_phone_nr = $_POST['booking_phone_nr'] ?? '';
+$booking_sms_number = $_POST['booking_sms_number'] ?? null;
 $user = $_POST['user'] ?? '';
 $password = $_POST['password'] ?? '';
 $email = $_POST['email'] ?? '';
@@ -203,15 +208,19 @@ try {
     
     // Update workpoint
     $stmt = $pdo->prepare("
-        UPDATE working_points 
-        SET name_of_the_place = ?, 
-            address = ?, 
-            lead_person_name = ?, 
-            lead_person_phone_nr = ?, 
-            workplace_phone_nr = ?, 
-            booking_phone_nr = ?, 
-            user = ?, 
-            password = ?, 
+        UPDATE working_points
+        SET name_of_the_place = ?,
+            description_of_the_place = ?,
+            address = ?,
+            landmark = ?,
+            directions = ?,
+            lead_person_name = ?,
+            lead_person_phone_nr = ?,
+            workplace_phone_nr = ?,
+            booking_phone_nr = ?,
+            booking_sms_number = ?,
+            user = ?,
+            password = ?,
             email = ?,
             country = ?,
             language = ?,
@@ -219,14 +228,18 @@ try {
             specialist_relevance = ?
         WHERE unic_id = ?
     ");
-    
+
     $result = $stmt->execute([
         $name_of_the_place,
+        $description_of_the_place,
         $address,
+        $landmark,
+        $directions,
         $lead_person_name,
         $lead_person_phone_nr,
         $workplace_phone_nr,
         $booking_phone_nr,
+        $booking_sms_number,
         $user,
         $password,
         $email,

@@ -11,6 +11,12 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
+// Store original admin role if admin is accessing
+$is_admin_impersonating = false;
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin_user') {
+    $is_admin_impersonating = true;
+}
+
 // This is always supervisor mode
 $supervisor_mode = true; // FORCED: Always supervisor mode in this file
 $working_point_user_id = $_GET['working_point_user_id'] ?? null;
@@ -891,9 +897,19 @@ if (isset($workpoint_id)) {
     </style>
 </head>
 <body>
+    <?php if ($is_admin_impersonating): ?>
+    <div style="background: #fff3cd; border-bottom: 2px solid #ffc107; padding: 4px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+        <div style="color: #856404;">
+            <i class="fas fa-user-shield"></i> <strong>Admin Mode</strong> - Viewing as supervisor
+        </div>
+        <a href="admin/admin_dashboard.php" style="background: #007bff; color: white; text-decoration: none; padding: 2px 10px; border-radius: 3px; font-weight: 600; font-size: 11px;">
+            <i class="fas fa-arrow-left"></i> Admin
+        </a>
+    </div>
+    <?php endif; ?>
     <!-- Notification Container -->
     <div id="notification-container"></div>
-    
+
     <div class="main-container">
         <!-- Header Table Layout -->
         <?php
@@ -1879,6 +1895,8 @@ if (isset($workpoint_id)) {
                                                 <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
                                             <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
                                                 <i class="fas fa-chart-bar" style="width: 20px;"></i> Statistics</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="openMacroDroidConfig(); return false;" style="font-size: 13px;">
+                                                <span style="width: 20px; display: inline-block;">🤖</span> MacroDroid Configuration</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1890,6 +1908,20 @@ if (isset($workpoint_id)) {
                     <div class="calendar-section">
                         <!-- Calendar Top Bar -->
                         <div class="calendar-top">
+                            <!-- Legend Toggle Link (only visible in monthly supervisor view) - Positioned at the START -->
+                            <?php
+                            // Debug: Output current state
+                            echo "<!-- Legend Debug: supervisor_mode=" . ($supervisor_mode ? 'true' : 'false') . ", calendar_design=" . $calendar_design . " -->";
+                            if ($supervisor_mode && $calendar_design === 'monthly'):
+                            ?>
+                            <div class="legend-toggle-container" id="legendToggleContainer" style="position: relative; margin-right: 20px;">
+                                <a href="#" id="legendToggleLink" onclick="toggleLegend(); return false;"
+                                   style="color: var(--primary-color); font-weight: 600; text-decoration: none; font-size: 20px; display: flex; align-items: center; cursor: pointer;">
+                                    🎨
+                                </a>
+                            </div>
+                            <?php endif; ?>
+
                             <div class="period-selector">
                                 <form method="GET" id="periodForm">
                                     <input type="hidden" name="working_point_user_id" value="<?= $working_point_user_id ?>">
@@ -2488,7 +2520,22 @@ if (isset($workpoint_id)) {
             setupSpecialistCollapsible();
             loadModifyScheduleEditor();
         }
-        
+
+        // Legend Toggle Functionality for Monthly Supervisor View
+        function toggleLegend() {
+            // Call the toggle function in the monthly supervisor template
+            const legend = document.getElementById('specialistLegend');
+            if (legend) {
+                if (legend.style.display === 'none' || legend.style.display === '') {
+                    legend.style.display = 'block';
+                } else {
+                    legend.style.display = 'none';
+                }
+            }
+        }
+
+        // Note: Legend toggle link visibility is now controlled by PHP based on supervisor_mode and calendar_design
+        // No need for JavaScript show/hide logic anymore
 
 
         // Add Specialist Modal - Using centralized modal loader
@@ -2720,6 +2767,86 @@ if (isset($workpoint_id)) {
                     // Everything already loaded, just open the modal
                     if (typeof window.openCommunicationSetupModalReal === 'function') {
                         window.openCommunicationSetupModalReal();
+                    }
+                }
+            }
+        }
+
+        // MacroDroid Configuration Modal - Lazy Loading
+        window.macroDroidConfigModalLoaded = false;
+        window.macroDroidConfigModalHtmlLoaded = false;
+
+        // Lazy loading wrapper for MacroDroid Configuration Modal
+        window.openMacroDroidConfig = function() {
+            // First check if HTML is loaded
+            if (!window.macroDroidConfigModalHtmlLoaded) {
+                // Load the modal HTML from assets directory
+                fetch('assets/modals/macrodroid-config-modal.php')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Create a temporary container
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+
+                        // Append all child elements to body
+                        while (temp.firstElementChild) {
+                            document.body.appendChild(temp.firstElementChild);
+                        }
+
+                        window.macroDroidConfigModalHtmlLoaded = true;
+
+                        // Now load the JavaScript if not already loaded
+                        if (!window.macroDroidConfigModalLoaded) {
+                            const script = document.createElement('script');
+                            script.src = 'assets/js/modals/macrodroid-config.js?v=' + Date.now();
+                            script.onload = function() {
+                                window.macroDroidConfigModalLoaded = true;
+                                // Call the real function
+                                if (typeof window.openMacroDroidConfigModalReal === 'function') {
+                                    window.openMacroDroidConfigModalReal();
+                                }
+                            };
+                            script.onerror = function() {
+                                console.error('Failed to load macrodroid-config.js module');
+                                alert('Failed to load MacroDroid Configuration module. Please try again.');
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            // JavaScript already loaded, just open the modal
+                            if (typeof window.openMacroDroidConfigModalReal === 'function') {
+                                window.openMacroDroidConfigModalReal();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to load MacroDroid Configuration modal HTML:', error);
+                        alert('Failed to load MacroDroid Configuration. Please try again.');
+                    });
+            } else {
+                // HTML already loaded, check if JavaScript is loaded
+                if (!window.macroDroidConfigModalLoaded) {
+                    const script = document.createElement('script');
+                    script.src = 'assets/js/modals/macrodroid-config.js?v=' + Date.now();
+                    script.onload = function() {
+                        window.macroDroidConfigModalLoaded = true;
+                        if (typeof window.openMacroDroidConfigModalReal === 'function') {
+                            window.openMacroDroidConfigModalReal();
+                        }
+                    };
+                    script.onerror = function() {
+                        console.error('Failed to load macrodroid-config.js module');
+                        alert('Failed to load MacroDroid Configuration module. Please try again.');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Everything already loaded, just open the modal
+                    if (typeof window.openMacroDroidConfigModalReal === 'function') {
+                        window.openMacroDroidConfigModalReal();
                     }
                 }
             }
@@ -3144,6 +3271,9 @@ if (isset($workpoint_id)) {
         // Get current workpoint ID from PHP
         window.currentWorkpointId = <?= json_encode($workpoint_id ?? 0) ?>;
         console.log('Initial workpoint ID from PHP:', window.currentWorkpointId); // Debug
+
+        // Set admin flag for modal features
+        window.isAdminImpersonating = <?= json_encode($is_admin_impersonating) ?>;
 
         // Lazy loading wrapper for Workpoint Holidays Modal
         window.openWorkpointHolidays = function() {

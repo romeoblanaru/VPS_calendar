@@ -110,41 +110,56 @@ if (isset($_GET['action']) && $_GET['action'] === 'list_all_org') {
                     <div class="wp-toggle-container" id="wp-toggle-container-<?=$wp['unic_id']?>" style="margin-bottom: 18px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="label" style="user-select:none; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: background 0.2s;" 
-                                    onclick="toggleWpDropdown(<?=$wp['unic_id']?>, event)" 
-                                    onmouseover="this.style.background='#f5faff'" 
-                                    onmouseout="this.style.background='transparent'"><?=$wpCounter?>. 🏢 <span style="text-decoration:underline;"><?=htmlspecialchars($wp['name_of_the_place'])?></span></span> -- 
-                                <span style="cursor: pointer; color: #007bff; text-decoration: underline;" 
+                                <span class="label" style="user-select:none; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: background 0.2s;"
+                                    onclick="toggleWpDropdown(<?=$wp['unic_id']?>, event)"
+                                    onmouseover="this.style.background='#f5faff'"
+                                    onmouseout="this.style.background='transparent'"><?=$wpCounter?>. 🏢 <span style="text-decoration:underline;"><?=htmlspecialchars($wp['name_of_the_place'])?></span></span> --
+                                <span style="cursor: pointer; color: #007bff; text-decoration: underline; font-size: 12px;"
                                     onclick="modifyWorkingPoint(<?=intval($wp['unic_id'])?>, <?=htmlspecialchars(json_encode($wp['name_of_the_place']))?>); event.stopPropagation();"
-                                    onmouseover="this.style.background='#e6f2ff'; this.style.color='#0056b3';" 
+                                    onmouseover="this.style.background='#e6f2ff'; this.style.color='#0056b3';"
                                     onmouseout="this.style.background='transparent'; this.style.color='#007bff';"
-                                    style="cursor: pointer; color: #007bff; text-decoration: underline; border-radius: 4px; transition: background 0.2s, color 0.2s; padding: 2px 4px;"
-                                >
-                            <?=htmlspecialchars($wp['address'])?> | <strong>Country:</strong> <?=htmlspecialchars($wp['country'] ?? 'N/A')?> | Lang. <?=htmlspecialchars($wp['language'] ?: 'N/A')?>
-                        </span>
-                        <?php if (!empty($wp['we_handling']) || !empty($wp['specialist_relevance'])): ?>
-                            <span style="margin-left: 8px; color: #666; font-size: 13px;">
-                                [<?php 
-                                    $details = [];
-                                    if (!empty($wp['we_handling'])) {
-                                        $details[] = '<strong>' . htmlspecialchars($wp['we_handling']) . '</strong>';
-                                    }
-                                    if (!empty($wp['specialist_relevance'])) {
-                                        $details[] = '<strong>' . htmlspecialchars(ucfirst($wp['specialist_relevance'])) . '</strong> - AI relevance';
-                                    }
-                                    echo implode(', ', $details);
-                                ?>]
-                            </span>
-                        <?php endif; ?>
+                                    style="cursor: pointer; color: #007bff; text-decoration: underline; border-radius: 4px; transition: background 0.2s, color 0.2s; padding: 2px 4px; font-size: 12px;"><?=htmlspecialchars($wp['address'])?> <?=htmlspecialchars($wp['country'] ?? 'N/A')?></span>
+                                <span style="font-size: 12px; color: #333;"> / <?=htmlspecialchars($wp['email'])?> / <strong>Language:</strong> <?=htmlspecialchars($wp['language'] ?: 'N/A')?></span>
                             </div>
-                            <div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #495057;">
-                                <button style="background: #007bff; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; font-size: 13px; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px;" onclick="editTelnyxPhone(<?=intval($wp['unic_id'])?>, <?=htmlspecialchars(json_encode($wp['booking_phone_nr'] ?? ''))?>); event.stopPropagation();" title="Click to edit booking phone number" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
-                                    <span style="font-weight: 600;">Booking.Ph.Nr:</span> <span><?=htmlspecialchars($wp['booking_phone_nr'] ?? 'Not set')?></span>
-                                </button>
-                            </div>
+                            <a href="../booking_supervisor_view.php?working_point_user_id=<?=intval($wp['unic_id'])?>" target="_blank" style="color: #28a745; text-decoration: none; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 4px; background: #e8f5e9; border: 1px solid #28a745; margin-left: auto;"
+                               onclick="event.stopPropagation();"
+                               onmouseover="this.style.background='#c8e6c9'; this.style.textDecoration='underline';"
+                               onmouseout="this.style.background='#e8f5e9'; this.style.textDecoration='none';"
+                               title="View as Supervisor">
+                                📋 Supervisor View
+                            </a>
                         </div>
-                        <div onclick="toggleWpDropdown(<?=$wp['unic_id']?>, event)" style="cursor:pointer; padding: 4px 0 4px 0; border-radius: 4px; transition: background 0.2s; min-height: 18px;" onmouseover="this.style.background='#f5faff'" onmouseout="this.style.background='transparent'">
-                        <small> Lead Person: <?=htmlspecialchars($wp['lead_person_name'])?> (<?=htmlspecialchars($wp['lead_person_phone_nr'])?>) | Phone: <?=htmlspecialchars($wp['workplace_phone_nr'])?> | Email: <?=htmlspecialchars($wp['email'])?></small>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <div style="background: #e3f2fd; color: #1565c0; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s; border: 1px solid #bbdefb; position: relative;" onclick="editTelnyxPhone(<?=intval($wp['unic_id'])?>, <?=htmlspecialchars(json_encode($wp['booking_phone_nr'] ?? ''))?>); event.stopPropagation();" onmouseover="this.style.background='#bbdefb'; document.getElementById('tooltip-booking-<?=$wp['unic_id']?>').style.display='block';" onmouseout="this.style.background='#e3f2fd'; document.getElementById('tooltip-booking-<?=$wp['unic_id']?>').style.display='none';">
+                                    <?php if (!empty($wp['booking_phone_nr'])): ?>
+                                        <?=htmlspecialchars($wp['booking_phone_nr'])?>
+                                    <?php else: ?>
+                                        <span style="font-weight: 500;">Booking Ph.Nr</span>
+                                    <?php endif; ?>
+                                    <div id="tooltip-booking-<?=$wp['unic_id']?>" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 11px; white-space: nowrap; margin-bottom: 5px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                        <b>Phone Booking Number</b> <i>(click to edit)</i>
+                                        <div style="position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #333;"></div>
+                                    </div>
+                                </div>
+                                <div style="background: #ffe0b2; color: #e65100; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s; border: 1px solid #ffcc80; position: relative;" onclick="editTelnyxPhone(<?=intval($wp['unic_id'])?>, <?=htmlspecialchars(json_encode($wp['booking_phone_nr'] ?? ''))?>); event.stopPropagation();" onmouseover="this.style.background='#ffcc80'; document.getElementById('tooltip-sms-<?=$wp['unic_id']?>').style.display='block';" onmouseout="this.style.background='#ffe0b2'; document.getElementById('tooltip-sms-<?=$wp['unic_id']?>').style.display='none';">
+                                    <?php if (!empty($wp['booking_sms_number'])): ?>
+                                        <?=htmlspecialchars($wp['booking_sms_number'])?>
+                                    <?php else: ?>
+                                        <span style="font-weight: 500;">SMS Ph.Nr</span>
+                                    <?php endif; ?>
+                                    <div id="tooltip-sms-<?=$wp['unic_id']?>" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 11px; white-space: nowrap; margin-bottom: 5px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                        <b>SMS Phone Number</b> <i>(click to edit)</i>
+                                        <div style="position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #333;"></div>
+                                    </div>
+                                </div>
+                                <div style="background: #fff9c4; color: #f57f17; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.2s; border: 1px solid #fff176;" onclick="openDroidConfigModal(<?=intval($wp['unic_id'])?>, <?=htmlspecialchars(json_encode($wp['name_of_the_place']))?>); event.stopPropagation();" onmouseover="this.style.background='#fff176'" onmouseout="this.style.background='#fff9c4'">
+                                    🤖 Droid.Config
+                                </div>
+                            </div>
+                            <div onclick="toggleWpDropdown(<?=$wp['unic_id']?>, event)" style="cursor:pointer; padding: 4px 0 4px 0; border-radius: 4px; transition: background 0.2s; min-height: 18px; margin-left: auto;" onmouseover="this.style.background='#f5faff'" onmouseout="this.style.background='transparent'">
+                                <small>Lead Person: <?=htmlspecialchars($wp['lead_person_name'])?> (<?=htmlspecialchars($wp['lead_person_phone_nr'])?>) | Phone: <?=htmlspecialchars($wp['workplace_phone_nr'])?></small>
+                            </div>
                         </div>
                         <div class="wp-specialists-dropdown" id="wp-specialists-dropdown-<?=$wp['unic_id']?>" style="display:none;">
                         <div class="wp-card">
@@ -170,11 +185,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'list_all_org') {
                                             $hasSpecialists = true;
                                         }   ?>
                                         
-                                        <a href="#" class="specialist-name-link" onclick="event.preventDefault(); modifySpecialist(<?=intval($sp['unic_id'])?>, <?=htmlspecialchars(json_encode($sp['name']))?>); event.stopPropagation();" title="Modify specialist details" onmouseover="this.style.backgroundColor='#ffffff'; this.style.color='#333';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                                            <span class="section-title mt-2" style="color: #808080;"><span style="color: #808080;">👥</span> Specialist - <?= htmlspecialchars($sp['name']) ?> ( <i><?= htmlspecialchars($sp['speciality']) ?></i> )</span>
-                                        </a>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <a href="#" class="specialist-name-link" onclick="event.preventDefault(); modifySpecialist(<?=intval($sp['unic_id'])?>, <?=htmlspecialchars(json_encode($sp['name']))?>); event.stopPropagation();" title="Modify specialist details" onmouseover="this.style.backgroundColor='#ffffff'; this.style.color='#333';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+                                                <span class="section-title mt-2" style="color: #808080;"><span style="color: #808080;">👥</span> Specialist - <?= htmlspecialchars($sp['name']) ?> ( <i><?= htmlspecialchars($sp['speciality']) ?></i> )</span>
+                                            </a>
+                                            <a href="../booking_specialist_view.php?specialist_id=<?=intval($sp['unic_id'])?>" target="_blank" style="color: #17a2b8; text-decoration: none; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: #d1ecf1; border: 1px solid #17a2b8; margin-left: 10px;"
+                                               onclick="event.stopPropagation();"
+                                               onmouseover="this.style.background='#bee5eb'; this.style.textDecoration='underline';"
+                                               onmouseout="this.style.background='#d1ecf1'; this.style.textDecoration='none';"
+                                               title="View as Specialist">
+                                                👤 Specialist View
+                                            </a>
+                                        </div>
                                         </small><br>
-                                        
+
                                         <div class="indent">
                                             <div class="mb-2">
                                                 <small><?= htmlspecialchars($sp['email']) ?> | Phone: <?= htmlspecialchars($sp['phone_nr']) ?> | Login: <?= htmlspecialchars($sp['user']) ?> / <?= htmlspecialchars($sp['password']) ?></small>

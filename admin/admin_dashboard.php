@@ -95,6 +95,19 @@ if (!isset($_SESSION['user_id'])) {
         visibility: visible !important;
         display: block !important;
     }
+
+    /* Fix for organisation card dropdown alignment */
+    .org-card .dropdown-content {
+        position: static !important;
+        box-shadow: none !important;
+        min-width: auto !important;
+        width: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .org-card.expanded .dropdown-content {
+        padding: 12px 0 16px 24px !important;
+    }
     </style>
 </head>
 <body>
@@ -1094,6 +1107,7 @@ function editTelnyxPhone(wpId, currentPhone) {
     .then(data => {
         if (data.success && data.workpoint) {
             const wp = data.workpoint;
+            document.getElementById('telnyxSmsInput').value = wp.booking_sms_number || '';
             document.getElementById('telnyxWeHandling').value = wp.we_handling || '';
             document.getElementById('telnyxSpecialistRelevance').value = wp.specialist_relevance || '';
         }
@@ -1149,6 +1163,7 @@ function updateTelnyxPhone() {
     const formData = new FormData();
     formData.append('workpoint_id', wpId);
     formData.append('booking_phone_nr', newPhone);
+    formData.append('booking_sms_number', document.getElementById('telnyxSmsInput').value.trim());
     formData.append('we_handling', document.getElementById('telnyxWeHandling').value);
     formData.append('specialist_relevance', document.getElementById('telnyxSpecialistRelevance').value);
     formData.append('action', 'update_booking_phone');
@@ -1177,6 +1192,97 @@ function updateTelnyxPhone() {
     })
     .finally(() => {
         // Re-enable submit button
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Droid Config Functions
+function openDroidConfigModal(wpId, wpName) {
+    document.getElementById('droidConfigWpName').textContent = wpName;
+    document.getElementById('droidConfigWpId').value = wpId;
+    document.getElementById('droidConfigModal').style.display = 'block';
+    document.getElementById('droidConfigError').style.display = 'none';
+
+    // Load current droid configuration
+    loadDroidConfig(wpId);
+}
+
+function closeDroidConfigModal() {
+    document.getElementById('droidConfigModal').style.display = 'none';
+}
+
+function loadDroidConfig(wpId) {
+    fetch('get_droid_config.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'wp_id=' + encodeURIComponent(wpId)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Load SMS config
+            if (data.sms) {
+                document.getElementById('droid_sms_active').value = data.sms.active || '0';
+                document.getElementById('droid_sms_phone_nr').value = data.sms.sms_phone_nr || '';
+                document.getElementById('droid_sms_link').value = data.sms.droid_link || '';
+            }
+
+            // Load WhatsApp config
+            if (data.whatsapp) {
+                document.getElementById('droid_whatsapp_active').value = data.whatsapp.active || '0';
+                document.getElementById('droid_whatsapp_phone_nr').value = data.whatsapp.whatsapp_phone_nr || '';
+                document.getElementById('droid_whatsapp_link').value = data.whatsapp.droid_link || '';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error loading droid config:', error);
+    });
+}
+
+function updateDroidConfig() {
+    const wpId = document.getElementById('droidConfigWpId').value;
+    const submitBtn = document.getElementById('confirmDroidConfigBtn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Saving...';
+    submitBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('wp_id', wpId);
+
+    // SMS config
+    formData.append('sms_active', document.getElementById('droid_sms_active').value);
+    formData.append('sms_phone_nr', document.getElementById('droid_sms_phone_nr').value);
+    formData.append('sms_droid_link', document.getElementById('droid_sms_link').value);
+
+    // WhatsApp config
+    formData.append('whatsapp_active', document.getElementById('droid_whatsapp_active').value);
+    formData.append('whatsapp_phone_nr', document.getElementById('droid_whatsapp_phone_nr').value);
+    formData.append('whatsapp_droid_link', document.getElementById('droid_whatsapp_link').value);
+
+    fetch('update_droid_config.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('MacroDroid configuration updated successfully');
+            closeDroidConfigModal();
+        } else {
+            document.getElementById('droidConfigError').textContent = data.message || 'Failed to update configuration';
+            document.getElementById('droidConfigError').style.display = 'block';
+        }
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error updating droid config:', error);
+        document.getElementById('droidConfigError').textContent = 'Error occurred while updating configuration';
+        document.getElementById('droidConfigError').style.display = 'block';
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
     });
@@ -1226,11 +1332,15 @@ function loadWorkingPointData(wpId) {
             const wp = data.workpoint;
             // Populate form fields
             document.getElementById('wp_name_of_the_place').value = wp.name_of_the_place || '';
+            document.getElementById('wp_description_of_the_place').value = wp.description_of_the_place || '';
             document.getElementById('wp_address').value = wp.address || '';
+            document.getElementById('wp_landmark').value = wp.landmark || '';
+            document.getElementById('wp_directions').value = wp.directions || '';
             document.getElementById('wp_lead_person_name').value = wp.lead_person_name || '';
             document.getElementById('wp_lead_person_phone_nr').value = wp.lead_person_phone_nr || '';
             document.getElementById('wp_workplace_phone_nr').value = wp.workplace_phone_nr || '';
             document.getElementById('wp_booking_phone_nr').value = wp.booking_phone_nr || '';
+            document.getElementById('wp_booking_sms_number').value = wp.booking_sms_number || '';
             document.getElementById('wp_email').value = wp.email || '';
             if (wp.country) {
                 // Set both display and hidden fields
@@ -3201,8 +3311,24 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                         <input type="text" id="wp_name_of_the_place" name="name_of_the_place" class="form-control" required>
                     </div>
                     <div class="form-group">
+                        <label for="wp_description_of_the_place">Description of the Place</label>
+                        <input type="text" id="wp_description_of_the_place" name="description_of_the_place" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="wp_address">Address *</label>
                         <input type="text" id="wp_address" name="address" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="wp_landmark">Landmark</label>
+                        <input type="text" id="wp_landmark" name="landmark" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 100%;">
+                        <label for="wp_directions">Directions</label>
+                        <textarea id="wp_directions" name="directions" class="form-control" rows="2" style="resize: vertical;"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -3222,7 +3348,7 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                     </div>
                     <div class="form-group">
                         <label for="wp_booking_phone_nr">Booking Phone *</label>
-                        <input type="text" id="wp_booking_phone_nr" name="booking_phone_nr" class="form-control" required>
+                        <input type="text" id="wp_booking_phone_nr" name="booking_phone_nr" class="form-control" required style="background-color: #e3f2fd; border: 1px solid #90caf9;">
                     </div>
                 </div>
                 <div class="form-row">
@@ -3231,24 +3357,30 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                         <input type="email" id="wp_email" name="email" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label for="wp_country_display">Country *</label>
-                        <input type="text" id="wp_country_display" placeholder="Type to search countries..." autocomplete="off" class="form-control">
-                        <input type="hidden" id="wp_country" name="country" required>
+                        <label for="wp_booking_sms_number">Booking SMS Number</label>
+                        <input type="text" id="wp_booking_sms_number" name="booking_sms_number" class="form-control" style="background-color: #ffedd5; border: 1px solid #ffb380;">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="wp_country_display">Country *</label>
+                        <input type="text" id="wp_country_display" placeholder="Type to search countries..." autocomplete="off" class="form-control">
+                        <input type="hidden" id="wp_country" name="country" required>
+                    </div>
+                    <div class="form-group">
                         <label for="wp_language">Language *</label>
                         <input type="text" id="wp_language" name="language" class="form-control" maxlength="2" pattern="[a-zA-Z]{2}" placeholder="e.g., EN, RO, LT" title="Enter 2-letter language code" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')">
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group" style="display: flex; flex-direction: row; gap: 8px; align-items: flex-end; margin-bottom: 0;">
                         <div style="flex: 1; display: flex; flex-direction: column;">
                             <label for="wp_user" style="font-size: 13px;">Login</label>
-                            <input type="text" id="wp_user" name="user" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #e6f2ff; border: 1px solid #b3d8ff;">
+                            <input type="text" id="wp_user" name="user" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #f3e5f5; border: 1px solid #ce93d8;">
                         </div>
                         <div style="flex: 1; display: flex; flex-direction: column;">
                             <label for="wp_password" style="font-size: 13px;">Password</label>
-                            <input type="text" id="wp_password" name="password" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #e6f2ff; border: 1px solid #b3d8ff;">
+                            <input type="text" id="wp_password" name="password" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #f3e5f5; border: 1px solid #ce93d8;">
                         </div>
                     </div>
                 </div>
@@ -3273,12 +3405,9 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                     <button type="button" class="btn-delete" onclick="deleteWorkingPointFromModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
                         🗑️ Delete Working Point
                     </button>
-                    
-                    <!-- Update and Cancel buttons on the right -->
-                    <div style="display: flex; gap: 10px;">
-                        <button type="button" class="btn-cancel" onclick="closeModifyWpModal()">Cancel</button>
-                        <button type="submit" class="btn-modify" id="confirmModifyWpBtn">Update Working Point</button>
-                    </div>
+
+                    <!-- Update button on the right -->
+                    <button type="submit" class="btn-modify" id="confirmModifyWpBtn">Update Working Point</button>
                 </div>
             </form>
         </div>
@@ -3678,17 +3807,25 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
             <form onsubmit="updateTelnyxPhone(); return false;">
                 <input type="hidden" id="telnyxWpId" value="">
                 <div class="form-group">
-                    <label for="telnyxPhoneInput">Booking Phone Number *</label>
-                    <input type="text" id="telnyxPhoneInput" class="form-control" required 
-                           placeholder="Enter phone number" style="font-size: 16px; padding: 8px;">
+                    <label for="telnyxPhoneInput">Telnyx Phone Number *</label>
+                    <input type="text" id="telnyxPhoneInput" class="form-control" required
+                           placeholder="Enter Telnyx phone number" style="font-size: 16px; padding: 8px; background-color: #e8f4ff;">
                 </div>
-                
+
+                <br>
+
+                <div class="form-group">
+                    <label for="telnyxSmsInput">Booking SMS Number</label>
+                    <input type="text" id="telnyxSmsInput" class="form-control"
+                           placeholder="Enter booking SMS number" style="font-size: 16px; padding: 8px; background-color: #ffedd5;">
+                </div>
+
                 <div class="form-group">
                     <label for="telnyxWeHandling">We Handling</label>
-                    <input type="text" id="telnyxWeHandling" class="form-control" 
+                    <input type="text" id="telnyxWeHandling" class="form-control"
                            placeholder="What do we handle here? Ex: Specialist, Table, Ramp">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="telnyxSpecialistRelevance">Specialist Relevance</label>
                     <select id="telnyxSpecialistRelevance" class="form-control">
@@ -3849,6 +3986,84 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                 
                 <div class="modify-modal-buttons">
                     <button type="button" class="btn-modify" id="saveComprehensiveScheduleBtn" onclick="saveComprehensiveSchedule()">Save All Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Droid Config Modal -->
+<div id="droidConfigModal" class="modify-modal-overlay">
+    <div class="modify-modal" style="max-width: 700px;">
+        <div class="modify-modal-header">
+            <h3>🤖 DROID CONFIGURATION</h3>
+            <span class="modify-modal-close" onclick="closeDroidConfigModal()">&times;</span>
+        </div>
+        <div class="modify-modal-body">
+            <div class="org-name-row">
+                <span class="modify-icon-inline">🏢</span>
+                <div class="org-name-large" id="droidConfigWpName"></div>
+            </div>
+
+            <form id="droidConfigForm" onsubmit="updateDroidConfig(); return false;">
+                <input type="hidden" id="droidConfigWpId" value="">
+
+                <!-- SMS Configuration -->
+                <div style="background: #ffe0b2; border: 2px solid #ffcc80; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #e65100; font-size: 16px;">📱 SMS Droid Configuration</h4>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="droid_sms_active">Active</label>
+                            <select id="droid_sms_active" class="form-control">
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="droid_sms_phone_nr">SMS Phone Number</label>
+                            <input type="text" id="droid_sms_phone_nr" class="form-control" placeholder="SMS phone number">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="width: 100%;">
+                            <label for="droid_sms_link">Droid Link</label>
+                            <input type="text" id="droid_sms_link" class="form-control" placeholder="MacroDroid link URL" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WhatsApp Configuration -->
+                <div style="background: #c8e6c9; border: 2px solid #81c784; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #2e7d32; font-size: 16px;">💬 WhatsApp Droid Configuration</h4>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="droid_whatsapp_active">Active</label>
+                            <select id="droid_whatsapp_active" class="form-control">
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="droid_whatsapp_phone_nr">WhatsApp Phone Number</label>
+                            <input type="text" id="droid_whatsapp_phone_nr" class="form-control" placeholder="WhatsApp phone number">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="width: 100%;">
+                            <label for="droid_whatsapp_link">Droid Link</label>
+                            <input type="text" id="droid_whatsapp_link" class="form-control" placeholder="MacroDroid link URL" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="droidConfigError" class="modify-error" style="display: none; color: #dc3545; font-size: 0.9em; margin: 10px 0;"></div>
+
+                <div class="modify-modal-buttons">
+                    <button type="submit" class="btn-modify" id="confirmDroidConfigBtn">Save Configuration</button>
                 </div>
             </form>
         </div>

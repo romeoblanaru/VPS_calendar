@@ -11,54 +11,44 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-// Check if this is supervisor mode
-$supervisor_mode = isset($_GET['supervisor_mode']) && $_GET['supervisor_mode'] === 'true';
-$working_point_user_id = $_GET['working_point_user_id'] ?? null;
+// Store original admin role if admin is accessing
+$is_admin_impersonating = false;
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin_user') {
+    $is_admin_impersonating = true;
+}
 
-if ($supervisor_mode && $working_point_user_id) {
-    // Supervisor mode - get workpoint information directly
-    // In this system, working_point_user_id is actually the workpoint_id
-    $stmt = $pdo->prepare("SELECT * FROM working_points WHERE unic_id = ?");
-    $stmt->execute([$working_point_user_id]);
-    $workpoint = $stmt->fetch();
-    
-    if (!$workpoint) {
-        die("Workpoint not found");
+// This page is for SPECIALIST VIEW ONLY
+// If supervisor mode is requested, redirect to the supervisor view page
+if (isset($_GET['supervisor_mode']) && $_GET['supervisor_mode'] === 'true') {
+    $working_point_user_id = $_GET['working_point_user_id'] ?? null;
+    if ($working_point_user_id) {
+        header("Location: booking_supervisor_view.php?working_point_user_id=" . $working_point_user_id . "&supervisor_mode=true");
+        exit;
     }
-    
-    // Get organization information
-    $stmt = $pdo->prepare("SELECT * FROM organisations WHERE unic_id = ?");
-    $stmt->execute([$workpoint['organisation_id']]);
-    $organisation = $stmt->fetch();
-    
-    // For supervisor mode, we'll show all specialists at this workpoint
-    $specialist_id = null; // Will be used to get all specialists
-    $specialist = null; // No single specialist in supervisor mode
-    $workpoint_id = $workpoint['unic_id']; // <-- Ensure this is set for the modal
-    
-} else {
-    // Regular specialist mode
-    $specialist_id = $_GET['specialist_id'] ?? null;
-    
-    if (!$specialist_id) {
-        die("Specialist ID is required");
-    }
-    
-    // Get specialist information
-    $stmt = $pdo->prepare("SELECT * FROM specialists WHERE unic_id = ?");
-    $stmt->execute([$specialist_id]);
-    $specialist = $stmt->fetch();
-    
-    if (!$specialist) {
-        die("Specialist not found");
-    }
-    
+}
+
+// Get specialist ID from URL
+$specialist_id = $_GET['specialist_id'] ?? null;
+
+if (!$specialist_id) {
+    die("Specialist ID is required");
+}
+
+// Get specialist information
+$stmt = $pdo->prepare("SELECT * FROM specialists WHERE unic_id = ?");
+$stmt->execute([$specialist_id]);
+$specialist = $stmt->fetch();
+
+if (!$specialist) {
+    die("Specialist not found");
+}
+
     // Check if the logged-in user has permission to view this specialist's calendar
     $user_role = $_SESSION['role'] ?? '';
     $user_specialist_id = $_SESSION['specialist_id'] ?? 0;
-    
-    // Specialists can only view their own calendar
-    if ($user_role === 'specialist_user' && $user_specialist_id != $specialist_id) {
+
+    // Specialists can only view their own calendar (unless admin is viewing)
+    if ($user_role === 'specialist_user' && $user_specialist_id != $specialist_id && !$is_admin_impersonating) {
         $_SESSION['error_message'] = "Access denied: You can only view your own calendar. Redirecting to your calendar...";
                 $period_redirect = $_GET['period'] ?? 'this_month';
         $redirectUrl = "booking_view_page.php?specialist_id=" . $user_specialist_id . "&period=" . $period_redirect;
@@ -123,93 +113,55 @@ if ($supervisor_mode && $working_point_user_id) {
             'foreground_color' => '#ffffff'
         ];
     }
-    
-    // Get organization information
-    $stmt = $pdo->prepare("SELECT * FROM organisations WHERE unic_id = ?");
-    $stmt->execute([$specialist['organisation_id']]);
-    $organisation = $stmt->fetch();
-}
+
+// Get organization information
+$stmt = $pdo->prepare("SELECT * FROM organisations WHERE unic_id = ?");
+$stmt->execute([$specialist['organisation_id']]);
+$organisation = $stmt->fetch();
 
 // Set timezone based on working point if available, otherwise fall back to organization
-if ($supervisor_mode && $workpoint) {
-    // Supervisor mode: use the specific workpoint
-    setTimezoneForWorkingPoint($workpoint);
-} elseif (!$supervisor_mode && !empty($working_points)) {
-    // Specialist mode: use the first working point (or primary one)
+if (!empty($working_points)) {
+    // Use the first working point (or primary one)
     setTimezoneForWorkingPoint($working_points[0]);
 } else {
     // Fallback: use organization timezone
-setTimezoneForOrganisation($organisation);
+    setTimezoneForOrganisation($organisation);
 }
 
-if ($supervisor_mode) {
-    // Supervisor mode - get all specialists with at least one non-zero shift at this workpoint
-    $stmt = $pdo->prepare("\n        SELECT DISTINCT s.* \n        FROM specialists s\n        INNER JOIN working_program wpr ON s.unic_id = wpr.specialist_id \n        WHERE wpr.working_place_id = ?\n          AND ((wpr.shift1_start <> '00:00:00' AND wpr.shift1_end <> '00:00:00')\n            OR (wpr.shift2_start <> '00:00:00' AND wpr.shift2_end <> '00:00:00')\n            OR (wpr.shift3_start <> '00:00:00' AND wpr.shift3_end <> '00:00:00'))\n        ORDER BY s.name\n    ");
-    $stmt->execute([$workpoint['unic_id']]);
-    $specialists = $stmt->fetchAll();
-    
-    // Handle selected specialist in supervisor mode
-    $selected_specialist = $_GET['selected_specialist'] ?? null;
-    
-    // If no specialist is selected but we have specialists, select the first one
-    if (!$selected_specialist && !empty($specialists)) {
-        $selected_specialist = $specialists[0]['unic_id'];
-    }
-    
-    // Get working points (just the current workpoint)
-    $working_points = [$workpoint];
-    
-    // Get working program for all specialists at this workpoint
-    $stmt = $pdo->prepare("\n        SELECT * FROM working_program \n        WHERE working_place_id = ?\n        ORDER BY specialist_id, day_of_week\n    ");
-    $stmt->execute([$workpoint['unic_id']]);
-    $working_program = $stmt->fetchAll();
-    
-    // For supervisor mode, set has_multiple_workpoints to false (supervisors don't need this feature)
-    $has_multiple_workpoints = false;
-    
-} else {
-    // Regular specialist mode
-    // Get working points for this specialist from working_program table
-    $stmt = $pdo->prepare("
-        SELECT DISTINCT wp.* 
-        FROM working_points wp 
-        INNER JOIN working_program wpr ON wp.unic_id = wpr.working_place_id 
-        WHERE wpr.specialist_id = ?
-        ORDER BY wp.name_of_the_place
-    ");
-    $stmt->execute([$specialist_id]);
-    $working_points = $stmt->fetchAll();
-    
-    // Check if specialist has multiple working points
-    $has_multiple_workpoints = count($working_points) > 1;
-    
-    // Set workpoint_id for specialist mode (use first working point if not specified)
-    if (!isset($workpoint_id) && !empty($working_points)) {
-        $workpoint_id = $working_points[0]['unic_id'];
-    }
-    
-    // Create a lookup array to get working point index by ID
-    $workpoint_index_lookup = [];
-    foreach ($working_points as $index => $wp) {
-        $workpoint_index_lookup[$wp['unic_id']] = $index + 1; // 1-based index
-    }
+// Get working points for this specialist from working_program table
+$stmt = $pdo->prepare("
+    SELECT DISTINCT wp.*
+    FROM working_points wp
+    INNER JOIN working_program wpr ON wp.unic_id = wpr.working_place_id
+    WHERE wpr.specialist_id = ?
+    ORDER BY wp.name_of_the_place
+");
+$stmt->execute([$specialist_id]);
+$working_points = $stmt->fetchAll();
 
-    // Get working program for this specialist
-    $stmt = $pdo->prepare("SELECT * FROM working_program WHERE specialist_id = ?");
-    $stmt->execute([$specialist_id]);
-    $working_program = $stmt->fetchAll();
+// Check if specialist has multiple working points
+$has_multiple_workpoints = count($working_points) > 1;
+
+// Set workpoint_id for specialist mode (use first working point if not specified)
+if (!isset($workpoint_id) && !empty($working_points)) {
+    $workpoint_id = $working_points[0]['unic_id'];
 }
 
-// Get current period selection (default to this month for both specialist and supervisor)
-if ($supervisor_mode) {
+// Create a lookup array to get working point index by ID
+$workpoint_index_lookup = [];
+foreach ($working_points as $index => $wp) {
+    $workpoint_index_lookup[$wp['unic_id']] = $index + 1; // 1-based index
+}
+
+// Get working program for this specialist
+$stmt = $pdo->prepare("SELECT * FROM working_program WHERE specialist_id = ?");
+$stmt->execute([$specialist_id]);
+$working_program = $stmt->fetchAll();
+
+// Get current period selection (default to this month)
 $period = $_GET['period'] ?? 'this_month';
 $start_date = $_GET['start_date'] ?? date('Y-m-01');
 $end_date = $_GET['end_date'] ?? date('Y-m-t');
-} else {
-$period = $_GET['period'] ?? 'this_month';
-$start_date = $_GET['start_date'] ?? date('Y-m-01');
-$end_date = $_GET['end_date'] ?? date('Y-m-t');
-}
 
 // Calculate date range and design based on period
 $date_range = calculateDateRange($period, $start_date, $end_date);
@@ -221,56 +173,21 @@ $calendar_design = $date_range['design'];
 error_log("Calendar Design: " . $calendar_design . " for period: " . $period . " start: " . $start_date . " end: " . $end_date);
 
 // Get bookings for the selected period
-if ($supervisor_mode) {
-    // Supervisor mode - get all bookings for this workpoint
-    $stmt = $pdo->prepare("
-        SELECT b.*, wp.name_of_the_place, wp.address, s.name_of_service, sp.name as specialist_name
-        FROM booking b
-        LEFT JOIN working_points wp ON b.id_work_place = wp.unic_id
-        LEFT JOIN services s ON b.service_id = s.unic_id
-        LEFT JOIN specialists sp ON b.id_specialist = sp.unic_id
-        WHERE b.id_work_place = ? 
-        AND DATE(b.booking_start_datetime) BETWEEN ? AND ?
-        ORDER BY b.booking_start_datetime
-    ");
-    $stmt->execute([$workpoint['unic_id'], $start_date, $end_date]);
-    $bookings = $stmt->fetchAll();
-} else {
-    // Regular specialist mode
-    $stmt = $pdo->prepare("
-        SELECT b.*, wp.name_of_the_place, wp.address, s.name_of_service 
-        FROM booking b
-        LEFT JOIN working_points wp ON b.id_work_place = wp.unic_id
-        LEFT JOIN services s ON b.service_id = s.unic_id
-        WHERE b.id_specialist = ? 
-        AND DATE(b.booking_start_datetime) BETWEEN ? AND ?
-        ORDER BY b.booking_start_datetime
-    ");
-    $stmt->execute([$specialist_id, $start_date, $end_date]);
-    $bookings = $stmt->fetchAll();
-}
+$stmt = $pdo->prepare("
+    SELECT b.*, wp.name_of_the_place, wp.address, s.name_of_service
+    FROM booking b
+    LEFT JOIN working_points wp ON b.id_work_place = wp.unic_id
+    LEFT JOIN services s ON b.service_id = s.unic_id
+    WHERE b.id_specialist = ?
+    AND DATE(b.booking_start_datetime) BETWEEN ? AND ?
+    ORDER BY b.booking_start_datetime
+");
+$stmt->execute([$specialist_id, $start_date, $end_date]);
+$bookings = $stmt->fetchAll();
 
 // Get specialist time off dates for the selected period
 $time_off_dates = [];
-if ($supervisor_mode && $selected_specialist) {
-    $stmt = $pdo->prepare("
-        SELECT date_off, start_time, end_time
-        FROM specialist_time_off
-        WHERE specialist_id = ?
-        AND date_off BETWEEN ? AND ?
-        ORDER BY date_off
-    ");
-    $stmt->execute([$selected_specialist, $start_date, $end_date]);
-    $time_off_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Create lookup array by date
-    foreach ($time_off_data as $off) {
-        $time_off_dates[$off['date_off']] = [
-            'start_time' => $off['start_time'],
-            'end_time' => $off['end_time']
-        ];
-    }
-} elseif (!$supervisor_mode && $specialist_id) {
+if ($specialist_id) {
     $stmt = $pdo->prepare("
         SELECT date_off, start_time, end_time
         FROM specialist_time_off
@@ -311,7 +228,7 @@ if (isset($workpoint_id)) {
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Calendar Booking System - <?= $supervisor_mode ? htmlspecialchars($workpoint['name_of_the_place']) . ' (Supervisor View)' : htmlspecialchars($specialist['name']) ?></title>
+    <title>Calendar Booking System - <?= htmlspecialchars($specialist['name']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
@@ -328,7 +245,7 @@ if (isset($workpoint_id)) {
             --dark-color: #343a40;
             --border-color: #dee2e6;
             --shadow: 0 2px 10px rgba(0,0,0,0.1);
-            <?php if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($specialist_permissions['foreground_color'])): ?>
+            <?php if ( isset($specialist_permissions['back_color']) && isset($specialist_permissions['foreground_color'])): ?>
             --specialist-bg-color: <?= $specialist_permissions['back_color'] ?>;
             --specialist-fg-color: <?= $specialist_permissions['foreground_color'] ?>;
             <?php endif; ?>
@@ -987,9 +904,19 @@ if (isset($workpoint_id)) {
     </style>
 </head>
 <body>
+    <?php if ($is_admin_impersonating): ?>
+    <div style="background: #d1ecf1; border-bottom: 2px solid #17a2b8; padding: 4px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+        <div style="color: #0c5460;">
+            <i class="fas fa-user-shield"></i> <strong>Admin Mode</strong> - Viewing as specialist
+        </div>
+        <a href="admin/admin_dashboard.php" style="background: #007bff; color: white; text-decoration: none; padding: 2px 10px; border-radius: 3px; font-weight: 600; font-size: 11px;">
+            <i class="fas fa-arrow-left"></i> Admin
+        </a>
+    </div>
+    <?php endif; ?>
     <!-- Notification Container -->
     <div id="notification-container"></div>
-    
+
     <div class="main-container">
         <!-- Title Box -->
         <div class="title-box">
@@ -997,10 +924,9 @@ if (isset($workpoint_id)) {
                 <div class="current-time" id="currentTime">
                     <?= date('l, F j, Y') ?> 
                     <span class="time-badge" id="currentTimeClock"><?= date('H:i:s') ?></span>
-                    <br><small style="color: #666;"><?= 
-                        $supervisor_mode && $workpoint ? getTimezoneForWorkingPoint($workpoint) : 
-                        (!$supervisor_mode && !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) : 
-                        getTimezoneForOrganisation($organisation)) 
+                    <br><small style="color: #666;"><?=
+                        !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) :
+                        getTimezoneForOrganisation($organisation)
                     ?></small>
                 </div>
             </div>
@@ -1041,9 +967,6 @@ if (isset($workpoint_id)) {
                 </div>
                 <div style="margin-top: 10px;">
                     <small><?= htmlspecialchars($_SESSION['user']) ?>
-                    <?php if ($supervisor_mode): ?>
-                    | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
-                    <?php endif; ?>
                     | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
                     | <span id="realtime-status-btn" onclick="toggleRealtimeUpdates()" style="cursor: pointer; display: inline-block; margin: 0 8px; vertical-align: middle;" title="Real-time booking updates via SSE (Server-Sent Events) - Connecting...">
                         <i class="status-icon fas fa-circle" style="font-size: 14px; color: #ffc107; transition: color 0.3s ease;"></i>
@@ -1056,42 +979,9 @@ if (isset($workpoint_id)) {
         <div class="content-wrapper">
             <!-- Left Sidebar -->
             <div class="sidebar">
-                <?php if ($supervisor_mode): ?>
-                <!-- Workpoint Details Widget (Supervisor Mode) -->
-                <div class="widget specialist-widget">
-                    <div class="widget-title" style="font-size: 1.1rem; color: var(--primary-color); text-align: center;">
-                        <span style="margin-right: 8px; font-size: 1.3rem;">🏢</span><?= htmlspecialchars($organisation['alias_name']) ?><br>
-                        (<?= htmlspecialchars($organisation['oficial_company_name']) ?>)
-                    </div>
-                    <div class="specialist-info">
-                        <div class="specialist-name-large" style="font-size: 1rem; color: var(--dark-color); font-style: italic; margin-bottom: 15px; text-align: center;"><?= htmlspecialchars($workpoint['name_of_the_place']) ?></div>
-                        <div class="contact-info">
-                            <span style="margin-right: 8px;">📍</span>
-                            <span><?= htmlspecialchars($workpoint['address']) ?></span>
-                        </div>
-                        <?php if ($workpoint['workplace_phone_nr'] || $workpoint['booking_phone_nr']): ?>
-                        <div class="contact-info">
-                            <?php if ($workpoint['workplace_phone_nr']): ?>
-                            <span style="margin-right: 8px;">☎️</span>
-                            <span><?= htmlspecialchars($workpoint['workplace_phone_nr']) ?></span>
-                            <?php endif; ?>
-                            <?php if ($workpoint['booking_phone_nr']): ?>
-                            <span style="margin-left: 20px;">
-                                <span style="margin-right: 5px;">📆</span><?= htmlspecialchars($workpoint['booking_phone_nr']) ?>
-                            </span>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-                        <div class="contact-info">
-                            <span style="margin-right: 8px;">👥</span>
-                            <span><?= count($specialists) ?> Specialist(s) at this location</span>
-                        </div>
-                    </div>
-                </div>
-                <?php else: ?>
                 <!-- Specialist Details Widget -->
                 <div class="widget specialist-widget">
-                    <div class="widget-title <?= (!$supervisor_mode && isset($specialist_permissions['back_color'])) ? 'specialist-colored' : '' ?>">
+                    <div class="widget-title <?= ( isset($specialist_permissions['back_color'])) ? 'specialist-colored' : '' ?>">
                         <i class="fas fa-user-md"></i> <?= htmlspecialchars($specialist['name']) ?>
                     </div>
                     <div class="specialist-info">
@@ -1135,7 +1025,7 @@ if (isset($workpoint_id)) {
                         
                         // Prepare services options for specialist view only
                         // Google Calendar functionality is only for specialist view
-                        if (!$supervisor_mode && $specialist_id) {
+                        if ( $specialist_id) {
                             try {
                                 $stmt = $pdo->prepare("SELECT unic_id, name_of_service FROM services WHERE id_specialist = ? AND (deleted IS NULL OR deleted != 1) AND (suspended IS NULL OR suspended != 1) ORDER BY name_of_service ASC");
                                 $stmt->execute([$specialist_id]);
@@ -1155,11 +1045,11 @@ if (isset($workpoint_id)) {
                                 echo "<!-- DEBUG: Error loading services: " . $e->getMessage() . " -->";
                             }
                         } else {
-                            echo "<!-- DEBUG: Not loading services - supervisor_mode = " . ($supervisor_mode ? 'true' : 'false') . ", specialist_id = " . ($specialist_id ?? 'null') . " -->";
+                            echo "<!-- DEBUG: Not loading services - supervisor_mode = " . ('false') . ", specialist_id = " . ($specialist_id ?? 'null') . " -->";
                         }
                         
                         // Skip Google Calendar for supervisor mode
-                        if (!$supervisor_mode && $specialist_id) {
+                        if ( $specialist_id) {
                             // Try to load Google Calendar connection - but don't let it break the page
                             if (file_exists(__DIR__ . '/includes/google_calendar_sync.php')) {
                                 @include_once __DIR__ . '/includes/google_calendar_sync.php';
@@ -1305,356 +1195,22 @@ if (isset($workpoint_id)) {
                         <?php endif; ?>
                     </div>
                 </div>
-                <?php endif; ?>
 
                 <!-- Organisation Details Widget -->
                 <div class="widget organisation-widget">
-                    <?php if ($supervisor_mode): ?>
-                    <div class="organisation-name-large" style="margin-bottom: 0; padding-bottom: 3px; position: relative;">
-                        <span style="margin-right: 8px;">👥</span>
-                        Specialists:
-                        <button type="button" 
-                                style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 11px; padding: 2px 8px; background-color: white; color: #333; border: 1px solid #ddd; transition: box-shadow 0.2s ease; cursor: pointer;"
-                                onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';"
-                                onmouseout="this.style.boxShadow='none';"
-                                onclick="openAddSpecialistModal('<?= $workpoint['unic_id'] ?>', '<?= $organisation['unic_id'] ?>')">
-                            <i class="fas fa-plus-circle"></i> Add New
-                        </button>
-                    </div>
-                    <?php else: ?>
-                    <div class="organisation-name-large" 
-                         style="cursor: pointer; margin-bottom: 0; padding-bottom: 3px;" 
-                         data-bs-toggle="tooltip" 
+                    <div class="organisation-name-large"
+                         style="cursor: pointer; margin-bottom: 0; padding-bottom: 3px;"
+                         data-bs-toggle="tooltip"
                          data-bs-placement="top"
                          title="<?= htmlspecialchars($organisation['oficial_company_name']) ?>">
                         <i class="fas fa-building" style="color: black; margin-right: 8px;"></i>
                         <?= htmlspecialchars($organisation['alias_name']) ?>
                     </div>
-                    <?php endif; ?>
-                    
 
-                    
-                                        <?php if ($supervisor_mode): ?>
+
+
                                         <div class="working-points-container" style="margin-top: 0;">
-                                            <?php 
-                                            $spec_counter = 1;
-                                            foreach ($specialists as $spec): 
-                                                // Get working program for this specialist
-                                                $spec_program = array_filter($working_program, function($p) use ($spec) {
-                                                    return $p['specialist_id'] == $spec['unic_id'];
-                                                });
-                                                
-                                                // Only show specialists that have programs
-                                                if (!empty($spec_program)):
-                                            ?>
-                                                <?php 
-                                                // Get specialist colors from settings
-                                                $stmt = $pdo->prepare("SELECT back_color, foreground_color FROM specialists_setting_and_attr WHERE specialist_id = ?");
-                                                $stmt->execute([$spec['unic_id']]);
-                                                $spec_settings = $stmt->fetch();
-                                                
-                                                $bg_color = $spec_settings['back_color'] ?? '#667eea';
-                                                $fg_color = $spec_settings['foreground_color'] ?? '#ffffff';
-                                                ?>
-                                                <div class="working-point-section specialist-collapsible" data-specialist-id="<?= $spec['unic_id'] ?>" 
-                                                     style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 10px; background-color: #fafafa; transition: all 0.2s ease;"
-                                                     onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'; this.style.transform='translateY(-2px)';"
-                                                     onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)';">
-                                                    <div class="working-point-header specialist-header" style="cursor: pointer; font-weight: normal; display: block; position: relative; min-height: 24px; padding-top: 8px; margin-bottom: 0;" onclick="(function(event) {
-                                                        const specialistSection = event.currentTarget.closest('.specialist-collapsible');
-                                                        const scheduleContent = specialistSection.querySelector('.schedule-content');
-                                                        
-                                                        // Toggle visibility
-                                                        if (scheduleContent.style.display === 'none' || scheduleContent.style.display === '') {
-                                                            scheduleContent.style.display = 'block';
-                                                        } else {
-                                                            scheduleContent.style.display = 'none';
-                                                        }
-                                                    })(event)">
-                                                        <div style="display: flex; align-items: center; width: 100%;">
-                                                            <div style="display: flex; align-items: center; flex: 1;">
-                                                                <div style="width: 16px; height: 16px; border-radius: 50%; background-color: <?= $bg_color ?>; border: 1px solid #ddd; margin-right: 8px; cursor: pointer; flex-shrink: 0;" 
-                                                                     onclick="event.stopPropagation(); openColorPickerModal('<?= $spec['unic_id'] ?>', '<?= htmlspecialchars($spec['name']) ?>', '<?= $bg_color ?>', '<?= $fg_color ?>')" 
-                                                                     title="Change specialist colors"></div>
-                                                                <?php
-                                                                // Get specialist visibility settings for tooltip
-                                                                $stmt = $pdo->prepare("SELECT specialist_nr_visible_to_client, specialist_email_visible_to_client FROM specialists_setting_and_attr WHERE specialist_id = ?");
-                                                                $stmt->execute([$spec['unic_id']]);
-                                                                $spec_visibility = $stmt->fetch();
-                                                                ?>
-                                                                <span style="color: #333; font-weight: 600; display: inline-block;" 
-                                                                      data-bs-toggle="tooltip" 
-                                                                      data-bs-placement="top" 
-                                                                      data-bs-html="true"
-                                                                      data-bs-trigger="hover"
-                                                                      title="<strong>Speciality:</strong> <?= htmlspecialchars($spec['speciality']) ?><br><em>Click to view schedule</em>">
-                                                                    <?= htmlspecialchars($spec['name']) ?>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div style="color: #6c757d; font-size: 0.9em; margin-top: -5px;">
-                                                            <?= ucfirst(strtolower(htmlspecialchars($spec['speciality']))) ?>  •  <span style="cursor: help;" 
-                                                                  data-bs-toggle="tooltip" 
-                                                                  data-bs-placement="top" 
-                                                                  data-bs-html="true"
-                                                                  title="Phone visible to clients: <?= ($spec_visibility['specialist_nr_visible_to_client'] ?? 0) ? '<span style=\'color: green;\'>✓ On</span>' : '<span style=\'color: red;\'>✗ Off</span>' ?>">
-                                                                <i class="fas fa-phone" style="font-size: 0.8em;"></i> <?= htmlspecialchars($spec['phone_nr']) ?>
-                                                            </span>  •  <span style="cursor: help;" 
-                                                                  data-bs-toggle="tooltip" 
-                                                                  data-bs-placement="top" 
-                                                                  data-bs-html="true"
-                                                                  title="<strong>Email:</strong> <?= htmlspecialchars($spec['email']) ?><br>Email visible to clients: <?= ($spec_visibility['specialist_email_visible_to_client'] ?? 0) ? '<span style=\'color: green;\'>✓ On</span>' : '<span style=\'color: red;\'>✗ Off</span>' ?>">
-                                                                <i class="fas fa-envelope" style="font-size: 0.8em;"></i>
-                                                            </span>
-                                                        </div>
-                                                        <button type="button"
-                                                                style="position: absolute; right: 8px; top: 50%; transform: translateY(calc(-50% - 8px)); z-index: 10; font-size: 11px; padding: 2px 8px; background-color: white; color: #333; border: 1px solid #ddd; transition: box-shadow 0.2s ease; cursor: pointer;"
-                                                                onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';"
-                                                                onmouseout="this.style.boxShadow='none';"
-                                                                onclick="event.stopPropagation(); openModifySpecialistModal('<?= $spec['unic_id'] ?>', '<?= htmlspecialchars($spec['name']) ?>', '<?= $workpoint['unic_id'] ?>')" 
-                                                                title="Edit details">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                    </div>
-                                                    <div class="working-point-item schedule-content" style="display: none; width: 100%; text-align: center; cursor: pointer; transition: background-color 0.3s ease;" 
-                                                         onclick="event.stopPropagation(); openModifyScheduleModal('<?= $spec['unic_id'] ?>', '<?= $workpoint['unic_id'] ?>')"
-                                                         onmouseover="this.style.backgroundColor='rgba(0, 123, 255, 0.05)'"
-                                                         onmouseout="this.style.backgroundColor='transparent'"
-                                                         title="Click to modify schedule">
-                                                        <div class="working-program">
-                                                            <?php
-                                                            if (!empty($spec_program)) {
-                                                                echo "<strong>Working Schedule:</strong><br>";
-                                                                
-                                                                // Define day order
-                                                                $day_order = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                                                                $day_names = [
-                                                                    'monday' => 'Mon',
-                                                                    'tuesday' => 'Tue', 
-                                                                    'wednesday' => 'Wed',
-                                                                    'thursday' => 'Thu',
-                                                                    'friday' => 'Fri',
-                                                                    'saturday' => 'Sat',
-                                                                    'sunday' => 'Sun'
-                                                                ];
-                                                                
-                                                                // Create a lookup array for working program
-                                                                $program_lookup = [];
-                                                                foreach ($spec_program as $program) {
-                                                                    $day = strtolower($program['day_of_week']); // Convert to lowercase
-                                                                    $shifts = [];
-                                                                    
-                                                                    // Check shift 1
-                                                                    $start1 = $program['shift1_start'];
-                                                                    $end1 = $program['shift1_end'];
-                                                                    if ($start1 && $end1 && $start1 !== '00:00:00' && $end1 !== '00:00:00') {
-                                                                        $start1_formatted = substr($start1, 0, 2) . "<sup>" . substr($start1, 3, 2) . "</sup>";
-                                                                        $end1_formatted = substr($end1, 0, 2) . "<sup>" . substr($end1, 3, 2) . "</sup>";
-                                                                        $shifts[] = $start1_formatted . " - " . $end1_formatted;
-                                                                    }
-                                                                    
-                                                                    // Check shift 2
-                                                                    $start2 = $program['shift2_start'];
-                                                                    $end2 = $program['shift2_end'];
-                                                                    if ($start2 && $end2 && $start2 !== '00:00:00' && $end2 !== '00:00:00') {
-                                                                        $start2_formatted = substr($start2, 0, 2) . "<sup>" . substr($start2, 3, 2) . "</sup>";
-                                                                        $end2_formatted = substr($end2, 0, 2) . "<sup>" . substr($end2, 3, 2) . "</sup>";
-                                                                        $shifts[] = $start2_formatted . " - " . $end2_formatted;
-                                                                    }
-                                                                    
-                                                                    // Check shift 3
-                                                                    $start3 = $program['shift3_start'];
-                                                                    $end3 = $program['shift3_end'];
-                                                                    if ($start3 && $end3 && $start3 !== '00:00:00' && $end3 !== '00:00:00') {
-                                                                        $start3_formatted = substr($start3, 0, 2) . "<sup>" . substr($start3, 3, 2) . "</sup>";
-                                                                        $end3_formatted = substr($end3, 0, 2) . "<sup>" . substr($end3, 3, 2) . "</sup>";
-                                                                        $shifts[] = $start3_formatted . " - " . $end3_formatted;
-                                                                    }
-                                                                    
-                                                                    if (!empty($shifts)) {
-                                                                        // Create colored shift spans
-                                                                        $colored_shifts = [];
-                                                                        foreach ($shifts as $index => $shift) {
-                                                                            $shift_number = $index + 1;
-                                                                            $bg_color = '';
-                                                                            switch ($shift_number) {
-                                                                                case 1:
-                                                                                    $bg_color = 'background-color: #ffebee; color: #d32f2f; padding: 2px 6px; border-radius: 3px; margin: 0 2px; text-align: right;';
-                                                                                    // Adjust margin for specific days
-                                                                                    if ($day === 'monday' || $day === 'wednesday') {
-                                                                                        $bg_color = 'background-color: #ffebee; color: #d32f2f; padding: 2px 6px; border-radius: 3px; margin: 0 -2px 0 2px; text-align: right;';
-                                                                                    } elseif ($day === 'friday') {
-                                                                                        $bg_color = 'background-color: #ffebee; color: #d32f2f; padding: 2px 6px; border-radius: 3px; margin: 0 4px; text-align: right;';
-                                                                                    }
-                                                                                    break;
-                                                                                case 2:
-                                                                                    $bg_color = 'background-color: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 3px; margin: 0 2px;';
-                                                                                    break;
-                                                                                case 3:
-                                                                                    $bg_color = 'background-color: #e8f5e8; color: #2e7d32; padding: 2px 6px; border-radius: 3px; margin: 0 2px;';
-                                                                                    break;
-                                                                            }
-                                                                            $colored_shifts[] = '<span style="' . $bg_color . '">' . $shift . '</span>';
-                                                                        }
-                                                                        // Remove separator when there are 3 shifts
-                                                                        $separator = count($shifts) == 3 ? "" : "&nbsp;";
-                                                                        $program_lookup[$day] = implode($separator, $colored_shifts);
-                                                                    }
-                                                                }
-                                                                
-                                                                // Display days in order, only if they have schedules
-                                                                $schedule_lines = [];
-                                                                foreach ($day_order as $day) {
-                                                                    if (isset($program_lookup[$day])) {
-                                                                        $day_name = $day_names[$day];
-                                                                        $day_style = '';
-                                                                        
-                                                                        // Condense Mon and Wed horizontally
-                                                                        if ($day_name === 'Mon' || $day_name === 'Wed') {
-                                                                            $day_style = 'style="letter-spacing: -0.5px; transform: scaleX(0.9); display: inline-block;"';
-                                                                        }
-                                                                        
-                                                                        $schedule_lines[] = '<span ' . $day_style . '>' . $day_name . ':</span> ' . $program_lookup[$day];
-                                                                    }
-                                                                }
-                                                                echo implode("<br>", $schedule_lines);
-                                                                if (!empty($schedule_lines)) {
-                                                                    echo "<br>";
-                                                                }
-                                                            }
-                                                            ?>
-                                                        </div>
-                                                        <?php
-                                                        // Display Days Off for this specialist
-                                                        $stmt_time_off = $pdo->prepare("
-                                                            SELECT date_off, start_time, end_time
-                                                            FROM specialist_time_off
-                                                            WHERE specialist_id = ? AND date_off >= CURDATE()
-                                                            ORDER BY date_off, id
-                                                        ");
-                                                        $stmt_time_off->execute([$spec['unic_id']]);
-                                                        $time_off_records = $stmt_time_off->fetchAll(PDO::FETCH_ASSOC);
-
-                                                        if (!empty($time_off_records)) {
-                                                            // Group by date
-                                                            $time_off_by_date = [];
-                                                            foreach ($time_off_records as $record) {
-                                                                $date = $record['date_off'];
-                                                                if (!isset($time_off_by_date[$date])) {
-                                                                    $time_off_by_date[$date] = [];
-                                                                }
-                                                                $time_off_by_date[$date][] = $record;
-                                                            }
-
-                                                            echo '<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #dee2e6;">';
-
-                                                            foreach ($time_off_by_date as $date => $records) {
-                                                                $date_obj = new DateTime($date);
-                                                                $formatted_date = $date_obj->format('D, j M');
-
-                                                                // Determine if full day or partial
-                                                                if (count($records) === 1 &&
-                                                                    $records[0]['start_time'] === '00:01:00' &&
-                                                                    $records[0]['end_time'] === '23:59:00') {
-                                                                    // Full day off
-                                                                    echo '<div style="font-size: 0.75em; color: #999; margin-bottom: 3px;">';
-                                                                    echo '<span style="color: #dc3545;">⊗</span> ' . $formatted_date . '. <span style="font-style: italic;">Full Day OFF</span>';
-                                                                    echo '</div>';
-                                                                } else if (count($records) >= 2) {
-                                                                    // Partial day - calculate working hours
-                                                                    $record1 = $records[0];
-                                                                    $record2 = $records[1];
-
-                                                                    $workStartTime = strtotime("1970-01-01 " . $record1['end_time']) + 60;
-                                                                    $workStart = date('H:i', $workStartTime);
-
-                                                                    $workEndTime = strtotime("1970-01-01 " . $record2['start_time']) - 60;
-                                                                    $workEnd = date('H:i', $workEndTime);
-
-                                                                    echo '<div style="font-size: 0.75em; color: #999; margin-bottom: 3px;">';
-                                                                    echo '<span style="color: #f59e0b; font-size: 1.2em;">◐</span> ' . $formatted_date . '. <span style="font-style: italic;">Partial Day OFF</span><br>';
-                                                                    echo '<span style="font-size: 0.9em; color: #aaa; margin-left: 12px;">(working only: ' . substr($workStart, 0, 2) . '<sup>' . substr($workStart, 3, 2) . '</sup>-' . substr($workEnd, 0, 2) . '<sup>' . substr($workEnd, 3, 2) . '</sup>)</span>';
-                                                                    echo '</div>';
-                                                                }
-                                                            }
-
-                                                            echo '</div>';
-                                                        }
-                                                        ?>
-                                                    </div>
-                                                </div>
-                                            <?php 
-                                                $spec_counter++;
-                                                endif;
-                                            endforeach; 
-                                            ?>
-                                            
-                                            <!-- Unassigned Specialists Dropdown (visible if organisation has unassigned specialists) -->
                                             <?php
-                                            // Fetch organisation-wide unassigned specialists (no working_program rows)
-                                            $org_unassigned = [];
-                                            if (!empty($organisation['unic_id'])) {
-                                                $stmt = $pdo->prepare("SELECT s.unic_id, s.name, s.speciality FROM specialists s WHERE s.organisation_id = ? AND NOT EXISTS (SELECT 1 FROM working_program wp WHERE wp.specialist_id = s.unic_id AND ((wp.shift1_start <> '00:00:00' AND wp.shift1_end <> '00:00:00') OR (wp.shift2_start <> '00:00:00' AND wp.shift2_end <> '00:00:00') OR (wp.shift3_start <> '00:00:00' AND wp.shift3_end <> '00:00:00'))) ORDER BY s.name");
-                                                $stmt->execute([$organisation['unic_id']]);
-                                                $org_unassigned = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                            }
-                                            if (!empty($org_unassigned)):
-                                            ?>
-                                            <div style="margin: 16px 0; padding-top: 12px; border-top: 1px dashed #ddd;">
-                                                <details>
-                                                    <summary style="cursor:pointer;font-weight:600;color:#444;font-size:0.9rem;font-style:italic;">
-                                                        <i class="fas fa-user-slash"></i> Specialists Withouth Program (<?= count($org_unassigned) ?>)
-                                                    </summary>
-                                                    <div style="margin-top:8px; font-size: 0.9rem; font-style: italic;">
-                                                        <select id="unassignedSpecialistsSelect" class="form-select form-select-sm" onchange="onSelectUnassignedSpecialist(this.value)" style="max-width:100%; font-size: 0.9rem; font-style: italic;">
-                                                            <option value="">Select a specialist…</option>
-                                                            <?php foreach ($org_unassigned as $us): ?>
-                                                                <option value="<?= (int)$us['unic_id'] ?>"><?= htmlspecialchars($us['name']) ?> — <?= htmlspecialchars($us['speciality']) ?></option>
-                                                            <?php endforeach; ?>
-                                                        </select>
-                                                    </div>
-                                                </details>
-                                            </div>
-                                            <?php endif; ?>
-
-                                            
-                                            <!-- Extra Tools Section -->
-                                            <div style="margin-top: 20px; text-align: center; padding: 15px; border-top: 2px solid #e0e0e0;">
-                                                <h5 style="font-size: 1rem; margin-bottom: 15px; color: #1e3a8a;">Extra Tools</h5>
-                                                <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
-                                                    <button type="button" class="btn btn-sm" 
-                                                            style="background-color: white; color: #1e3a8a; border: 1px solid #1e3a8a; padding: 8px; flex: 1; transition: all 0.3s ease;"
-                                                            onmouseover="this.style.backgroundColor='#1e3a8a'; this.style.color='white';"
-                                                            onmouseout="this.style.backgroundColor='white'; this.style.color='#1e3a8a';"
-                                                            onclick="showSearchPanel()"
-                                                            title="Search Bookings">
-                                                        <i class="fas fa-search"></i>
-                                                        <div style="font-size: 0.7rem; margin-top: 4px;">Search</div>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm" 
-                                                            style="background-color: white; color: #1e3a8a; border: 1px solid #1e3a8a; padding: 8px; flex: 1; transition: all 0.3s ease;"
-                                                            onmouseover="this.style.backgroundColor='#1e3a8a'; this.style.color='white';"
-                                                            onmouseout="this.style.backgroundColor='white'; this.style.color='#1e3a8a';"
-                                                            onclick="showArrivalsPanel()"
-                                                            title="View Booking Arrivals">
-                                                        <i class="fas fa-calendar-check"></i>
-                                                        <div style="font-size: 0.7rem; margin-top: 4px;">Arrivals</div>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm" 
-                                                            style="background-color: white; color: #1e3a8a; border: 1px solid #1e3a8a; padding: 8px; flex: 1; transition: all 0.3s ease;"
-                                                            onmouseover="this.style.backgroundColor='#1e3a8a'; this.style.color='white';"
-                                                            onmouseout="this.style.backgroundColor='white'; this.style.color='#1e3a8a';"
-                                                            onclick="showCanceledPanel()"
-                                                            title="View Canceled Bookings">
-                                                        <i class="fas fa-ban"></i>
-                                                        <div style="font-size: 0.7rem; margin-top: 4px;">Canceled</div>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <?php else: ?>
-                                        <div class="working-points-container" style="margin-top: 0;">
-                                            <?php 
                                             $wp_counter = 1;
                                             foreach ($working_points as $wp): 
                                                 // Check if this working point has a program
@@ -1943,13 +1499,12 @@ if (isset($workpoint_id)) {
                                             <?php 
                                                 $wp_counter++;
                                                 endif;
-                                            endforeach; 
+                                            endforeach;
                                             ?>
                                         </div>
-                                        <?php endif; ?>
-                                        
+
                                         <!-- Services Section -->
-                                        <?php if (!$supervisor_mode && $specialist_id): ?>
+                                        <?php if ( $specialist_id): ?>
                                         <div class="specialist-services-section" style="margin-top: 0; padding-top: 5px; border-top: 1px solid #e9ecef;">
                                             <div class="services-list" id="specialistServicesList">
                                                 <?php
@@ -2086,9 +1641,9 @@ if (isset($workpoint_id)) {
                                             </div>
                                         </div>
                                         <?php endif; ?>
-                                        
-                                        <!-- Extra Tools Section for Specialist Mode -->
-                                        <?php if (!$supervisor_mode): ?>
+
+
+                                        <!-- Extra Tools Section -->
                                         <div style="margin-top: 20px; text-align: center; padding: 15px; border-top: 2px solid #e0e0e0;">
                                             <h5 style="font-size: 1rem; margin-bottom: 15px; color: #1e3a8a;">Extra Tools</h5>
                                             <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
@@ -2121,7 +1676,6 @@ if (isset($workpoint_id)) {
                                                 </button>
                                             </div>
                                         </div>
-                                        <?php endif; ?>
                 </div>
             </div>
 
@@ -2131,12 +1685,7 @@ if (isset($workpoint_id)) {
                 <div class="calendar-top">
                                             <div class="period-selector">
                             <form method="GET" id="periodForm">
-                                <?php if ($supervisor_mode): ?>
-                                <input type="hidden" name="working_point_user_id" value="<?= $working_point_user_id ?>">
-                                <input type="hidden" name="supervisor_mode" value="true">
-                                <?php else: ?>
                                 <input type="hidden" name="specialist_id" value="<?= $specialist_id ?>">
-                                <?php endif; ?>
                                 
                                 <div class="period-option">
                                     <input type="radio" name="period" value="today" id="today" <?= $period === 'today' ? 'checked' : '' ?> onclick="changePeriod('today')">
@@ -2172,7 +1721,7 @@ if (isset($workpoint_id)) {
                 </div>
 
                 <!-- Calendar View -->
-                <div class="calendar-view<?= ($supervisor_mode && $calendar_design === 'monthly') ? ' compact' : '' ?>">
+                <div class="calendar-view<?= ($calendar_design === 'monthly') ? ' compact' : '' ?>">
                     <?php
                     // Debug: Show which template is being loaded
                     echo "<!-- Loading template: " . $calendar_design . " -->";
@@ -2220,15 +1769,9 @@ if (isset($workpoint_id)) {
     </div>
 
     <!-- Include Templates -->
-    <?php 
-    // Get the workpoint_id for the modal
-    if ($supervisor_mode && $working_point_user_id) {
-        // In supervisor mode, use the working_point_user_id as workpoint_id
-        $workpoint_id = $working_point_user_id;
-    } else {
-        // In specialist mode, use the first workpoint for this specialist
-        $workpoint_id = $working_points[0]['unic_id'] ?? 1;
-    }
+    <?php
+    // Get the workpoint_id for the modal - use the first workpoint for this specialist
+    $workpoint_id = $working_points[0]['unic_id'] ?? 1;
     ?>
     
     <!-- Error Message Display -->
@@ -2262,8 +1805,8 @@ if (isset($workpoint_id)) {
     $excluded_channels_array = array_map('trim', explode(',', $excluded_channels_str));
     $is_web_excluded = in_array('WEB', $excluded_channels_array);
     
-    // Pass supervisor mode and specialist permissions to the modal template
-    $modal_supervisor_mode = $supervisor_mode;
+    // Pass specialist permissions to the modal template
+    $modal_supervisor_mode = false;
     $modal_specialist_permissions = $specialist_permissions ?? null;
     $has_multiple_workpoints = $has_multiple_workpoints ?? false;
     $modal_excluded_channels = $excluded_channels_array;
@@ -2727,10 +2270,9 @@ if (isset($workpoint_id)) {
     </script>
     <script>
         // Timezone for JavaScript (working point if available, otherwise organization)
-        const organizationTimezone = '<?= 
-            $supervisor_mode && $workpoint ? getTimezoneForWorkingPoint($workpoint) : 
-            (!$supervisor_mode && !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) : 
-            getTimezoneForOrganisation($organisation)) 
+        const organizationTimezone = '<?=
+            !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) :
+            getTimezoneForOrganisation($organisation)
         ?>';
         
         // Period change function - must be defined before HTML that uses it
@@ -2740,20 +2282,7 @@ if (isset($workpoint_id)) {
             url.searchParams.set('period', period);
             
             // Handle supervisor mode vs specialist mode
-            <?php if ($supervisor_mode): ?>
-            url.searchParams.set('working_point_user_id', '<?= $working_point_user_id ?>');
-            url.searchParams.set('supervisor_mode', 'true');
-            
-            // Always include selected specialist in supervisor mode
-            const currentSelectedSpecialist = url.searchParams.get('selected_specialist') || '<?= $selected_specialist ?>';
-            
-            if (currentSelectedSpecialist) {
-                url.searchParams.set('selected_specialist', currentSelectedSpecialist);
-            }
-            
-            <?php else: ?>
             url.searchParams.set('specialist_id', '<?= $specialist_id ?>');
-            <?php endif; ?>
             
             // Remove any custom date parameters for predefined periods
             url.searchParams.delete('start_date');
@@ -3112,15 +2641,9 @@ if (isset($workpoint_id)) {
                     // Build URL without unnecessary parameters for predefined periods
                     const url = new URL(window.location);
                     url.searchParams.set('period', this.value);
-                    
-                    // Handle supervisor mode vs specialist mode
-                    <?php if ($supervisor_mode): ?>
-                    url.searchParams.set('working_point_user_id', '<?= $working_point_user_id ?>');
-                    url.searchParams.set('supervisor_mode', 'true');
-                    <?php else: ?>
+
                     url.searchParams.set('specialist_id', '<?= $specialist_id ?>');
-                    <?php endif; ?>
-                    
+
                     // Remove any custom date parameters for predefined periods
                     url.searchParams.delete('start_date');
                     url.searchParams.delete('end_date');
@@ -3159,13 +2682,8 @@ if (isset($workpoint_id)) {
             url.searchParams.set('lang', lang);
             
             // Handle supervisor mode vs specialist mode
-            <?php if ($supervisor_mode): ?>
-            url.searchParams.set('working_point_user_id', '<?= $working_point_user_id ?>');
-            url.searchParams.set('supervisor_mode', 'true');
-            <?php else: ?>
             url.searchParams.set('specialist_id', '<?= $specialist_id ?>');
-            <?php endif; ?>
-            
+
             url.searchParams.set('period', '<?= $period ?>');
             
             // No custom date range to preserve
@@ -3184,9 +2702,9 @@ if (isset($workpoint_id)) {
         
         function initializeRealtimeBookings() {
             realtimeBookings = new RealtimeBookings({
-                specialistId: <?= $supervisor_mode ? 'null' : $specialist_id ?>,
-                workpointId: <?= $supervisor_mode ? $working_point_user_id : 'null' ?>,
-                supervisorMode: <?= $supervisor_mode ? 'true' : 'false' ?>,
+                specialistId: <?= $specialist_id ?>,
+                workpointId: <?= 'null' ?>,
+                supervisorMode: <?= 'false' ?>,
                 onUpdate: function(data) {
                     console.log('Booking update received:', data);
                     
@@ -4467,8 +3985,7 @@ if (isset($workpoint_id)) {
                 formData.append('action', 'delete_schedule');
                 formData.append('specialist_id', document.getElementById('modifyScheduleSpecialistId').value);
                 formData.append('workpoint_id', document.getElementById('modifyScheduleWorkpointId').value);
-                formData.append('supervisor_mode', 'true');
-                
+
                 fetch('admin/modify_schedule_ajax.php', {
                     method: 'POST',
                     body: formData,
@@ -4561,7 +4078,6 @@ if (isset($workpoint_id)) {
             formData.append('action', 'get_booked_dates');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('year', currentTimeOffYear);
-            formData.append('supervisor_mode', 'true');
             
             fetch('admin/get_specialist_bookings_ajax.php', {
                 method: 'POST',
@@ -4945,7 +4461,6 @@ if (isset($workpoint_id)) {
             const formData = new FormData();
             formData.append('action', 'get_time_off_details');
             formData.append('specialist_id', timeOffSpecialistId);
-            formData.append('supervisor_mode', 'true');
 
             fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
@@ -4981,7 +4496,6 @@ if (isset($workpoint_id)) {
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('dates', JSON.stringify(Array.from(selectedTimeOffDates)));
             formData.append('details', JSON.stringify(timeOffDetails));
-            formData.append('supervisor_mode', 'true');
             
             fetch('admin/specialist_time_off_ajax.php', {
                 method: 'POST',
@@ -5009,7 +4523,6 @@ if (isset($workpoint_id)) {
             formData.append('action', 'add_full_day');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('date', date);
-            formData.append('supervisor_mode', 'true');
 
             fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
@@ -5030,7 +4543,6 @@ if (isset($workpoint_id)) {
             formData.append('action', 'remove_day');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('date', date);
-            formData.append('supervisor_mode', 'true');
 
             fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
@@ -5051,7 +4563,6 @@ if (isset($workpoint_id)) {
             formData.append('action', 'convert_to_partial');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('date', date);
-            formData.append('supervisor_mode', 'true');
 
             fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
@@ -5072,7 +4583,6 @@ if (isset($workpoint_id)) {
             formData.append('action', 'convert_to_full');
             formData.append('specialist_id', timeOffSpecialistId);
             formData.append('date', date);
-            formData.append('supervisor_mode', 'true');
 
             fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
@@ -5095,7 +4605,6 @@ if (isset($workpoint_id)) {
             formData.append('date', date);
             formData.append('work_start', workStart);
             formData.append('work_end', workEnd);
-            formData.append('supervisor_mode', 'true');
 
             fetch('admin/specialist_time_off_auto_ajax.php', {
                 method: 'POST',
@@ -5118,12 +4627,7 @@ if (isset($workpoint_id)) {
             formData.append('action', 'get_schedule');
             formData.append('specialist_id', specialistId);
             formData.append('workpoint_id', workpointId);
-            
-            // Add supervisor mode flag if in supervisor mode
-            <?php if ($supervisor_mode): ?>
-            formData.append('supervisor_mode', 'true');
-            <?php endif; ?>
-            
+
             fetch('admin/modify_schedule_ajax.php', {
                 method: 'POST',
                 body: formData,
@@ -6494,7 +5998,7 @@ if (isset($workpoint_id)) {
     // Store specialist permissions in JavaScript
     const specialistCanModifyServices = <?= json_encode(($specialist_permissions['specialist_can_modify_services'] ?? 0) == 1) ?>;
     const specialistCanDeleteServices = <?= json_encode(($specialist_permissions['specialist_can_delete_services'] ?? 0) == 1) ?>;
-    const isSupervisorMode = <?= json_encode($supervisor_mode) ?>;
+    const isSupervisorMode = false;
     
     
     // Function to edit a specialist service
@@ -6964,7 +6468,7 @@ if (isset($workpoint_id)) {
     }
     
     // Toggle Working Schedule dropdown for each working point
-    <?php if (!$supervisor_mode && isset($working_points) && !empty($working_points)): ?>
+    <?php if ( isset($working_points) && !empty($working_points)): ?>
         <?php foreach ($working_points as $wp): ?>
         function toggleWorkingSchedule<?= $wp['unic_id'] ?>() {
             const content = document.getElementById('workingScheduleContent<?= $wp['unic_id'] ?>');
@@ -7088,12 +6592,8 @@ if (isset($workpoint_id)) {
         openRightPanel();
         
         // Fetch arrivals data
-        <?php if ($supervisor_mode): ?>
-        const url = 'ajax/get_arrivals.php?mode=supervisor&workpoint_id=<?= $workpoint_id ?>';
-        <?php else: ?>
         const url = 'ajax/get_arrivals.php?mode=specialist&specialist_id=<?= $specialist_id ?>';
-        <?php endif; ?>
-        
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -7112,12 +6612,8 @@ if (isset($workpoint_id)) {
         openRightPanel();
         
         // Fetch canceled bookings
-        <?php if ($supervisor_mode): ?>
-        const url = 'ajax/get_canceled.php?mode=supervisor&workpoint_id=<?= $workpoint_id ?>';
-        <?php else: ?>
         const url = 'ajax/get_canceled.php?mode=specialist&specialist_id=<?= $specialist_id ?>';
-        <?php endif; ?>
-        
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -7144,12 +6640,8 @@ if (isset($workpoint_id)) {
             return;
         }
         
-        <?php if ($supervisor_mode): ?>
-        const url = `ajax/search_bookings.php?mode=supervisor&workpoint_id=<?= $workpoint_id ?>&search=${encodeURIComponent(searchTerm)}`;
-        <?php else: ?>
         const url = `ajax/search_bookings.php?mode=specialist&specialist_id=<?= $specialist_id ?>&search=${encodeURIComponent(searchTerm)}`;
-        <?php endif; ?>
-        
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -7365,15 +6857,11 @@ if (isset($workpoint_id)) {
         const serviceName = booking.service_name ? 
             booking.service_name.charAt(0).toUpperCase() + booking.service_name.slice(1).toLowerCase() : 
             'No Service';
-        
-        <?php if ($supervisor_mode): ?>
-        // Supervisor mode - include specialist color
-        const specialistColor = booking.specialist_color || '#667eea';
-        <?php else: ?>
-        // Specialist mode - use specialist's own color
+
+
+        // Use specialist's own color
         const specialistColor = '<?= $specialist_permissions['back_color'] ?? '#667eea' ?>';
-        <?php endif; ?>
-        
+
         // Generate unique ID for this card
         const cardId = 'booking-' + booking.unic_id + '-' + Math.random().toString(36).substr(2, 9);
         
@@ -7458,21 +6946,12 @@ if (isset($workpoint_id)) {
                     <!-- Specialist info with calendar links -->
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div style="font-size: 12px;">
-                            <?php if ($supervisor_mode): ?>
-                            <span style="display: inline-block; padding: 2px 8px; background-color: ${specialistColor}; color: ${booking.specialist_fg_color || '#fff'}; border-radius: 3px; cursor: help;"
-                                  data-bs-toggle="tooltip" 
-                                  data-bs-placement="top" 
-                                  title="${booking.specialist_speciality ? booking.specialist_speciality.charAt(0).toUpperCase() + booking.specialist_speciality.slice(1).toLowerCase() : 'Specialist'}">
-                                <i class="fas fa-user-md"></i> ${booking.specialist_name}
-                            </span>
-                            <?php else: ?>
                             <span style="display: inline-block; padding: 2px 8px; background-color: <?= $specialist_permissions['back_color'] ?? '#667eea' ?>; color: <?= $specialist_permissions['foreground_color'] ?? '#ffffff' ?>; border-radius: 3px; cursor: help;"
-                                  data-bs-toggle="tooltip" 
-                                  data-bs-placement="top" 
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
                                   title="<?= htmlspecialchars(ucfirst(strtolower($specialist['speciality']))) ?>">
                                 <i class="fas fa-user-md"></i> <?= htmlspecialchars($specialist['name']) ?>
                             </span>
-                            <?php endif; ?>
                         </div>
                         <div>
                             <a href="#" onclick="event.stopPropagation(); navigateToBookingDate('${booking.booking_date}', 'today', '${booking.id_specialist}')" 
@@ -7535,26 +7014,15 @@ if (isset($workpoint_id)) {
     }
     
     function navigateToBookingDate(bookingDate, period = 'custom', specialistId = null) {
-        let baseUrl;
-        <?php if ($supervisor_mode): ?>
-        // In supervisor mode, stay in supervisor mode
-        baseUrl = 'booking_view_page.php?supervisor_mode=true&working_point_user_id=<?= $working_point_user_id ?>';
-        <?php else: ?>
-        // In specialist mode, use the current specialist ID
-        baseUrl = 'booking_view_page.php?specialist_id=<?= $specialist_id ?>';
-        <?php endif; ?>
-        
+        // Use the current specialist ID
+        const baseUrl = 'booking_view_page.php?specialist_id=<?= $specialist_id ?>';
+
         // Close the panel
         closeRightPanel();
         
         // Navigate to the specific date with the requested period
-        <?php if ($supervisor_mode): ?>
-        // In supervisor mode, add the selected specialist ID to the URL
-        const specialistParam = specialistId ? '&selected_specialist=' + specialistId : '';
-        <?php else: ?>
         const specialistParam = '';
-        <?php endif; ?>
-        
+
         if (period === 'today') {
             window.location.href = baseUrl + '&period=custom&start_date=' + bookingDate + '&end_date=' + bookingDate + specialistParam;
         } else if (period === 'this_week') {

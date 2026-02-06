@@ -175,7 +175,9 @@
                 pane.classList.add('active');
 
                 // Load content if not already loaded
-                if (tabName === 'services' && !pane.dataset.loaded) {
+                // For services, ALWAYS reload to get fresh data
+                if (tabName === 'services') {
+                    pane.dataset.loaded = '';  // Clear the loaded flag
                     loadServices(specialistId);
                 } else if (tabName === 'permissions' && !pane.dataset.loaded) {
                     loadPermissions(specialistId);
@@ -251,7 +253,7 @@
                     // Add new service button at bottom (same as modal)
                     servicesHTML += `
                         <button type="button" class="btn btn-sm"
-                                onclick="window.serviceReturnModal = 'specialistTab'; window.serviceReturnSpecialistId = '${specialistId}'; if(window.addNewService) { addNewService(); } else if(window.openAddServiceModalForSpecialist) { openAddServiceModalForSpecialist('${specialistId}'); }"
+                                onclick="window.serviceReturnModal = 'specialistTab'; window.serviceReturnSpecialistId = '${specialistId}'; if(window.openAddServiceModalForSpecialist) { openAddServiceModalForSpecialist('${specialistId}'); }"
                                 style="font-size: 0.65rem; padding: 3px 6px; background-color: white; color: #333; border: 1px solid #ddd; transition: all 0.2s ease; cursor: pointer; margin-top: 6px; width: 100%;"
                                 onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'; this.style.transform='translateY(-1px)';"
                                 onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)';">
@@ -263,7 +265,18 @@
                     container.innerHTML = servicesHTML;
                     container.dataset.loaded = 'true';
                 } else {
-                    container.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 15px;"><em style="font-size: 0.75rem;">No services assigned yet.</em></div>';
+                    // No services - show message and Add button
+                    container.innerHTML = '<div style="padding: 1px;">' +
+                        '<div style="text-align: center; color: #6c757d; padding: 15px;"><em style="font-size: 0.75rem;">No services assigned yet.</em></div>' +
+                        '<button type="button" class="btn btn-sm"' +
+                        ' onclick="window.serviceReturnModal = \'specialistTab\'; window.serviceReturnSpecialistId = \'' + specialistId + '\'; if(window.openAddServiceModalForSpecialist) { openAddServiceModalForSpecialist(\'' + specialistId + '\'); }"' +
+                        ' style="font-size: 0.65rem; padding: 3px 6px; background-color: white; color: #333; border: 1px solid #ddd; transition: all 0.2s ease; cursor: pointer; margin-top: 6px; width: 100%;"' +
+                        ' onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,0.15)\'; this.style.transform=\'translateY(-1px)\';"' +
+                        ' onmouseout="this.style.boxShadow=\'none\'; this.style.transform=\'translateY(0)\';">' +
+                        '<i class="fas fa-plus" style="font-size: 0.6rem;"></i> Add new service' +
+                        '</button>' +
+                        '</div>';
+                    container.dataset.loaded = 'true';
                 }
             })
             .catch(error => {
