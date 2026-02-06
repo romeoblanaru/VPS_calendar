@@ -178,7 +178,7 @@ if (isset($workpoint_id)) {
 
         /* Ensure title-box doesn't interfere with dropdowns */
         .title-box {
-            z-index: 100;
+            z-index: 10;
             position: relative;
         }
 
@@ -186,6 +186,12 @@ if (isset($workpoint_id)) {
         .calendar-section, .sidebar, .widget {
             z-index: 1;
             position: relative;
+        }
+
+        /* Ensure table doesn't create stacking context above sliding panel */
+        table {
+            position: relative;
+            z-index: 1;
         }
         :root {
             --primary-color: #667eea;
