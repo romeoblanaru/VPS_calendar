@@ -743,7 +743,7 @@ if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($
     font-size: 0.7rem;
     cursor: pointer;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.8s ease, opacity 0.8s ease;
     box-sizing: border-box;
     width: 120px; /* Will be set dynamically by JavaScript */
     word-wrap: break-word;
@@ -751,6 +751,9 @@ if (!$supervisor_mode && isset($specialist_permissions['back_color']) && isset($
     border: 1px solid #1976d2;
     left: 0;
     top: 0;
+    transform-origin: center center;
+    opacity: 0;
+    transform: scale(0.3);
 }
 
 .booking-box:hover {
@@ -1407,41 +1410,73 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Dynamically position booking boxes using table cells as reference points
+    var positionRetryCount = 0;
+    var maxRetries = 5;
+    var isPositioning = false;
+    var pendingReposition = false;
+
     function positionBookingBoxes() {
-        var table = document.querySelector('.weekly-grid');
-        var container = document.querySelector('.weekly-grid-container');
-        if (!table || !container) {
-            // Retry after a short delay if elements aren't ready
-            setTimeout(positionBookingBoxes, 50);
+        // If already positioning, mark that we need to reposition again after current one finishes
+        if (isPositioning) {
+            pendingReposition = true;
             return;
         }
 
-        // Get table position relative to its container
-        var tableRect = table.getBoundingClientRect();
-        var containerRect = container.getBoundingClientRect();
-        
-        // Calculate table offset within container
-        var tableOffsetLeft = tableRect.left - containerRect.left;
-        var tableOffsetTop = tableRect.top - containerRect.top;
+        isPositioning = true;
+
+        var table = document.querySelector('.weekly-grid');
+        var container = document.querySelector('.weekly-grid-container');
+        if (!table || !container) {
+            isPositioning = false;
+            // Retry after a short delay if elements aren't ready
+            if (positionRetryCount < maxRetries) {
+                positionRetryCount++;
+                setTimeout(positionBookingBoxes, 50);
+            }
+            return;
+        }
+
+        // Get container's scroll position
+        var containerScrollLeft = container.scrollLeft;
+        var containerScrollTop = container.scrollTop;
+
+        // Get table's offset position relative to container (using offsetLeft/offsetTop which are relative to offsetParent)
+        var tableOffsetLeft = table.offsetLeft;
+        var tableOffsetTop = table.offsetTop;
 
         // Get the first row of the table body to use as reference
-        var firstRow = table.querySelector('tbody tr');
+        var tbody = table.querySelector('tbody');
+        if (!tbody) return;
+
+        var firstRow = tbody.querySelector('tr');
         if (!firstRow) return;
 
         // Get all cells in the first row (time column + day columns)
         var cells = firstRow.children;
-        if (cells.length < 2) return;
+
+        // If not enough cells, the table is still rendering - retry
+        if (cells.length < 2) {
+            isPositioning = false;
+            if (positionRetryCount < maxRetries) {
+                positionRetryCount++;
+                setTimeout(positionBookingBoxes, 100);
+            }
+            return;
+        }
+
+        // Reset retry count on success
+        positionRetryCount = 0;
 
         // Calculate the width of the time column (first cell)
         var timeColumnWidth = cells[0].offsetWidth;
-        
+
         // Calculate the width of each day column (all other cells should be equal)
         var dayColumnWidth = cells[1].offsetWidth;
 
         // Get header height (accounting for padding)
         var thead = table.querySelector('thead');
         var headerHeight = thead ? thead.offsetHeight : 0;
-        
+
         // Account for the padding in the header rows
         var weekInfoRow = table.querySelector('.week-info-row');
         var dayHeaderRow = table.querySelector('thead tr:last-child');
@@ -1449,7 +1484,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var dayHeaderHeight = dayHeaderRow ? dayHeaderRow.offsetHeight : 0;
 
         // Position each booking box
-        document.querySelectorAll('.booking-box').forEach(function(box) {
+        var bookingBoxes = document.querySelectorAll('.booking-box');
+
+        bookingBoxes.forEach(function(box) {
             var dayIndex = parseInt(box.getAttribute('data-day-index'), 10);
             var topBase = parseInt(box.getAttribute('data-top-base'), 10);
 
@@ -1457,10 +1494,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Get the actual cell position for more accurate positioning
                 var targetCell = table.querySelector('tbody tr:first-child td:nth-child(' + (dayIndex + 2) + ')');
                 if (targetCell) {
-                    var cellRect = targetCell.getBoundingClientRect();
-                    var left = cellRect.left - containerRect.left;
+                    // Use offsetLeft which is relative to the offsetParent (the container)
+                    var cellOffsetLeft = targetCell.offsetLeft;
+                    var left = tableOffsetLeft + cellOffsetLeft;
                     var top = tableOffsetTop + headerHeight + topBase;
-                    var width = cellRect.width;
+                    var width = targetCell.offsetWidth;
                 } else {
                     // Fallback to calculated positioning
                     var left = tableOffsetLeft + timeColumnWidth + (dayIndex * dayColumnWidth);
@@ -1470,27 +1508,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Add small margin for better visual alignment
                 var margin = 1;
-                box.style.left = (left + margin) + 'px';
-                box.style.top = (top + margin) + 'px';
-                box.style.width = (width - (margin * 2)) + 'px';
-                
+                var newLeft = left + margin;
+                var newTop = top + margin;
 
+                // Set position (no transition on position changes)
+                box.style.left = newLeft + 'px';
+                box.style.top = newTop + 'px';
+                box.style.width = (width - (margin * 2)) + 'px';
             }
         });
+
+        // Mark positioning as complete
+        isPositioning = false;
+
+        // If there was a pending reposition request, execute it now
+        if (pendingReposition) {
+            pendingReposition = false;
+            setTimeout(positionBookingBoxes, 50);
+        }
     }
     
-    // Position boxes on load
+    // Initial positioning (boxes are hidden by CSS initially)
     positionBookingBoxes();
-    
-    // Reposition on window resize
-    window.addEventListener('resize', positionBookingBoxes);
-    
-    // Also reposition after a short delay to ensure all styles are applied
-    setTimeout(positionBookingBoxes, 100);
-    
-    // Additional positioning after images and fonts are loaded
+
+    // Animate booking boxes growing from small to full size on page load
+    setTimeout(function() {
+        // Trigger reflow to ensure positions are set
+        document.body.offsetHeight;
+
+        // Grow to full size (CSS already has them at scale(0.3) and opacity 0)
+        document.querySelectorAll('.booking-box').forEach(function(box) {
+            box.style.transform = 'scale(1)';
+            box.style.opacity = '1';
+        });
+    }, 100);
+
+    // Reposition on window resize (debounced)
+    var resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(positionBookingBoxes, 100);
+    });
+
+    // Final positioning after everything is loaded
     window.addEventListener('load', function() {
-        setTimeout(positionBookingBoxes, 50);
+        setTimeout(positionBookingBoxes, 100);
     });
 });
 
@@ -1672,7 +1734,7 @@ function switchSpecialist(specialistId) {
         tab.classList.remove('active');
         if (tab.getAttribute('data-specialist-id') !== specialistId) {
             // Fade out inactive tabs
-            tab.style.opacity = '0.3';
+            tab.style.opacity = '0.47';
         } else {
             // Full opacity for active tab
             tab.style.opacity = '1';
@@ -1725,12 +1787,14 @@ function filterBookingsBySpecialist(specialistId) {
     document.querySelectorAll('.booking-box').forEach(box => {
         box.style.display = 'none';
     });
-    
-    // Show only bookings for the selected specialist
+
+    // Show only bookings for the selected specialist (instantly, no animation)
     document.querySelectorAll('.booking-box').forEach(box => {
         const bookingSpecialistId = box.getAttribute('data-specialist-id');
         if (bookingSpecialistId === specialistId) {
             box.style.display = 'block';
+            box.style.opacity = '1';
+            box.style.transform = 'scale(1)';
         }
     });
 }

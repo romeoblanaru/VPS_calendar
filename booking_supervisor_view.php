@@ -861,150 +861,50 @@ if (isset($workpoint_id)) {
     <div id="notification-container"></div>
     
     <div class="main-container">
-        <!-- Title Box -->
-        <div class="title-box">
-            <div class="title-left">
-                <div class="current-time" id="currentTime">
-                    <small style="color: var(--primary-color); font-weight: 600;"><?= date('l, F j, Y') ?></small>
-                    <span class="time-badge" id="currentTimeClock" style="margin-left: 8px; padding: 3px 6px;"><?= date('H:i:s') ?></span>
-                    <br>
-                    <small style="color: #666;">
-                        <?php
-                        $timezone_str = $supervisor_mode && $workpoint ? getTimezoneForWorkingPoint($workpoint) :
-                            (!$supervisor_mode && !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) :
-                            getTimezoneForOrganisation($organisation));
-
-                        // Calculate GMT offset
-                        $tz = new DateTimeZone($timezone_str);
-                        $datetime = new DateTime('now', $tz);
-                        $offset_seconds = $tz->getOffset($datetime);
-                        $offset_hours = $offset_seconds / 3600;
-                        $gmt_offset = sprintf("GMT%+d", $offset_hours);
-                        ?>
-                        <?= $timezone_str ?> <span style="font-size: 11px;">(<?= $gmt_offset ?>)</span>
-
-                        <!-- Language Dropdown -->
-                        <div class="dropdown" style="display: inline-block; margin-left: 8px; margin-right: 8px; position: relative;">
-                            <button class="btn btn-sm dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
-                                    style="padding: 1px 6px; font-size: 12px; background-color: #f8f9fa; border: 1px solid #dee2e6; line-height: 1.3;">
-                                <?= strtoupper($lang) ?>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" style="min-width: 80px; z-index: 999999 !important;">
-                                <li><a class="dropdown-item <?= $lang === 'en' ? 'active' : '' ?>" href="#" onclick="changeLanguage('en'); return false;" style="font-size: 12px;">English</a></li>
-                                <li><a class="dropdown-item <?= $lang === 'ro' ? 'active' : '' ?>" href="#" onclick="changeLanguage('ro'); return false;" style="font-size: 12px;">Română</a></li>
-                                <li><a class="dropdown-item <?= $lang === 'lt' ? 'active' : '' ?>" href="#" onclick="changeLanguage('lt'); return false;" style="font-size: 12px;">Lietuvių</a></li>
-                            </ul>
-                        </div>
-
-                        <!-- SSE Status Indicator -->
-                        <span id="realtime-status-btn" onclick="toggleRealtimeUpdates()" style="cursor: pointer; display: inline-block; margin-left: 5px; vertical-align: middle;" title="Real-time booking updates via SSE (Server-Sent Events) - Connecting...">
-                            <i class="status-icon fas fa-circle" style="font-size: 12px; color: #ffc107; transition: color 0.3s ease;"></i>
-                        </span>
-                    </small>
-                </div>
-            </div>
-            <div class="title-center">
-                <h1 class="page-title">
-                    <span class="logo-text">
-                        <span class="logo-letter">B</span>
-                        <span class="logo-letter beauty-eye">
-                            <span class="eye-outer">o</span>
-                            <span class="eye-inner">
-                                <span class="iris"></span>
-                            </span>
-                        </span>
-                        <span class="logo-letter beauty-eye">
-                            <span class="eye-outer">o</span>
-                            <span class="eye-inner">
-                                <span class="iris"></span>
-                            </span>
-                        </span>
-                        <span class="logo-letter">k</span>
-                        <span class="logo-letter">i</span>
-                        <span class="logo-letter">n</span>
-                        <span class="logo-letter">g</span>
-                        <span class="logo-letter space"></span>
-                        <span class="logo-letter">P</span>
-                        <span class="logo-letter">a</span>
-                        <span class="logo-letter">g</span>
-                        <span class="logo-letter">e</span>
-                    </span>
-                </h1>
-
-            </div>
-            <div class="title-right">
-                <div style="margin-top: 10px;">
-                    <small>Usr: <?= htmlspecialchars($_SESSION['user']) ?>
+        <!-- Header Table Layout -->
+        <?php
+        // Check number of specialists to adjust layout
+        $specialist_count = count($specialists);
+        $table_width = $specialist_count > 6 ? '100%' : '90%';
+        $first_cell_width = $specialist_count > 6 ? '360px' : '320px';
+        ?>
+        <div align="center">
+        <table style="width: <?= $table_width ?>; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="width: <?= $first_cell_width ?>; vertical-align: top; padding-right: 10px; border: 1px solid black;">
                     <?php if ($supervisor_mode): ?>
-                    | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
+                    <!-- Workpoint Details Widget (Supervisor Mode) -->
+                    <div class="widget specialist-widget" style="width: 100%; margin-bottom: 10px;">
+                        <div class="widget-title" style="font-size: 1.1rem; color: var(--primary-color); text-align: center;">
+                            <span style="margin-right: 8px; font-size: 1.3rem;">🏢</span><?= htmlspecialchars($organisation['alias_name']) ?><br>
+                            (<?= htmlspecialchars($organisation['oficial_company_name']) ?>)
+                        </div>
+                        <div class="specialist-info">
+                            <div class="specialist-name-large" style="font-size: 1rem; color: var(--dark-color); font-style: italic; margin-bottom: 15px; text-align: center;"><?= htmlspecialchars($workpoint['name_of_the_place']) ?></div>
+                            <div class="contact-info">
+                                <span style="margin-right: 8px;">📍</span>
+                                <span><?= htmlspecialchars($workpoint['address']) ?></span>
+                            </div>
+                            <?php if ($workpoint['workplace_phone_nr'] || $workpoint['booking_phone_nr']): ?>
+                            <div class="contact-info">
+                                <?php if ($workpoint['workplace_phone_nr']): ?>
+                                <span style="margin-right: 8px;">☎️</span>
+                                <span><?= htmlspecialchars($workpoint['workplace_phone_nr']) ?></span>
+                                <?php endif; ?>
+                                <?php if ($workpoint['booking_phone_nr']): ?>
+                                <span style="margin-left: 20px;">
+                                    <span style="margin-right: 5px;">📆</span><?= htmlspecialchars($workpoint['booking_phone_nr']) ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                            <div class="contact-info">
+                                <span style="margin-right: 8px;">👥</span>
+                                <span><?= count($specialists) ?> Specialist(s) at this location</span>
+                            </div>
+                        </div>
+                    </div>
                     <?php endif; ?>
-                    | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
-                    </small>
-
-                    <!-- Menu Dropdown -->
-                    <div style="margin-top: 5px;">
-                        <div class="dropdown" style="display: inline-block;">
-                            <button class="btn btn-sm" type="button" id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false"
-                                    style="padding: 4px 8px; font-size: 14px; background-color: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; gap: 5px;">
-                                <i class="fas fa-bars" style="font-size: 14px;"></i>
-                                <span style="font-size: 12px;">Working Point Config.Settings</span>
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="menuDropdown" style="z-index: 999999 !important;">
-                                <li><a class="dropdown-item" href="#" onclick="openCommunicationSetup(); return false;" style="font-size: 13px;">
-                                    <i class="fab fa-whatsapp" style="width: 20px; color: #25D366;"></i> Communication Setup</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openSMSConfirmationSetup(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-sms" style="width: 20px; color: #1e88e5;"></i> SMS Confirmation Setup</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openWorkpointHolidays(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays & Closures</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openManageServices(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
-                                    <i class="fas fa-chart-bar" style="width: 20px;"></i> Statistics</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="content-wrapper">
-            <!-- Left Sidebar -->
-            <div class="sidebar">
-                <?php if ($supervisor_mode): ?>
-                <!-- Workpoint Details Widget (Supervisor Mode) -->
-                <div class="widget specialist-widget">
-                    <div class="widget-title" style="font-size: 1.1rem; color: var(--primary-color); text-align: center;">
-                        <span style="margin-right: 8px; font-size: 1.3rem;">🏢</span><?= htmlspecialchars($organisation['alias_name']) ?><br>
-                        (<?= htmlspecialchars($organisation['oficial_company_name']) ?>)
-                    </div>
-                    <div class="specialist-info">
-                        <div class="specialist-name-large" style="font-size: 1rem; color: var(--dark-color); font-style: italic; margin-bottom: 15px; text-align: center;"><?= htmlspecialchars($workpoint['name_of_the_place']) ?></div>
-                        <div class="contact-info">
-                            <span style="margin-right: 8px;">📍</span>
-                            <span><?= htmlspecialchars($workpoint['address']) ?></span>
-                        </div>
-                        <?php if ($workpoint['workplace_phone_nr'] || $workpoint['booking_phone_nr']): ?>
-                        <div class="contact-info">
-                            <?php if ($workpoint['workplace_phone_nr']): ?>
-                            <span style="margin-right: 8px;">☎️</span>
-                            <span><?= htmlspecialchars($workpoint['workplace_phone_nr']) ?></span>
-                            <?php endif; ?>
-                            <?php if ($workpoint['booking_phone_nr']): ?>
-                            <span style="margin-left: 20px;">
-                                <span style="margin-right: 5px;">📆</span><?= htmlspecialchars($workpoint['booking_phone_nr']) ?>
-                            </span>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-                        <div class="contact-info">
-                            <span style="margin-right: 8px;">👥</span>
-                            <span><?= count($specialists) ?> Specialist(s) at this location</span>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
                 <!-- Organisation Details Widget -->
                 <div class="widget organisation-widget">
                     <?php if ($supervisor_mode): ?>
@@ -1844,75 +1744,192 @@ if (isset($workpoint_id)) {
                                         <?php endif; ?>
                 </div>
             </div>
+                </td>
+                <td style="vertical-align: top; border: 1px solid black;">
+                    <!-- Title Box -->
+                    <div class="title-box" style="width: 100%;">
+                        <div class="title-left">
+                            <div class="current-time" id="currentTime">
+                                <small style="color: var(--primary-color); font-weight: 600;"><?= date('l, F j, Y') ?></small>
+                                <span class="time-badge" id="currentTimeClock" style="margin-left: 8px; padding: 3px 6px;"><?= date('H:i:s') ?></span>
+                                <br>
+                                <small style="color: #666;">
+                                    <?php
+                                    $timezone_str = $supervisor_mode && $workpoint ? getTimezoneForWorkingPoint($workpoint) :
+                                        (!$supervisor_mode && !empty($working_points) ? getTimezoneForWorkingPoint($working_points[0]) :
+                                        getTimezoneForOrganisation($organisation));
 
-            <!-- Calendar Section -->
-            <div class="calendar-section">
-                <!-- Calendar Top Bar -->
-                <div class="calendar-top">
-                                            <div class="period-selector">
-                            <form method="GET" id="periodForm">
-                                <input type="hidden" name="working_point_user_id" value="<?= $working_point_user_id ?>">
-                                
-                                <div class="period-option">
-                                    <input type="radio" name="period" value="today" id="today" <?= $period === 'today' ? 'checked' : '' ?> onclick="changePeriod('today', event); return false;">
-                                    <label for="today" onclick="changePeriod('today', event); return false;">Today</label>
-                                </div>
+                                    // Calculate GMT offset
+                                    $tz = new DateTimeZone($timezone_str);
+                                    $datetime = new DateTime('now', $tz);
+                                    $offset_seconds = $tz->getOffset($datetime);
+                                    $offset_hours = $offset_seconds / 3600;
+                                    $gmt_offset = sprintf("GMT%+d", $offset_hours);
+                                    ?>
+                                    <?= $timezone_str ?> <span style="font-size: 11px;">(<?= $gmt_offset ?>)</span>
 
-                                <div class="period-option">
-                                    <input type="radio" name="period" value="tomorrow" id="tomorrow" <?= $period === 'tomorrow' ? 'checked' : '' ?> onclick="changePeriod('tomorrow', event); return false;">
-                                    <label for="tomorrow" onclick="changePeriod('tomorrow', event); return false;">Tomorrow</label>
-                                </div>
+                                    <!-- Language Dropdown -->
+                                    <div class="dropdown" style="display: inline-block; margin-left: 8px; margin-right: 8px; position: relative;">
+                                        <button class="btn btn-sm dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                                style="padding: 1px 6px; font-size: 12px; background-color: #f8f9fa; border: 1px solid #dee2e6; line-height: 1.3;">
+                                            <?= strtoupper($lang) ?>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" style="min-width: 80px; z-index: 999999 !important;">
+                                            <li><a class="dropdown-item <?= $lang === 'en' ? 'active' : '' ?>" href="#" onclick="changeLanguage('en'); return false;" style="font-size: 12px;">English</a></li>
+                                            <li><a class="dropdown-item <?= $lang === 'ro' ? 'active' : '' ?>" href="#" onclick="changeLanguage('ro'); return false;" style="font-size: 12px;">Română</a></li>
+                                            <li><a class="dropdown-item <?= $lang === 'lt' ? 'active' : '' ?>" href="#" onclick="changeLanguage('lt'); return false;" style="font-size: 12px;">Lietuvių</a></li>
+                                        </ul>
+                                    </div>
 
-                                <div class="period-option">
-                                    <input type="radio" name="period" value="this_week" id="this_week" <?= $period === 'this_week' ? 'checked' : '' ?> onclick="changePeriod('this_week', event); return false;">
-                                    <label for="this_week" onclick="changePeriod('this_week', event); return false;">This Week</label>
-                                </div>
-
-                                <div class="period-option">
-                                    <input type="radio" name="period" value="next_week" id="next_week" <?= $period === 'next_week' ? 'checked' : '' ?> onclick="changePeriod('next_week', event); return false;">
-                                    <label for="next_week" onclick="changePeriod('next_week', event); return false;">Next Week</label>
-                                </div>
-
-                                <div class="period-option">
-                                    <input type="radio" name="period" value="this_month" id="this_month" <?= $period === 'this_month' ? 'checked' : '' ?> onclick="changePeriod('this_month', event); return false;">
-                                    <label for="this_month" onclick="changePeriod('this_month', event); return false;">This Month</label>
-                                </div>
-
-                                <div class="period-option">
-                                    <input type="radio" name="period" value="next_month" id="next_month" <?= $period === 'next_month' ? 'checked' : '' ?> onclick="changePeriod('next_month', event); return false;">
-                                    <label for="next_month" onclick="changePeriod('next_month', event); return false;">Next Month</label>
-                                </div>
-                            </form>
+                                    <!-- SSE Status Indicator -->
+                                    <span id="realtime-status-btn" onclick="toggleRealtimeUpdates()" style="cursor: pointer; display: inline-block; margin-left: 5px; vertical-align: middle;" title="Real-time booking updates via SSE (Server-Sent Events) - Connecting...">
+                                        <i class="status-icon fas fa-circle" style="font-size: 12px; color: #ffc107; transition: color 0.3s ease;"></i>
+                                    </span>
+                                </small>
+                            </div>
                         </div>
-                </div>
+                        <div class="title-center">
+                            <h1 class="page-title">
+                                <span class="logo-text">
+                                    <span class="logo-letter">B</span>
+                                    <span class="logo-letter beauty-eye">
+                                        <span class="eye-outer">o</span>
+                                        <span class="eye-inner">
+                                            <span class="iris"></span>
+                                        </span>
+                                    </span>
+                                    <span class="logo-letter beauty-eye">
+                                        <span class="eye-outer">o</span>
+                                        <span class="eye-inner">
+                                            <span class="iris"></span>
+                                        </span>
+                                    </span>
+                                    <span class="logo-letter">k</span>
+                                    <span class="logo-letter">i</span>
+                                    <span class="logo-letter">n</span>
+                                    <span class="logo-letter">g</span>
+                                    <span class="logo-letter space"></span>
+                                    <span class="logo-letter">P</span>
+                                    <span class="logo-letter">a</span>
+                                    <span class="logo-letter">g</span>
+                                    <span class="logo-letter">e</span>
+                                </span>
+                            </h1>
 
-                <!-- Calendar View -->
-                <div class="calendar-view<?= ($supervisor_mode && $calendar_design === 'monthly') ? ' compact' : '' ?>">
-                    <?php
-                    // Debug: Show which template is being loaded
-                    echo "<!-- Loading template: " . $calendar_design . " -->";
-                    
-                    // Load the appropriate calendar template based on design
-                    switch ($calendar_design) {
-                        case 'daily':
-                            include 'templates/calendar_daily.php';
-                            break;
-                        case 'weekly':
-                            include 'templates/calendar_weekly.php';
-                            break;
-                        case 'monthly':
-                            include 'templates/calendar_monthly.php';
-                            break;
-                        case 'monthly':
-                            include 'templates/calendar_monthly.php';
-                            break;
-                        default:
-                            include 'templates/calendar_daily.php';
-                    }
-                    ?>
-                </div>
-            </div>
-            
+                        </div>
+                        <div class="title-right">
+                            <div style="margin-top: 10px;">
+                                <small>Usr: <?= htmlspecialchars($_SESSION['user']) ?>
+                                <?php if ($supervisor_mode): ?>
+                                | <a href="workpoint_supervisor_dashboard.php" style="color: var(--primary-color); text-decoration: none;">Dashboard</a>
+                                <?php endif; ?>
+                                | <a href="logout.php" style="color: var(--danger-color); text-decoration: none;"><?= $LANG['logout'] ?? 'Logout' ?></a>
+                                </small>
+
+                                <!-- Menu Dropdown -->
+                                <div style="margin-top: 5px;">
+                                    <div class="dropdown" style="display: inline-block;">
+                                        <button class="btn btn-sm" type="button" id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                                style="padding: 4px 8px; font-size: 14px; background-color: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; gap: 5px;">
+                                            <i class="fas fa-bars" style="font-size: 14px;"></i>
+                                            <span style="font-size: 12px;">Working Point Config.Settings</span>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="menuDropdown" style="z-index: 999999 !important;">
+                                            <li><a class="dropdown-item" href="#" onclick="openCommunicationSetup(); return false;" style="font-size: 13px;">
+                                                <i class="fab fa-whatsapp" style="width: 20px; color: #25D366;"></i> Communication Setup</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="openSMSConfirmationSetup(); return false;" style="font-size: 13px;">
+                                                <i class="fas fa-sms" style="width: 20px; color: #1e88e5;"></i> SMS Confirmation Setup</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="openWorkpointHolidays(); return false;" style="font-size: 13px;">
+                                                <i class="fas fa-calendar-times" style="width: 20px; color: #FFA500;"></i> Workpoint Holidays & Closures</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="openManageServices(); return false;" style="font-size: 13px;">
+                                                <i class="fas fa-cogs" style="width: 20px;"></i> Manage Services</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="openStatistics(); return false;" style="font-size: 13px;">
+                                                <i class="fas fa-chart-bar" style="width: 20px;"></i> Statistics</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Section -->
+                    <div class="calendar-section">
+                        <!-- Calendar Top Bar -->
+                        <div class="calendar-top">
+                            <div class="period-selector">
+                                <form method="GET" id="periodForm">
+                                    <input type="hidden" name="working_point_user_id" value="<?= $working_point_user_id ?>">
+
+                                    <div class="period-option">
+                                        <input type="radio" name="period" value="today" id="today" <?= $period === 'today' ? 'checked' : '' ?> onclick="changePeriod('today', event); return false;">
+                                        <label for="today" onclick="changePeriod('today', event); return false;">Today</label>
+                                    </div>
+
+                                    <div class="period-option">
+                                        <input type="radio" name="period" value="tomorrow" id="tomorrow" <?= $period === 'tomorrow' ? 'checked' : '' ?> onclick="changePeriod('tomorrow', event); return false;">
+                                        <label for="tomorrow" onclick="changePeriod('tomorrow', event); return false;">Tomorrow</label>
+                                    </div>
+
+                                    <div class="period-option">
+                                        <input type="radio" name="period" value="this_week" id="this_week" <?= $period === 'this_week' ? 'checked' : '' ?> onclick="changePeriod('this_week', event); return false;">
+                                        <label for="this_week" onclick="changePeriod('this_week', event); return false;">This Week</label>
+                                    </div>
+
+                                    <div class="period-option">
+                                        <input type="radio" name="period" value="next_week" id="next_week" <?= $period === 'next_week' ? 'checked' : '' ?> onclick="changePeriod('next_week', event); return false;">
+                                        <label for="next_week" onclick="changePeriod('next_week', event); return false;">Next Week</label>
+                                    </div>
+
+                                    <div class="period-option">
+                                        <input type="radio" name="period" value="this_month" id="this_month" <?= $period === 'this_month' ? 'checked' : '' ?> onclick="changePeriod('this_month', event); return false;">
+                                        <label for="this_month" onclick="changePeriod('this_month', event); return false;">This Month</label>
+                                    </div>
+
+                                    <div class="period-option">
+                                        <input type="radio" name="period" value="next_month" id="next_month" <?= $period === 'next_month' ? 'checked' : '' ?> onclick="changePeriod('next_month', event); return false;">
+                                        <label for="next_month" onclick="changePeriod('next_month', event); return false;">Next Month</label>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Calendar View -->
+                        <div class="calendar-view<?= ($supervisor_mode && $calendar_design === 'monthly') ? ' compact' : '' ?>">
+                            <?php
+                            // Debug: Show which template is being loaded
+                            echo "<!-- Loading template: " . $calendar_design . " -->";
+
+                            // Load the appropriate calendar template based on design
+                            switch ($calendar_design) {
+                                case 'daily':
+                                    include 'templates/calendar_daily.php';
+                                    break;
+                                case 'weekly':
+                                    include 'templates/calendar_weekly.php';
+                                    break;
+                                case 'monthly':
+                                    include 'templates/calendar_monthly.php';
+                                    break;
+                                case 'monthly':
+                                    include 'templates/calendar_monthly.php';
+                                    break;
+                                default:
+                                    include 'templates/calendar_daily.php';
+                            }
+                            ?>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-wrapper">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+
+
             <!-- Left Side Panel for Search/Arrivals/Canceled Results -->
             <div id="rightSidePanel" class="left-side-panel" style="position: fixed; left: -472px; top: 0; width: 472px; height: 100%; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 1050; overflow-y: auto; transition: left 0.3s ease;">
                 <div class="panel-header" style="padding: 20px; border-bottom: 1px solid #dee2e6; background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
