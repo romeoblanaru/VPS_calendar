@@ -193,6 +193,34 @@ if (isset($workpoint_id)) {
             position: relative;
             z-index: 1;
         }
+
+        /* Compress specialist list spacing by default, expand on hover */
+        .organisation-widget .working-point-header,
+        .organisation-widget .specialist-header {
+            padding-top: 4px !important;
+            padding-bottom: 2px !important;
+            margin-bottom: 3px !important;
+            transition: all 0.2s ease;
+        }
+
+        .organisation-widget:hover .working-point-header,
+        .organisation-widget:hover .specialist-header {
+            padding-top: 8px !important;
+            padding-bottom: 4px !important;
+            margin-bottom: 8px !important;
+        }
+
+        .organisation-widget .specialist-info-line {
+            margin-top: -5px !important;
+            margin-bottom: 2px !important;
+            transition: all 0.2s ease;
+        }
+
+        .organisation-widget:hover .specialist-info-line {
+            margin-top: -3px !important;
+            margin-bottom: 5px !important;
+        }
+
         :root {
             --primary-color: #667eea;
             --secondary-color: #764ba2;
@@ -877,7 +905,7 @@ if (isset($workpoint_id)) {
         <div align="center">
         <table style="width: <?= $table_width ?>; border-collapse: collapse; margin-bottom: 20px;">
             <tr>
-                <td style="width: <?= $first_cell_width ?>; vertical-align: top; padding-right: 10px; border: 1px solid black;">
+                <td style="width: <?= $first_cell_width ?>; vertical-align: top; padding-right: 10px;">
                     <?php if ($supervisor_mode): ?>
                     <!-- Workpoint Details Widget (Supervisor Mode) -->
                     <div class="widget specialist-widget" style="width: 100%; margin-bottom: 10px;">
@@ -1751,7 +1779,7 @@ if (isset($workpoint_id)) {
                 </div>
             </div>
                 </td>
-                <td style="vertical-align: top; border: 1px solid black;">
+                <td style="vertical-align: top;">
                     <!-- Title Box -->
                     <div class="title-box" style="width: 100%;">
                         <div class="title-left">
