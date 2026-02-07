@@ -3075,33 +3075,7 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
 </script>
 
 
-<!-- Add Organisation Modal -->
-<div id="addOrgModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10000;background:rgba(0,0,0,0.35);">
-  <div style="background:#fff;width:400px;max-width:98vw;padding:24px 18px 18px 18px;margin:60px auto 0 auto;border-radius:7px;position:relative;">
-    <h5>Add New Organisation</h5>
-    <form id="addOrgForm">
-      <div style="margin-bottom:6px;"><input name="alias_name" type="text" class="form-control" placeholder="Alias Name *" required></div>
-      <div style="margin-bottom:6px;"><input name="oficial_company_name" type="text" class="form-control" placeholder="Official Company Name *" required></div>
-      <!-- Booking phone is now managed per working point -->
-      <div style="margin-bottom:6px;"><input name="contact_name" type="text" class="form-control" placeholder="Contact Name"></div>
-      <div style="margin-bottom:6px;"><input name="position" type="text" class="form-control" placeholder="Position"></div>
-      <div style="margin-bottom:6px;"><input name="email_address" type="email" class="form-control" placeholder="Email"></div>
-      <div style="margin-bottom:6px;"><input name="www_address" type="text" class="form-control" placeholder="Website"></div>
-      <div style="margin-bottom:6px;"><input name="company_head_office_address" type="text" class="form-control" placeholder="Head Office Address"></div>
-      <div style="margin-bottom:6px;"><input name="company_phone_nr" type="text" class="form-control" placeholder="Company Phone"></div>
-      <div style="margin-bottom:6px;"><input name="country" type="text" class="form-control" placeholder="Country"></div>
-      <div style="margin-bottom:6px;"><input name="owner_name" type="text" class="form-control" placeholder="Owner Name"></div>
-      <div style="margin-bottom:6px;"><input name="owner_phone_nr" type="text" class="form-control" placeholder="Owner Phone"></div>
-      <div style="margin-bottom:6px;"><input name="user" type="text" class="form-control" placeholder="Login"></div>
-      <div style="margin-bottom:6px;"><input name="pasword" type="text" class="form-control" placeholder="Password"></div>
-      
-      <div id="addOrgError" style="color:#c00;font-size:0.96em;margin-bottom:6px;display:none;"></div>
-      <button type="submit" class="btn btn-success btn-sm">Add</button>
-      <button type="button" onclick="closeAddOrgModal()" class="btn btn-secondary btn-sm">Cancel</button>
-    </form>
-    <span onclick="closeAddOrgModal()" style="position:absolute;top:10px;right:16px;cursor:pointer;font-size:1.2em;">&times;</span>
-  </div>
-</div>
+<!-- Old Add Organisation Modal - REMOVED - Use addNewOrgModal instead -->
 
 <!-- Delete Organisation Confirmation Modal -->
 <div id="deleteOrgModal" class="delete-modal-overlay">
@@ -3259,10 +3233,9 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                         🗑️ Delete Organisation
                     </button>
                     
-                    <!-- Update and Cancel buttons on the right -->
+                    <!-- Update button on the right -->
                     <div style="display: flex; gap: 10px;">
                         <button type="submit" class="btn-modify" id="confirmModifyBtn">Update Organisation</button>
-                        <button type="button" class="btn-cancel" onclick="closeModifyModal()">Cancel</button>
                     </div>
                 </div>
             </form>
@@ -3321,14 +3294,14 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                         <input type="text" id="wp_address" name="address" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="wp_landmark">Landmark</label>
-                        <input type="text" id="wp_landmark" name="landmark" class="form-control">
+                        <label for="wp_landmark">Landmark *</label>
+                        <input type="text" id="wp_landmark" name="landmark" class="form-control" required style="border: 1px solid #dc3545;">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group" style="width: 100%;">
-                        <label for="wp_directions">Directions</label>
-                        <textarea id="wp_directions" name="directions" class="form-control" rows="2" style="resize: vertical;"></textarea>
+                        <label for="wp_directions">Directions *</label>
+                        <textarea id="wp_directions" name="directions" class="form-control" rows="2" required style="resize: vertical; border: 1px solid #dc3545;"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -3386,12 +3359,12 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="wp_we_handling">We Handling</label>
-                        <input type="text" id="wp_we_handling" name="we_handling" class="form-control" placeholder="What do we handle here? Ex: Specialist, Table, Ramp">
+                        <label for="wp_we_handling">We Handling *</label>
+                        <input type="text" id="wp_we_handling" name="we_handling" class="form-control" placeholder="What do we handle here? Ex: Specialist, Table, Ramp" required style="border: 1px solid #dc3545;">
                     </div>
                     <div class="form-group">
-                        <label for="wp_specialist_relevance">Specialist Relevance</label>
-                        <select id="wp_specialist_relevance" name="specialist_relevance" class="form-control">
+                        <label for="wp_specialist_relevance">Specialist Relevance *</label>
+                        <select id="wp_specialist_relevance" name="specialist_relevance" class="form-control" required style="border: 1px solid #dc3545;">
                             <option value="">Select relevance...</option>
                             <option value="strong">Strong</option>
                             <option value="medium">Medium</option>
@@ -3623,15 +3596,31 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
         <div class="modify-modal-body">
             <form id="addWpForm">
                 <input type="hidden" id="addWpOrganisationId" name="organisation_id">
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="add_wp_name_of_the_place">Name of the Place *</label>
                         <input type="text" id="add_wp_name_of_the_place" name="name_of_the_place" class="form-control" required>
                     </div>
                     <div class="form-group">
+                        <label for="add_wp_description_of_the_place">Description of the Place</label>
+                        <input type="text" id="add_wp_description_of_the_place" name="description_of_the_place" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="add_wp_address">Address *</label>
                         <input type="text" id="add_wp_address" name="address" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add_wp_landmark">Landmark *</label>
+                        <input type="text" id="add_wp_landmark" name="landmark" class="form-control" required style="border: 1px solid #dc3545;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 100%;">
+                        <label for="add_wp_directions">Directions *</label>
+                        <textarea id="add_wp_directions" name="directions" class="form-control" rows="2" required style="resize: vertical; border: 1px solid #dc3545;"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -3650,8 +3639,8 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                         <input type="text" id="add_wp_workplace_phone_nr" name="workplace_phone_nr" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label for="add_wp_booking_phone_nr">Booking Phone</label>
-                        <input type="text" id="add_wp_booking_phone_nr" name="booking_phone_nr" class="form-control">
+                        <label for="add_wp_booking_phone_nr">Booking Phone *</label>
+                        <input type="text" id="add_wp_booking_phone_nr" name="booking_phone_nr" class="form-control" required style="background-color: #e3f2fd; border: 1px solid #90caf9;">
                     </div>
                 </div>
                 <div class="form-row">
@@ -3660,35 +3649,41 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                         <input type="email" id="add_wp_email" name="email" class="form-control">
                     </div>
                     <div class="form-group">
+                        <label for="add_wp_booking_sms_number">Booking SMS Number</label>
+                        <input type="text" id="add_wp_booking_sms_number" name="booking_sms_number" class="form-control" style="background-color: #ffedd5; border: 1px solid #ffb380;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="add_wp_country_display">Country *</label>
                         <input type="text" id="add_wp_country_display" placeholder="Type to search countries..." autocomplete="off" class="form-control">
                         <input type="hidden" id="add_wp_country" name="country" required>
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="form-group">
                         <label for="add_wp_language">Language *</label>
                         <input type="text" id="add_wp_language" name="language" class="form-control" maxlength="2" pattern="[a-zA-Z]{2}" placeholder="e.g., EN, RO, LT" title="Enter 2-letter language code" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')">
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group" style="display: flex; flex-direction: row; gap: 8px; align-items: flex-end; margin-bottom: 0;">
                         <div style="flex: 1; display: flex; flex-direction: column;">
                             <label for="add_wp_user" style="font-size: 13px;">Login</label>
-                            <input type="text" id="add_wp_user" name="user" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #e6f2ff; border: 1px solid #b3d8ff;">
+                            <input type="text" id="add_wp_user" name="user" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #f3e5f5; border: 1px solid #ce93d8;">
                         </div>
                         <div style="flex: 1; display: flex; flex-direction: column;">
                             <label for="add_wp_password" style="font-size: 13px;">Password</label>
-                            <input type="text" id="add_wp_password" name="password" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #e6f2ff; border: 1px solid #b3d8ff;">
+                            <input type="text" id="add_wp_password" name="password" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #f3e5f5; border: 1px solid #ce93d8;">
                         </div>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="add_wp_we_handling">We Handling</label>
-                        <input type="text" id="add_wp_we_handling" name="we_handling" class="form-control" placeholder="What do we handle here? Ex: Specialist, Table, Ramp">
+                        <label for="add_wp_we_handling">We Handling *</label>
+                        <input type="text" id="add_wp_we_handling" name="we_handling" class="form-control" placeholder="What do we handle here? Ex: Specialist, Table, Ramp" required style="border: 1px solid #dc3545;">
                     </div>
                     <div class="form-group">
-                        <label for="add_wp_specialist_relevance">Specialist Relevance</label>
-                        <select id="add_wp_specialist_relevance" name="specialist_relevance" class="form-control">
+                        <label for="add_wp_specialist_relevance">Specialist Relevance *</label>
+                        <select id="add_wp_specialist_relevance" name="specialist_relevance" class="form-control" required style="border: 1px solid #dc3545;">
                             <option value="">Select relevance...</option>
                             <option value="strong">Strong</option>
                             <option value="medium">Medium</option>
@@ -3698,7 +3693,6 @@ function loadAvailableWorkingPointsForOrphaned(specialistId, organisationId) {
                 </div>
                 <div id="addWpError" class="modify-error" style="display: none; color: #dc3545; font-size: 0.9em; margin: 10px 0;"></div>
                 <div class="modify-modal-buttons">
-                    <button type="button" class="btn-cancel" onclick="closeAddNewWpModal()">Cancel</button>
                     <button type="button" class="btn-modify" id="confirmAddNewWpBtn" onclick="submitAddWorkingPoint()">Add Working Point</button>
                 </div>
             </form>
@@ -4786,15 +4780,16 @@ function closeDeleteSpecialistModal() {
                             <label for="new_owner_phone_nr">Owner Phone</label>
                             <input type="text" id="new_owner_phone_nr" name="owner_phone_nr" class="form-control">
                         </div>
-                        <div class="form-group" style="display: flex; flex-direction: row; gap: 8px; align-items: flex-end; margin-bottom: 0;">
-                            <div style="flex: 1; display: flex; flex-direction: column;">
-                                <label for="new_user" style="font-size: 13px;">Login</label>
-                                <input type="text" id="new_user" name="user" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #e6f2ff; border: 1px solid #b3d8ff;">
-                            </div>
-                            <div style="flex: 1; display: flex; flex-direction: column;">
-                                <label for="new_pasword" style="font-size: 13px;">Password</label>
-                                <input type="text" id="new_pasword" name="pasword" class="form-control" style="font-size: 13px; padding: 4px 6px; background: #e6f2ff; border: 1px solid #b3d8ff;">
-                            </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new_user">Login</label>
+                            <input type="text" id="new_user" name="user" class="form-control login-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_pasword">Password</label>
+                            <input type="text" id="new_pasword" name="pasword" class="form-control login-password">
                         </div>
                     </div>
                     
@@ -4802,7 +4797,6 @@ function closeDeleteSpecialistModal() {
                     
                     <div class="modify-modal-buttons" style="display: flex; justify-content: flex-end; align-items: center; padding-right: 20px;">
                         <div style="display: flex; gap: 10px;">
-                            <button type="button" class="btn-cancel" onclick="closeAddNewOrgModal()">Cancel</button>
                             <button type="submit" class="btn-modify" id="confirmAddNewOrgBtn">Add Organisation</button>
                         </div>
                     </div>

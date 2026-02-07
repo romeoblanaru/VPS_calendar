@@ -20,10 +20,10 @@ if (!isset($_SESSION['user']) || !in_array($_SESSION['role'], ['organisation_use
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Validate required fields
-        $required_fields = ['name_of_the_place', 'address', 'user', 'password', 'organisation_id'];
-        
+        $required_fields = ['name_of_the_place', 'address', 'landmark', 'directions', 'user', 'password', 'organisation_id', 'we_handling', 'specialist_relevance'];
+
         foreach ($required_fields as $field) {
-            if (!isset($_POST[$field]) || empty($_POST[$field])) {
+            if (!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
                     header('Content-Type: application/json');
                     echo json_encode(['success' => false, 'message' => "Field '$field' is required"]);
@@ -99,16 +99,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        $stmt = $pdo->prepare('INSERT INTO working_points 
-            (name_of_the_place, address, lead_person_name, lead_person_phone_nr, workplace_phone_nr, booking_phone_nr, email, user, password, organisation_id, country, language, we_handling, specialist_relevance)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO working_points
+            (name_of_the_place, description_of_the_place, address, landmark, directions, lead_person_name, lead_person_phone_nr, workplace_phone_nr, booking_phone_nr, booking_sms_number, email, user, password, organisation_id, country, language, we_handling, specialist_relevance)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             $_POST['name_of_the_place'],
+            $_POST['description_of_the_place'] ?? '',
             $_POST['address'],
+            $_POST['landmark'] ?? '',
+            $_POST['directions'] ?? '',
             $_POST['lead_person_name'] ?? '',
             $_POST['lead_person_phone_nr'] ?? '',
             $_POST['workplace_phone_nr'] ?? '',
             $_POST['booking_phone_nr'] ?? '',
+            $_POST['booking_sms_number'] ?? '',
             $_POST['email'] ?? '',
             $_POST['user'],
             $_POST['password'],

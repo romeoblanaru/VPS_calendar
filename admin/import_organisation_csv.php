@@ -74,9 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // WORKING POINTS section
                 if (!empty($sections['# WORKING POINTS'])) {
                     foreach (array_slice($sections['# WORKING POINTS'], 1) as $wrow) {
-                        if (count($wrow) >= 5) {
-                            $label = isset($wrow[1]) ? ('workpoint ' . $wrow[1]) : 'workpoint';
-                            $registerPair($wrow[3], $wrow[4], 'WORKING POINTS', $label);
+                        if (count($wrow) >= 7) {
+                            $label = isset($wrow[0]) ? ('workpoint ' . $wrow[0]) : 'workpoint';
+                            $registerPair($wrow[5], $wrow[6], 'WORKING POINTS', $label);
                         }
                     }
                 }

@@ -145,9 +145,10 @@ $we_handling = $_POST['we_handling'] ?? '';
 $specialist_relevance = $_POST['specialist_relevance'] ?? null;
 
 // Validate required fields
-if (!$workpoint_id || !$name_of_the_place || !$address || !$lead_person_name || 
-    !$lead_person_phone_nr || !$workplace_phone_nr || !$booking_phone_nr || 
-    !$user || !$password) {
+if (!$workpoint_id || !$name_of_the_place || !$address || trim($landmark) === '' ||
+    trim($directions) === '' || !$lead_person_name || !$lead_person_phone_nr ||
+    !$workplace_phone_nr || !$booking_phone_nr || !$user || !$password ||
+    trim($we_handling) === '' || trim($specialist_relevance) === '') {
     echo json_encode(['success' => false, 'message' => 'All required fields must be filled']);
     exit;
 }
